@@ -36,7 +36,7 @@ def get_all_busan_accommodation(service_key):
     return pd.DataFrame(all_data)  # 모든 데이터를 DataFrame으로 변환하여 반환
 
 # API 키
-service_key = 'JfUHeeWSk3g1jD8q4YQCDFH3kw92N+3XdsGsvdk1ROKf3YlFNQNBTqt8bOF5BJtjmusHFh4wom2zM44tMkQZyA=='
+service_key = 'API key'
 
 # 데이터 가져오기
 df = get_all_busan_accommodation(service_key)
