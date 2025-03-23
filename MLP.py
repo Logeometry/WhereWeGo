@@ -274,22 +274,6 @@ def create_accessibility_map():
             return None
 
 
-class UserRating:
-    def __init__(self):
-        self.ratings = []
-
-    def add_rating(self, facility_id, features, accessibility_score,
-                   user_type, visit_date, comments):
-        self.ratings.append({
-            'facility_id': facility_id,
-            'features': features,  # [물품보관함, 유아거치대, 휠체어, 점자유도로]
-            'accessibility_score': accessibility_score,  # 사용자 평가 점수
-            'user_type': user_type,  # 일반/장애인/노인/임산부 등
-            'visit_date': visit_date,
-            'comments': comments
-        })
-
-
 if __name__ == "__main__":
     result = create_accessibility_map()
     if result:
