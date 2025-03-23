@@ -10,7 +10,7 @@ import webbrowser
 import os
 from torch.utils.data import TensorDataset, DataLoader
 
-serviceKey = 'JfUHeeWSk3g1jD8q4YQCDFH3kw92N+3XdsGsvdk1ROKf3YlFNQNBTqt8bOF5BJtjmusHFh4wom2zM44tMkQZyA=='
+serviceKey = 'API key'
 base_url = 'https://api.odcloud.kr/api/15096728/v1/uddi:a7cfe5da-2d11-4416-b67f-aff99ee63bbe'
 busan_center = [35.1796, 129.0756]
 
