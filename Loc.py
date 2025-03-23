@@ -49,7 +49,7 @@ def get_busan_attractions(service_key):
         return None
 
 # API 키
-service_key = 'JfUHeeWSk3g1jD8q4YQCDFH3kw92N%2B3XdsGsvdk1ROKf3YlFNQNBTqt8bOF5BJtjmusHFh4wom2zM44tMkQZyA%3D%3D'
+service_key = 'API key'
 
 # 함수 호출
 df = get_busan_attractions(service_key)
