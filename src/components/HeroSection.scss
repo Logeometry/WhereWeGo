@@ -1,0 +1,104 @@
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.hero-section {
+  position: relative;
+  width: 100%;
+  height: 90vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+
+  &__slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+    animation: slideFadeIn 1s;
+  }
+  &__slide.active {
+    opacity: 1;
+  }
+
+  &__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+  }
+
+  &__content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 20px;
+    max-width: 80%;
+    animation: fadeInUp 1s ease-out;
+  }
+
+  &__title {
+    font-weight: bold;
+    margin-bottom: 16px;
+    font-size: 3rem;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+    @media (max-width: 768px) {
+      font-size: 2rem;
+    }
+  }
+
+  &__subtitle {
+    margin-bottom: 32px;
+    font-size: 1.5rem;
+    color: #ddd;
+    line-height: 1.6;
+    @media (max-width: 768px) {
+      font-size: 1.2rem;
+    }
+  }
+
+  &__buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+  }
+
+  &__btn {
+    // 버튼 색상은 테마로 통일되므로 레이아웃/애니메이션만 정의합니다.
+    border-radius: 30px;
+    padding: 14px 32px;
+    font-weight: bold;
+    text-transform: none;
+    transition: transform 0.3s, box-shadow 0.3s;
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+  }
+}

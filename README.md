@@ -1,36 +1,70 @@
-# 부산 관광지 추천 서비스
+# Getting Started with Create React App
 
-부산 지역 관광지를 사용자 맞춤형으로 추천하는 머신러닝 기반 관광 추천 시스템입니다
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## 프로젝트 소개
+## Available Scripts
 
-이 프로젝트는 사용자의 선호도와 여행 스타일에 맞는 부산 지역 관광지를 추천하는 서비스 개발을 목표로 합니다.<br>
-Foursquare API를 통해 수집한 관광지 데이터와 머신러닝 알고리즘을 활용하여 사용자의 취향에 맞는 관광지를 추천합니다.
+In the project directory, you can run:
 
-## 기술 스택
+### `npm start`
 
-- **Backend**: FastAPI
-- **Database**: MongoDB
-- **이미지 처리**: pytorch
-- **머신러닝**: pytorch
-- **API 통합**: Foursquare Places API
-- **Frontend**: react.js, MUI, SCSS
+Runs the app in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-## 코드 컨벤션
+The page will reload when you make changes.\
+You may also see any lint errors in the console.
 
-### 명명 규칙
-- **모듈명**: snake_case, 기능을 직관적으로 표시 (예: data_processor.py)
-- **클래스명**: PascalCase (예: DataProcessor)
-- **함수명**: snake_case, 동사나 동사구로 시작 (예: get_recommendations())
-- **변수명**: snake_case, 약어 대신 직관적인 이름 사용 (예: place_id)
-- **상수명**: 대문자와 언더바 (예: MAX_RESULTS)
+### `npm test`
 
-### 코드 스타일
-- **들여쓰기**: 스페이스 4회
-- **공백**: 함수, 클래스 간 공백 1줄
-- **연산자**: 연산자 양쪽에 공백 추가 (예: top_k: int = 5)
+Launches the test runner in the interactive watch mode.\
+See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-### 코딩 패턴
-- **비동기 함수**: 데이터베이스 조회, API 요청, 파일 작업은 비동기 함수로 구현
-- **비동기 키워드**: async 함수, async with 컨텍스트 매니저 사용
-- **타입 힌팅**: 함수 파라미터와 반환값에 타입 힌팅 사용 (예: def get_data(user_id: str) -> dict:)
+### `npm run build`
+
+Builds the app for production to the `build` folder.\
+It correctly bundles React in production mode and optimizes the build for the best performance.
+
+The build is minified and the filenames include the hashes.\
+Your app is ready to be deployed!
+
+See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+
+### `npm run eject`
+
+**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+
+If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+
+Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+
+You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+
+## Learn More
+
+You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+
+To learn React, check out the [React documentation](https://reactjs.org/).
+
+### Code Splitting
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+
+### Analyzing the Bundle Size
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+
+### Making a Progressive Web App
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+
+### Advanced Configuration
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+
+### Deployment
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+
+### `npm run build` fails to minify
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)

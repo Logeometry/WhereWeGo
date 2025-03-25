@@ -1,0 +1,21 @@
+//현재 사용하지 않음
+.sidebar-filter {
+  width: 240px;
+  border-right: 1px solid #ddd;
+  padding: 16px;
+
+  &__title {
+    font-weight: bold;
+    margin-bottom: 16px;
+  }
+
+  &__buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__button {
+    // 추가적인 스타일이 필요하면 여기에 작성
+  }
+}

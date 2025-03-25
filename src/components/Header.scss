@@ -1,0 +1,66 @@
+.header {
+  background-color: #fff !important;
+  color: #333;
+  box-shadow: none !important;
+
+  &__toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__left {
+    display: flex;
+    align-items: center;
+
+    .header__icon-button {
+      color: #ff1150; // 11번가 느낌의 포인트 컬러
+    }
+
+    .header__logo {
+      margin-left: 8px;
+      font-weight: bold;
+      color: #ff1150;
+    }
+  }
+
+  &__center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+
+    .header__search {
+      width: 400px;
+
+      .MuiOutlinedInput-root {
+        border-radius: 20px;
+        background-color: #f6f6f6;
+
+        fieldset {
+          border-color: #f6f6f6;
+        }
+
+        &:hover fieldset {
+          border-color: #ddd;
+        }
+
+        &:focus-within fieldset {
+          border-color: #ff1150;
+        }
+      }
+    }
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+
+    .header__icon-button {
+      color: #333;
+      margin-left: 8px;
+      &:hover {
+        color: #ff1150;
+      }
+    }
+  }
+}

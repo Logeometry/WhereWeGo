@@ -1,0 +1,21 @@
+.landing-page {
+    &__content {
+      display: flex;
+      gap: 24px;
+      margin: 32px 0;
+    }
+    &__sidebar {
+      display: none;
+    }
+    &__cards {
+      flex: 1;
+    }
+  
+    @media (min-width: 768px) {
+      &__sidebar {
+        display: block;
+        width: 240px;
+      }
+    }
+  }
+  

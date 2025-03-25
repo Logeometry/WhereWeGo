@@ -1,0 +1,92 @@
+.ai-banner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 80px 100px;
+    // public 폴더 내 이미지 파일을 절대 경로로 참조 (파일명은 정확하게)
+    background: url('../assets/banner.jpg') center center / cover no-repeat;
+
+    // 반응형: 960px 이하에서 세로 배치
+    @media (max-width: 960px) {
+      flex-direction: column;
+      text-align: center;
+      padding: 40px 20px;
+    }
+  
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(255, 255, 255, 0.3);
+      z-index: 0;
+    }
+  
+    & > * {
+      position: relative;
+      z-index: 1;
+    }
+  
+    &__left {
+      max-width: 50%;
+      @media (max-width: 960px) {
+        max-width: 100%;
+        margin-bottom: 40px;
+      }
+    }
+  
+    &__title {
+      font-weight: bold;
+      margin-bottom: 16px;
+      line-height: 1.2;
+      font-size: 2.4rem;
+      color: #3972ff;
+    }
+  
+    &__subtitle {
+      margin-bottom: 24px;
+      color: #555;
+      font-size: 1.2rem;
+      line-height: 1.8;
+    }
+  
+    &__hashtags {
+      margin-bottom: 32px;
+      span {
+        display: inline-block;
+        background-color: #eaf1ff;
+        color: #1777ff;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        margin-right: 8px;
+        &:last-child {
+          margin-right: 0;
+        }
+      }
+    }
+  
+    &__btn {
+      text-transform: none;
+      font-weight: bold;
+      border-radius: 24px;
+      padding: 12px 24px;
+      font-size: 1rem;
+    }
+  
+    &__right {
+      max-width: 45%;
+      display: flex;
+      justify-content: flex-end;
+      @media (max-width: 960px) {
+        max-width: 100%;
+        justify-content: center;
+      }
+    }
+  
+    &__image {
+      width: 80%;
+      max-width: 450px;
+    }
+  }
+  
