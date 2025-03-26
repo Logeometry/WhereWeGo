@@ -10,8 +10,7 @@ Foursquare API를 통해 수집한 관광지 데이터와 머신러닝 알고리
 ## 기술 스택
 
 - **Backend**: FastAPI
-- **Database**: MongoDB
-- **이미지 처리**: pytorch
+- **Database**: MongoDB, PyMongo
 - **머신러닝**: pytorch
 - **API 통합**: Foursquare Places API
 - **Frontend**: react.js, MUI, SCSS
