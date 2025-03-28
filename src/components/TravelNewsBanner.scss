@@ -1,0 +1,46 @@
+.travel-news-banner {
+    background: #f9fafc; // 배너 영역 배경색
+    padding: 2rem 0;
+  
+    &__title {
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+  
+    &__item {
+      padding: 1rem;
+      border-radius: 8px;
+      transition: transform 0.2s ease;
+  
+      &:hover {
+        transform: translateY(-2px);
+      }
+    }
+  
+    &__icon {
+      margin-right: 0.5rem;
+      color: #1976d2; // MUI Primary Color
+    }
+  
+    &__source {
+      font-weight: 600;
+      color: #1976d2;
+    }
+  
+    &__link {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: #333;
+  
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  
+    &__date {
+      font-size: 0.8rem;
+    }
+  }
+  
