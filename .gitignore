@@ -1,0 +1,79 @@
+# =====================
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+*.log
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Jupyter & IPython
+.ipynb_checkpoints/
+
+# 환경 설정 파일
+.env
+.env.*
+config.yaml
+secrets.json
+
+# 모델 파일
+*.pth
+*.pt
+*.ckpt
+*.h5
+*.joblib
+*.pkl
+*.npz
+
+# =====================
+#  PyTest / Coverage
+# =====================
+.cache/
+.coverage
+htmlcov/
+.tox/
+nosetests.xml
+test-results.xml
+junit-*.xml
+
+# =====================
+# Frontend (React)
+# =====================
+node_modules/
+dist/
+build/
+.cache/
+
+# Local env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =====================
+# OS별 시스템 파일
+# =====================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# =====================
+# 기타
+# =====================
+# 에디터/IDE
+.vscode/
+.idea/
+*.swp
+
+# 프로젝트 실행 스크립트 캐시
+*.sh~
