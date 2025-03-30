@@ -107,7 +107,7 @@ def get_tourist_spots():
     url = "https://api.foursquare.com/v3/places/search"
     headers = {
         "accept": "application/json",
-        "Authorization": "fsq3iBy12AUaWHffFGraw83oh8Qc9d6YRFopa5t0w/ZQCag="
+        "Authorization": "api key"
     }
 
     tourist_params = {
@@ -125,7 +125,7 @@ def get_restaurants():
     url = "https://api.foursquare.com/v3/places/search"
     headers = {
         "accept": "application/json",
-        "Authorization": "fsq3iBy12AUaWHffFGraw83oh8Qc9d6YRFopa5t0w/ZQCag="
+        "Authorization": "api key"
     }
 
     restaurant_params = {
@@ -198,7 +198,7 @@ def create_google_maps():
         tourist_restaurant_data[tourist_name] = nearby
 
     # Google Maps API 키 (실제 사용 시 발급 필요)
-    api_key = "AIzaSyB9-lxK5AxRb7K8udF1RL0lNsryox23BdY"
+    api_key = "google api key"
 
     # HTML 템플릿 생성
     html_content = f"""
