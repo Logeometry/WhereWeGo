@@ -1,0 +1,530 @@
+import requests
+import pandas as pd
+import numpy as np
+import os
+import webbrowser
+import json
+from math import radians, sin, cos, sqrt, atan2
+
+#정확한 측정을 위한 하버사인 거리 측정
+def MEASdistance(lat1, lon1, lat2, lon2):
+    # 지구 반경 (km)
+    R = 6371.0
+
+    # 라디안으로 변환
+    lat1_rad = radians(lat1)
+    lon1_rad = radians(lon1)
+    lat2_rad = radians(lat2)
+    lon2_rad = radians(lon2)
+
+    # 위도와 경도의 차이
+    dlat = lat2_rad - lat1_rad
+    dlon = lon2_rad - lon1_rad
+
+    # 하버사인 공식
+    a = sin(dlat / 2) ** 2 + cos(lat1_rad) * cos(lat2_rad) * sin(dlon / 2) ** 2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+    # 거리 계산
+    distance = R * c
+
+    return distance
+
+
+class MYKNN:
+    def __init__(self, k=5, distance_type='euclidean'):
+
+        self.k = k
+        self.distance_type = distance_type
+        self.training_data = None
+
+    def fit(self, training_data):
+
+        self.training_data = np.array(training_data)
+        print(f"학습 데이터 크기: {self.training_data.shape}")
+        return self  # 메소드 체이닝을 위해 self 반환
+
+    def calculate_euclidean(self, point1, point2):
+
+        gap = point1 - point2
+        # 차이의 제곱 계산
+        squared_diff = gap ** 2
+        # 제곱의 합 계산
+        sum_squared_diff = np.sum(squared_diff)
+        # 제곱합의 제곱근(루트) 계산
+        distance = np.sqrt(sum_squared_diff)
+        return distance
+
+    def kneighbors(self, test_data, return_distance=True):
+
+        # 테스트 데이터를 numpy 배열로 변환
+        test_data = np.array(test_data)
+
+        # 테스트 데이터와 학습 데이터의 샘플 수 확인
+        test_samples = test_data.shape[0]
+        train_samples = self.training_data.shape[0]
+
+        # 모든 테스트 데이터와 학습 데이터 간의 거리를 저장할 배열 초기화
+        all_distances = np.zeros((test_samples, train_samples))
+
+        # 거리 계산 (이중 for문 사용)
+        for i in range(test_samples):  # 각 테스트 데이터에 대해
+            for j in range(train_samples):  # 각 학습 데이터에 대해
+                if self.distance_type == 'haversine':
+                    # 하버사인 거리 계산
+                    lat1, lon1 = test_data[i]
+                    lat2, lon2 = self.training_data[j]
+                    all_distances[i, j] = MEASdistance(lat1, lon1, lat2, lon2)
+                elif self.distance_type == 'euclidean':
+                    # 유클리드 거리 계산
+                    all_distances[i, j] = self.calculate_euclidean(test_data[i], self.training_data[j])
+
+        # 각 테스트 데이터에 대해 가장 가까운 k개의 이웃 찾기
+        # argsort 함수로 거리가 가까운 순서대로 인덱스 정렬
+        nearest_indices = np.zeros((test_samples, self.k), dtype=int)
+        nearest_distances = np.zeros((test_samples, self.k))
+
+        for i in range(test_samples):
+            # 거리 순으로 정렬된 인덱스 가져오기
+            sorted_indices = np.argsort(all_distances[i])
+            # k개만 선택
+            k_nearest_indices = sorted_indices[:self.k]
+            # 결과 저장
+            nearest_indices[i] = k_nearest_indices
+            nearest_distances[i] = all_distances[i][k_nearest_indices]
+
+        # 디버깅 메시지
+        print(f"가장 가까운 {self.k}개의 이웃을 찾았습니다!")
+
+        # 결과 반환
+        if return_distance:
+            return nearest_distances, nearest_indices
+        else:
+            return nearest_indices
+
+
+def get_tourist_spots():
+    url = "https://api.foursquare.com/v3/places/search"
+    headers = {
+        "accept": "application/json",
+        "Authorization": "fsq3iBy12AUaWHffFGraw83oh8Qc9d6YRFopa5t0w/ZQCag="
+    }
+
+    tourist_params = {
+        "near": "busan,KR",
+        "limit": 50,
+        "categories": "16000,16003,16017,16020,16032,16034,16035",
+        "fields": "name,geocodes,location,rating,stats,website,fsq_id"
+    }
+
+    response = requests.get(url, headers=headers, params=tourist_params)
+    return response.json()['results'] if 'results' in response.json() else []
+
+
+def get_restaurants():
+    url = "https://api.foursquare.com/v3/places/search"
+    headers = {
+        "accept": "application/json",
+        "Authorization": "fsq3iBy12AUaWHffFGraw83oh8Qc9d6YRFopa5t0w/ZQCag="
+    }
+
+    restaurant_params = {
+        "near": "busan,KR",
+        "limit": 50,
+        "categories": "13000",
+        "fields": "name,geocodes,location,rating,stats,website,fsq_id"
+    }
+
+    response = requests.get(url, headers=headers, params=restaurant_params)
+    return response.json()['results'] if 'results' in response.json() else []
+
+
+def get_nearby_restaurants(tourist_name, tourist_spots, restaurants):
+    # 해당 관광지 찾기
+    tourist = next((t for t in tourist_spots if t['name'] == tourist_name), None)
+    if not tourist:
+        return []
+
+    tourist_lat = tourist['geocodes']['main']['latitude']
+    tourist_lon = tourist['geocodes']['main']['longitude']
+
+    # 음식점 좌표 추출
+    restaurant_coords = [[r['geocodes']['main']['latitude'], r['geocodes']['main']['longitude']]
+                         for r in restaurants]
+
+    # 직접 구현한 KNN 모델 초기화 및 학습
+    knn = MYKNN(k=5)
+    knn.fit(restaurant_coords)
+
+    # 관광지 좌표
+    tourist_coords = [[tourist_lat, tourist_lon]]
+
+    # 가장 가까운 음식점 찾기
+    distances, indices = knn.kneighbors(tourist_coords)
+
+    # 결과 생성
+    nearby_restaurants = []
+    for i, idx in enumerate(indices[0]):
+        rest = restaurants[idx]
+        rest_lat = rest['geocodes']['main']['latitude']
+        rest_lon = rest['geocodes']['main']['longitude']
+
+        # 하버사인 공식으로 직접 거리 계산
+        distance = MEASdistance(tourist_lat, tourist_lon, rest_lat, rest_lon)
+
+        nearby_restaurants.append({
+            'restaurant_id': int(idx),
+            'name': rest['name'],
+            'restaurant_lat': float(rest_lat),
+            'restaurant_lon': float(rest_lon),
+            'tourist_lat': float(tourist_lat),
+            'tourist_lon': float(tourist_lon),
+            'distance': float(distance)  # 하버사인 공식으로 계산된 거리
+        })
+
+    return nearby_restaurants
+
+
+def create_google_maps():
+    # 데이터 가져오기
+    tourist_spots = get_tourist_spots()
+    restaurants = get_restaurants()
+
+    # 관광지별 주변 음식점 데이터 미리 계산
+    tourist_restaurant_data = {}
+    for tourist in tourist_spots:
+        tourist_name = tourist['name']
+        nearby = get_nearby_restaurants(tourist_name, tourist_spots, restaurants)
+        tourist_restaurant_data[tourist_name] = nearby
+
+    # Google Maps API 키 (실제 사용 시 발급 필요)
+    api_key = "AIzaSyB9-lxK5AxRb7K8udF1RL0lNsryox23BdY"
+
+    # HTML 템플릿 생성
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>부산 관광지 및 음식점 지도</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {{
+                font-family: 'Noto Sans KR', sans-serif;
+                margin: 0;
+                padding: 0;
+            }}
+            #map {{
+                height: 100vh;
+                width: 100%;
+            }}
+            .info-window {{
+                max-width: 300px;
+                padding: 10px;
+            }}
+            .info-window h3 {{
+                margin-top: 0;
+                color: #333;
+            }}
+            .info-window button {{
+                background-color: #4285F4;
+                color: white;
+                border: none;
+                padding: 8px 12px;
+                border-radius: 4px;
+                cursor: pointer;
+                margin-top: 10px;
+                font-weight: bold;
+            }}
+            .info-window button:hover {{
+                background-color: #3367D6;
+            }}
+            .legend {{
+                background: white;
+                padding: 10px;
+                margin: 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                font-size: 12px;
+                position: absolute;
+                bottom: 30px;
+                right: 10px;
+                z-index: 1000;
+            }}
+            .legend-item {{
+                margin: 5px 0;
+                display: flex;
+                align-items: center;
+            }}
+            .legend-color {{
+                width: 20px;
+                height: 20px;
+                margin-right: 5px;
+                border-radius: 50%;
+                display: inline-block;
+            }}
+            .tourist {{
+                background-color: #EA4335;
+            }}
+            .restaurant {{
+                background-color: #4285F4;
+            }}
+            .loading {{
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(255, 255, 255, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 2000;
+                font-size: 24px;
+                font-weight: bold;
+            }}
+        </style>
+    </head>
+    <body>
+        <div id="map"></div>
+        <div id="loading" class="loading">지도 로딩 중...</div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <span class="legend-color tourist"></span> 관광지
+            </div>
+            <div class="legend-item">
+                <span class="legend-color restaurant"></span> 음식점
+            </div>
+        </div>
+
+        <script>
+            // 전역 변수
+            let map;
+            let markers = [];
+            let infoWindows = [];
+            let polylines = [];
+
+            // 미리 계산된 데이터
+            const touristSpots = {json.dumps(tourist_spots)};
+            const restaurants = {json.dumps(restaurants)};
+            const nearbyRestaurantsData = {json.dumps(tourist_restaurant_data)};
+
+            // 지도 초기화
+            function initMap() {{
+                // 부산 중심 좌표
+                const busanCenter = {{ lat: 35.1796, lng: 129.0756 }};
+
+                // 지도 생성
+                map = new google.maps.Map(document.getElementById("map"), {{
+                    center: busanCenter,
+                    zoom: 13,
+                    mapTypeControl: true,
+                    streetViewControl: true,
+                    fullscreenControl: true,
+                    zoomControl: true
+                }});
+
+                // 마커 생성
+                createMarkers();
+
+                // 로딩 화면 숨기기
+                document.getElementById("loading").style.display = "none";
+            }}
+
+            // 마커 생성 함수
+            function createMarkers() {{
+                // 관광지 마커 생성
+                touristSpots.forEach(spot => {{
+                    const position = {{
+                        lat: spot.geocodes.main.latitude,
+                        lng: spot.geocodes.main.longitude
+                    }};
+
+                    const marker = new google.maps.Marker({{
+                        position: position,
+                        map: map,
+                        title: spot.name,
+                        icon: {{
+                            path: google.maps.SymbolPath.CIRCLE,
+                            fillColor: "#EA4335",
+                            fillOpacity: 1,
+                            strokeWeight: 1,
+                            strokeColor: "#FFFFFF",
+                            scale: 10
+                        }}
+                    }});
+
+                    const contentString = `
+                        <div class="info-window">
+                            <h3>${{spot.name}}</h3>
+                            <p>${{spot.location?.address || "주소 정보 없음"}}</p>
+                            <button onclick="showNearbyRestaurants('${{spot.name}}')">주변 음식점 보기</button>
+                        </div>
+                    `;
+
+                    const infoWindow = new google.maps.InfoWindow({{
+                        content: contentString,
+                        maxWidth: 300
+                    }});
+
+                    marker.addListener("click", () => {{
+                        // 열려있는 모든 정보창 닫기
+                        infoWindows.forEach(info => info.close());
+
+                        // 현재 정보창 열기
+                        infoWindow.open(map, marker);
+                    }});
+
+                    markers.push(marker);
+                    infoWindows.push(infoWindow);
+                }});
+
+                // 음식점 마커 생성
+                restaurants.forEach(rest => {{
+                    const position = {{
+                        lat: rest.geocodes.main.latitude,
+                        lng: rest.geocodes.main.longitude
+                    }};
+
+                    const marker = new google.maps.Marker({{
+                        position: position,
+                        map: map,
+                        title: rest.name,
+                        icon: {{
+                            path: google.maps.SymbolPath.CIRCLE,
+                            fillColor: "#4285F4",
+                            fillOpacity: 1,
+                            strokeWeight: 1,
+                            strokeColor: "#FFFFFF",
+                            scale: 8
+                        }}
+                    }});
+
+                    const contentString = `
+                        <div class="info-window">
+                            <h3>${{rest.name}}</h3>
+                            <p>${{rest.location?.address || "주소 정보 없음"}}</p>
+                        </div>
+                    `;
+
+                    const infoWindow = new google.maps.InfoWindow({{
+                        content: contentString,
+                        maxWidth: 300
+                    }});
+
+                    marker.addListener("click", () => {{
+                        // 열려있는 모든 정보창 닫기
+                        infoWindows.forEach(info => info.close());
+
+                        // 현재 정보창 열기
+                        infoWindow.open(map, marker);
+                    }});
+
+                    markers.push(marker);
+                    infoWindows.push(infoWindow);
+                }});
+            }}
+
+            // 주변 음식점 표시 함수
+            function showNearbyRestaurants(touristName) {{
+                // 기존 선 제거
+                clearPolylines();
+
+                // 해당 관광지의 주변 음식점 데이터 가져오기
+                const nearbyRestaurants = nearbyRestaurantsData[touristName];
+                if (!nearbyRestaurants || nearbyRestaurants.length === 0) {{
+                    alert("주변 음식점 정보가 없습니다.");
+                    return;
+                }}
+
+                // 관광지 좌표
+                const touristLat = nearbyRestaurants[0].tourist_lat;
+                const touristLng = nearbyRestaurants[0].tourist_lon;
+                const touristPosition = {{ lat: touristLat, lng: touristLng }};
+
+                // 지도 범위 설정을 위한 bounds 객체
+                const bounds = new google.maps.LatLngBounds();
+                bounds.extend(touristPosition);
+
+                // 각 음식점에 대해 선 그리기
+                nearbyRestaurants.forEach(restaurant => {{
+                    const restaurantPosition = {{ 
+                        lat: restaurant.restaurant_lat, 
+                        lng: restaurant.restaurant_lon 
+                    }};
+
+                    // bounds에 위치 추가
+                    bounds.extend(restaurantPosition);
+
+                    // 선 그리기
+                    const line = new google.maps.Polyline({{
+                        path: [touristPosition, restaurantPosition],
+                        geodesic: true,
+                        strokeColor: "#FF0000",
+                        strokeOpacity: 0.8,
+                        strokeWeight: 2
+                    }});
+
+                    line.setMap(map);
+                    polylines.push(line);
+
+                    // 정보창 추가
+                    const infoWindow = new google.maps.InfoWindow({{
+                        content: `<div class="info-window">
+                            <h3>${{restaurant.name}}</h3>
+                            <p>거리: ${{restaurant.distance.toFixed(2)}} km</p>
+                        </div>`,
+                        position: {{
+                            lat: (touristLat + restaurant.restaurant_lat) / 2,
+                            lng: (touristLng + restaurant.restaurant_lon) / 2
+                        }}
+                    }});
+
+                    infoWindow.open(map);
+                    infoWindows.push(infoWindow);
+                }});
+
+                // 지도 범위 조정
+                map.fitBounds(bounds, {{
+                    padding: {{
+                        top: 50,
+                        right: 50,
+                        bottom: 50,
+                        left: 50
+                    }}
+                }});
+            }}
+
+            // 모든 선 제거 함수
+            function clearPolylines() {{
+                polylines.forEach(line => line.setMap(null));
+                polylines = [];
+
+                // 열려있는 모든 정보창 닫기
+                infoWindows.forEach(info => info.close());
+                infoWindows = [];
+            }}
+        </script>
+
+        <!-- Google Maps API 로드 -->
+        <script async defer
+            src="https://maps.googleapis.com/maps/api/js?key={api_key}&callback=initMap">
+        </script>
+    </body>
+    </html>
+    """
+
+    # HTML 파일 저장
+    map_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'google_maps_tourist.html')
+    with open(map_file, 'w', encoding='utf-8') as f:
+        f.write(html_content)
+
+    print(f"지도 파일 저장 위치: {map_file}")
+
+    # 브라우저에서 열기
+    webbrowser.open('file://' + os.path.abspath(map_file))
+
+
+if __name__ == "__main__":
+    create_google_maps()
