@@ -18,7 +18,7 @@ Foursquare API를 통해 수집한 관광지 데이터와 머신러닝 알고리
 ## 코드 컨벤션
 
 ### 명명 규칙
-- **모듈명**: snake_case, 기능을 직관적으로 표시 (예: data_processor.py)
+- **모듈명**: snake_case, 기능을 직관적으로 표시 (예: data_processor)
 - **클래스명**: PascalCase (예: DataProcessor)
 - **함수명**: snake_case, 동사나 동사구로 시작 (예: get_recommendations())
 - **변수명**: snake_case, 약어 대신 직관적인 이름 사용 (예: place_id)
