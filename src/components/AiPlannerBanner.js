@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Button, Stack } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import './AiPlannerBanner.scss';
 
 const AiPlannerBanner = () => {
@@ -22,7 +23,13 @@ const AiPlannerBanner = () => {
           <span>#BEST 코스</span>
         </Stack>
 
-        <Button variant="contained" color="primary" className="ai-banner__btn">
+        <Button
+          variant="contained"
+          color="primary"
+          className="ai-banner__btn"
+          component={RouterLink}
+          to="/travelPreference"
+        >
           AI 추천 받기 →
         </Button>
       </Box>
