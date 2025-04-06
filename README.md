@@ -1,35 +1,85 @@
-# 부산 관광지 추천 서비스
+## ⚠️ 주의사항
+- 현재는 API 구조 및 응답 형태를 테스트하기 위한 임시 백엔드입니다.
+- 모든 데이터는 JSON 파일로 저장되고 있으며, 이후 실제 DB 또는 외부 API를 연동할 예정입니다.
+- 따라서 API 동작은 구조 파악 및 프론트엔드 개발 참고용으로 사용해주세요.
+- 실제 DB 또는 외부 API 반영 후에는 반환 형태가 달라질 수 있습니다. 
 
-부산 지역 관광지를 사용자 맞춤형으로 추천하는 머신러닝 기반 관광 추천 시스템입니다
+## 📁 test 폴더
+- 프론트엔드에서 사용할 API를 미리 확인해보기 위해 구성한 테스트용 코드가 위치합니다.
+- 실제 API 연동 시 제거되거나 수정될 수 있습니다.
 
-## 프로젝트 소개
+## ✅ API 엔드포인트
 
-이 프로젝트는 사용자의 선호도와 여행 스타일에 맞는 부산 지역 관광지를 추천하는 서비스 개발을 목표로 합니다.<br>
-Foursquare API를 통해 수집한 관광지 데이터와 머신러닝 알고리즘을 활용하여 사용자의 취향에 맞는 관광지를 추천합니다.
+### 🔹 `/categories`  
+**Method:** `GET`  
+**Description:** 전체 장소 데이터를 반환하거나, 특정 카테고리 키워드로 필터링된 데이터를 조회합니다.
 
-## 기술 스택
+**Query Parameters:**
 
-- **Backend**: FastAPI
-- **Database**: MongoDB, PyMongo
-- **머신러닝**: pytorch
-- **API 통합**: Foursquare Places API
-- **Frontend**: react.js, MUI, SCSS
+| Name    | Type     | Required | Description                              |
+|---------|----------|----------|------------------------------------------|
+| keyword | `string` | No       | 카테고리 필터링 키워드 (예: "자연", "맛집") |
 
-## 코드 컨벤션
+**Response:**
 
-### 명명 규칙
-- **모듈명**: snake_case, 기능을 직관적으로 표시 (예: data_processor.py)
-- **클래스명**: PascalCase (예: DataProcessor)
-- **함수명**: snake_case, 동사나 동사구로 시작 (예: get_recommendations())
-- **변수명**: snake_case, 약어 대신 직관적인 이름 사용 (예: place_id)
-- **상수명**: 대문자와 언더바 (예: MAX_RESULTS)
+```json
+[
+  {
+    "name": "해운대 해수욕장", 
+    "location": "해운대, 부산", 
+    "description": "황금빛 모래와 맑은 물로 유명한 해변.", 
+    "category": ["자연/해변", "체험"], 
+    "rating": 4.7
+    },
+  ...
+]
+``` 
 
-### 코드 스타일
-- **들여쓰기**: 스페이스 4회
-- **공백**: 함수, 클래스 간 공백 1줄
-- **연산자**: 연산자 양쪽에 공백 추가 (예: top_k: int = 5)
+### 🔹 `/search`  
+**Method:** `GET`  
+**Description:** 여행지 데이터에서 키워드 기반으로 장소를 검색합니다.  
+※ `data/temporary_data.json` 에 임시 저장된 데이터를 기준으로 동작합니다.
 
-### 코딩 패턴
-- **비동기 함수**: 데이터베이스 조회, API 요청, 파일 작업은 비동기 함수로 구현
-- **비동기 키워드**: async 함수, async with 컨텍스트 매니저 사용
-- **타입 힌팅**: 함수 파라미터와 반환값에 타입 힌팅 사용 (예: def get_data(user_id: str) -> dict:)
+**Query Parameters:**
+
+| Name  | Type        | Required | Description                                     |
+|-------|-------------|----------|-------------------------------------------------|
+| query | `string`    | No       | 장소 이름 또는 카테고리명으로 검색 키워드 입력 |
+
+**Response (예시):**
+
+```json
+[
+   {
+    "name": "해운대 해수욕장", 
+    "location": "해운대, 부산", 
+    "description": "황금빛 모래와 맑은 물로 유명한 해변.", 
+    "category": ["자연/해변", "체험"], 
+    "rating": 4.7
+    },
+  ...
+]
+``` 
+## 📋 설문 응답 수신 API
+
+설문 데이터를 수신하고 서버에 저장하기 위한 라우터입니다.  
+현재는 JSON 파일(`data/survey_results.json`)에 누적 저장되며, 이후 DB 연동 예정입니다.
+
+### 🔸 POST `/survey`
+
+- 클라이언트에서 전송한 설문 응답 데이터를 저장합니다.
+- 성공 시: `{"message": "설문이 성공적으로 저장되었습니다."}` 반환
+- 실패 시: HTTP 500 에러와 함께 에러 메시지 반환
+
+### 🔸 Request Body 예시 (`application/json`)
+```json
+  {
+    "username": "test1",
+    "travel_type": "도시 관광",
+    "climate": "온화한 사계절 기후",
+    "budget": "2",
+    "duration": "8-14일",
+    "companion": "커플/부부"
+  },
+'''
+
