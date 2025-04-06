@@ -1,0 +1,205 @@
+import numpy as np
+from tqdm import tqdm
+import random
+from scipy.sparse import csr_matrix
+
+
+class ItemInteractionBPR:
+    def __init__(self, n_users, n_items, n_factors=20, learning_rate=0.01, reg_lambda=0.01,
+                 item_interaction_weight=0.5):
+        """
+        아이템 간 상호작용을 고려한 BPR 알고리즘 초기화
+
+        매개변수:
+            n_users (int): 사용자 수
+            n_items (int): 아이템 수
+            n_factors (int): 잠재 요인 차원 수
+            learning_rate (float): 학습률
+            reg_lambda (float): 정규화 계수
+            item_interaction_weight (float): 아이템 간 상호작용 가중치
+        """
+        self.n_users = n_users
+        self.n_items = n_items
+        self.n_factors = n_factors
+        self.learning_rate = learning_rate
+        self.reg_lambda = reg_lambda
+        self.item_interaction_weight = item_interaction_weight
+
+        self.user_factors = np.random.normal(0, 0.1, (n_users, n_factors))
+        self.item_factors = np.random.normal(0, 0.1, (n_items, n_factors))
+
+        self.item_item_matrix = None
+
+    def _sigmoid(self, x):
+        return 1.0 / (1.0 + np.exp(-x))
+
+    def _calculate_item_item_matrix(self, user_item_matrix):
+
+        item_item = user_item_matrix.T @ user_item_matrix
+
+        np.fill_diagonal(item_item.toarray(), 0)
+
+        # 행 정규화
+        row_sums = item_item.sum(axis=1).A.flatten()
+        row_sums[row_sums == 0] = 1  # 0으로 나누기 방지
+        item_item_norm = item_item / row_sums[:, np.newaxis]
+
+        self.item_item_matrix = csr_matrix(item_item_norm)
+
+    def predict(self, user_id, item_id, user_items=None):
+        """
+        사용자-아이템 쌍에 대한 예측 점수 계산
+
+        매개변수:
+            user_id: 사용자 ID
+            item_id: 아이템 ID
+            user_items: 사용자가 상호작용한 아이템 목록 (아이템 간 상호작용 계산용)
+        """
+        # 기본 BPR 점수
+        base_score = np.dot(self.user_factors[user_id], self.item_factors[item_id])
+
+        # 아이템 간 상호작용이 없거나 사용자 아이템 정보가 없으면 기본 점수만 반환
+        if self.item_item_matrix is None or user_items is None or len(user_items) == 0:
+            return base_score
+
+        # 아이템 간 상호작용 점수 계산
+        item_interaction_score = 0
+        for interacted_item in user_items:
+            item_interaction_score += self.item_item_matrix[interacted_item, item_id]
+
+        # 정규화
+        if len(user_items) > 0:
+            item_interaction_score /= len(user_items)
+
+        # 최종 점수 = 기본 점수 + 아이템 상호작용 가중치 * 아이템 간 상호작용 점수
+        return base_score + self.item_interaction_weight * item_interaction_score
+
+    def _sample_triplet(self, user_item_matrix):
+        """(사용자, 긍정적 아이템, 부정적 아이템) 샘플링"""
+        # 훈련 데이터에서 유효한 사용자 ID 목록 가져오기
+        valid_user_ids = user_item_matrix.nonzero()[0]  # 상호작용이 있는 사용자 ID
+
+        u = random.choice(valid_user_ids)
+
+        pos_items = user_item_matrix[u].nonzero()[1]
+
+        # 사용자가 상호작용한 아이템이 없으면 다시 샘플링
+        if len(pos_items) == 0:
+            return self._sample_triplet(user_item_matrix)
+
+        i = random.choice(pos_items)
+
+        j = random.randint(0, self.n_items - 1)
+        while j in pos_items:
+            j = random.randint(0, self.n_items - 1)
+
+        return u, i, j, pos_items
+
+    def fit(self, user_item_matrix, n_iters=10, batch_size=1000):
+        """BPR 모델 학습
+
+        매개변수:
+            user_item_matrix: 사용자-아이템 상호작용 행렬 (희소 행렬)
+            n_iters: 반복 횟수
+            batch_size: 배치 크기
+        """
+        print("아이템 간 상호작용 행렬 계산 중...")   # <----------------- 디버깅용
+        self._calculate_item_item_matrix(user_item_matrix)
+
+        for iteration in range(n_iters):
+            total_loss = 0
+
+            for _ in tqdm(range(batch_size), desc=f"Iteration {iteration + 1}/{n_iters}"):
+                # 샘플 트리플렛 (u, i, j) 가져오기
+                u, i, j, user_items = self._sample_triplet(user_item_matrix)
+
+                x_ui = self.predict(u, i, user_items)
+                x_uj = self.predict(u, j, user_items)
+
+                # BPR 손실 계산
+                x_uij = x_ui - x_uj
+                loss = -np.log(self._sigmoid(x_uij))
+                total_loss += loss
+
+                # 그래디언트 계산
+                grad = self._sigmoid(-x_uij)
+
+                # 파라미터 업데이트 (기본 BPR 업데이트)
+                u_factor = self.user_factors[u].copy()
+                i_factor = self.item_factors[i].copy()
+                j_factor = self.item_factors[j].copy()
+
+                self.user_factors[u] += self.learning_rate * (grad * (i_factor - j_factor) - self.reg_lambda * u_factor)
+                self.item_factors[i] += self.learning_rate * (grad * u_factor - self.reg_lambda * i_factor)
+                self.item_factors[j] += self.learning_rate * (-grad * u_factor - self.reg_lambda * j_factor)
+
+            avg_loss = total_loss / batch_size
+            print(f"Iteration {iteration + 1}/{n_iters}, Loss: {avg_loss:.4f}")
+
+    def recommend_items(self, user_id, user_item_matrix, top_n=10):
+        """사용자에게 아이템 추천
+
+        매개변수:
+            user_id: 사용자 ID
+            user_item_matrix: 사용자-아이템 상호작용 행렬
+            top_n: 추천할 아이템 수
+
+        반환:
+            추천 아이템 ID 리스트
+        """
+        # 사용자 ID가 유효한지 확인
+        if user_id < 0 or user_id >= self.n_users:
+            raise ValueError("유효하지 않은 사용자 ID입니다.")
+
+        # 사용자가 이미 상호작용한 아이템 찾기
+        if isinstance(user_item_matrix, np.ndarray):
+            user_items = np.where(user_item_matrix[user_id] > 0)[0]
+        else:
+            user_items = user_item_matrix[user_id].nonzero()[1]  # 희소 행렬인 경우
+
+        interacted_items = set(user_items)
+
+        # 모든 아이템에 대한 예측 점수 계산
+        predictions = []
+        for item_id in range(self.n_items):
+            if item_id not in interacted_items:  # 이미 상호작용한 아이템은 제외
+                predictions.append((item_id, self.predict(user_id, item_id, user_items)))
+
+        # 점수에 따라 정렬하고 상위 N개 반환
+        predictions.sort(key=lambda x: x[1], reverse=True)
+        return [item_id for item_id, _ in predictions[:top_n]]
+
+    def get_item_similarity(self, item_id, top_n=10):
+        """특정 아이템과 가장 유사한 아이템 찾기"""
+        if self.item_item_matrix is None:
+            raise ValueError("아이템 간 상호작용 행렬이 계산되지 않았습니다.")
+
+        # 아이템 간 유사도 점수 가져오기
+        similarity_scores = self.item_item_matrix[item_id].toarray().flatten()
+
+        similarity_scores[item_id] = 0
+
+        # 상위 N개 유사 아이템 찾기
+        top_similar_items = np.argsort(similarity_scores)[::-1][:top_n]
+
+        return [(item, similarity_scores[item]) for item in top_similar_items]
+
+    def calculate_loss(self, user_item_matrix):
+
+        total_loss = 0
+        num_samples = 0
+
+        for _ in range(1000): 
+            u, i, j, user_items = self._sample_triplet(user_item_matrix)
+
+            # 예측 점수 계산
+            x_ui = self.predict(u, i, user_items)
+            x_uj = self.predict(u, j, user_items)
+
+            # BPR 손실 계산
+            x_uij = x_ui - x_uj
+            loss = -np.log(self._sigmoid(x_uij))
+            total_loss += loss
+            num_samples += 1
+
+        return total_loss / num_samples if num_samples > 0 else 0
