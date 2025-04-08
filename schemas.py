@@ -1,4 +1,4 @@
-# DB 구조에 맞게 수정하고 통일 에정 
+# DB 구조에 맞게 수정하고 통일 에정정 
 from pydantic import BaseModel
 from typing import List, Optional
 
