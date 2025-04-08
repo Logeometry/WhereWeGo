@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>카테고리 테스트</title>
+  <style>
+    body {
+      display: flex;
+      font-family: sans-serif;
+    }
+
+    .sidebar {
+      width: 200px;
+      padding: 20px;
+      border-right: 1px solid #ccc;
+    }
+
+    .sidebar h2 {
+      margin-bottom: 16px;
+    }
+
+    .category-btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 8px;
+      background-color: #f5f5f5;
+      border: none;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background-color 0.3s;
+    }
+
+    .category-btn:hover {
+      background-color: #3498db;
+      color: white;
+    }
+
+    .content {
+      padding: 20px;
+      flex: 1;
+    }
+
+    .spot {
+      margin-bottom: 16px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    .spot h3 {
+      margin: 0 0 8px 0;
+    }
+
+    .spot .desc {
+      font-size: 0.9em;
+      color: #555;
+    }
+
+    .spot img {
+      max-width: 200px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>카테고리</h2>
+    <button class="category-btn" onclick="fetchCategory(['A01'])">자연/해변</button>
+    <button class="category-btn" onclick="fetchCategory(['A02'])">역사/문화</button>
+    <button class="category-btn" onclick="fetchCategory(['A05'])">맛집/레스토랑</button>
+    <button class="category-btn" onclick="fetchCategory(['B02'])">숙박</button>
+    <button class="category-btn" onclick="fetchCategory(['A03'])">이벤트</button>
+    <button class="category-btn" onclick="fetchCategory(['C01'])">지도/투어</button>
+    <button class="category-btn" onclick="fetchCategory(['A04'])">체험</button>
+  </div>
+
+  <div class="content" id="result">
+    <p>카테고리를 선택하면 결과가 여기에 표시됩니다.</p>
+  </div>
+
+  <script>
+    async function fetchCategory(keywords) {
+      const query = keywords.map(k => `keywords=${encodeURIComponent(k)}`).join('&');
+      const response = await fetch(`/api/v1/categories?${query}`);
+      const data = await response.json();
+
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = '';
+
+      if (data.length === 0) {
+        resultDiv.innerHTML = '<p>결과가 없습니다.</p>';
+        return;
+      }
+
+      data.forEach(spot => {
+        const div = document.createElement('div');
+        div.className = 'spot';
+
+        div.innerHTML = `
+          ${spot.image_url ? `<img src="${spot.image_url}" alt="${spot.name}">` : ''}
+          <h3>${spot.name}</h3>
+          <p><strong>주소:</strong> ${spot.address || '정보 없음'}</p>
+          <p><strong>전화번호:</strong> ${spot.tel || '정보 없음'}</p>
+          <p><strong>카테고리:</strong> ${[spot.cat1, spot.cat2, spot.cat3].filter(Boolean).join(' / ')}</p>
+        `;
+
+        resultDiv.appendChild(div);
+      });
+    }
+  </script>
+
+</body>
+</html>
