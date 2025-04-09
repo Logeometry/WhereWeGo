@@ -1,22 +1,20 @@
-import React from 'react';
+// src/App.js
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
-//import SurveyForm from './pages/SurveyForm/SurveyForm';
+import SurveyForm from './pages/SurveyForm/SurveyForm';
+import CategoryDetailPage from './pages/CategoryDetailPage';
+import Header from './components/Header';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import './App.scss';
+import { categoriesData } from './data/categoriesData';
 
 const theme = createTheme({
   palette: {
-    primary: {
-      main: '#ff1150', // 메인 색상
-    },
-    secondary: {
-      main: '#ff6f61', // 보조 색상
-    },
+    primary: { main: '#ff1150' },
+    secondary: { main: '#ff6f61' },
   },
-  typography: {
-    fontFamily: 'Noto Sans KR, sans-serif',
-  },
+  typography: { fontFamily: 'Noto Sans KR, sans-serif' },
   components: {
     MuiButton: {
       styleOverrides: {
@@ -29,23 +27,16 @@ const theme = createTheme({
         containedPrimary: {
           backgroundColor: '#ff1150',
           color: '#fff',
-          '&:hover': {
-            backgroundColor: '#ff6f61',
-          },
+          '&:hover': { backgroundColor: '#ff6f61' },
         },
         outlinedPrimary: {
           borderColor: '#ff1150',
           color: '#ff1150',
-          '&:hover': {
-            borderColor: '#ff6f61',
-            color: '#ff6f61',
-          },
+          '&:hover': { borderColor: '#ff6f61', color: '#ff6f61' },
         },
         textPrimary: {
           color: '#ff1150',
-          '&:hover': {
-            backgroundColor: 'rgba(255, 17, 80, 0.08)',
-          },
+          '&:hover': { backgroundColor: 'rgba(255, 17, 80, 0.08)' },
         },
       },
     },
@@ -53,12 +44,25 @@ const theme = createTheme({
 });
 
 function App() {
+  // 초기 값으로 categoriesData의 첫번째 대분류 사용 (예: '자연/해변')
+  const [selectedCategory, setSelectedCategory] = useState(categoriesData[0]?.label || '');
+
   return (
     <ThemeProvider theme={theme}>
       <BrowserRouter>
+        <Header onSelectCategory={setSelectedCategory} />
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          {/*<Route path="/survey" element={<SurveyForm />} />*/}
+          <Route path="/survey" element={<SurveyForm />} />
+          <Route
+            path="/category"
+            element={
+              <CategoryDetailPage 
+                selectedCategory={selectedCategory} 
+                onSelectSubCategory={(subLabel) => console.log("선택된 소분류:", subLabel)}
+              />
+            }
+          />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

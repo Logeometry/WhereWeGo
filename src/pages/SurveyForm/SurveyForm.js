@@ -25,8 +25,7 @@ const SurveyForm = () => {
   return (
     <div className="survey-container">
       <header className="survey-header">
-        <div className="logo">트립마스터</div>
-        <div>로그인 | 회원가입</div>
+        <div className="logo">유저 선호도 설문 조사</div>
       </header>
 
       <form className="survey-form" onSubmit={handleSubmit}>
@@ -44,19 +43,8 @@ const SurveyForm = () => {
             </label>
           ))}
         </div>
-
         <div className="question-block">
-          <h3>2. 선호하는 여행 기후는?</h3>
-          {climates.map((type, i) => (
-            <label key={i} className="option-item">
-              <input type="radio" name="climate" value={type} />
-              {type}
-            </label>
-          ))}
-        </div>
-
-        <div className="question-block">
-          <h3>3. 예산 범위는 어떻게 되시나요?</h3>
+          <h3>2. 예산 범위는 어떻게 되시나요?</h3>
           <input type="range" min="1" max="5" defaultValue="3" className="slider" />
           <div className="slider-values">
             <span>저예산</span>
@@ -66,7 +54,7 @@ const SurveyForm = () => {
         </div>
 
         <div className="question-block">
-          <h3>4. 선호하는 여행 기간은?</h3>
+          <h3>3. 선호하는 여행 기간은?</h3>
           {durations.map((d, i) => (
             <label key={i} className="option-item">
               <input type="radio" name="duration" value={d} />
@@ -76,7 +64,7 @@ const SurveyForm = () => {
         </div>
 
         <div className="question-block">
-          <h3>5. 다음 중 관심 있는 활동을 모두 선택해주세요.</h3>
+          <h3>4. 다음 중 관심 있는 활동을 모두 선택해주세요.</h3>
           <div className="tags-container">
             {activities.map((tag) => (
               <span
@@ -91,7 +79,7 @@ const SurveyForm = () => {
         </div>
 
         <div className="question-block">
-          <h3>6. 숙박 시설의 중요도는?</h3>
+          <h3>5. 숙박 시설의 중요도는?</h3>
           <div className="rating">
             {[5, 4, 3, 2, 1].map((val) => (
               <React.Fragment key={val}>
@@ -103,7 +91,7 @@ const SurveyForm = () => {
         </div>
 
         <div className="question-block">
-          <h3>7. 얼마나 인기있는 관광지를 선호하시나요?</h3>
+          <h3>6. 얼마나 인기있는 관광지를 선호하시나요?</h3>
           <input type="range" min="1" max="5" defaultValue="3" className="slider" />
           <div className="slider-values">
             <span>한적한 곳</span>
@@ -113,7 +101,7 @@ const SurveyForm = () => {
         </div>
 
         <div className="question-block">
-          <h3>8. 여행 동반자는?</h3>
+          <h3>7. 여행 동반자는?</h3>
           {companions.map((c, i) => (
             <label key={i} className="option-item">
               <input type="radio" name="companion" value={c} />

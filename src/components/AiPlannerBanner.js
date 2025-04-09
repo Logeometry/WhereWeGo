@@ -28,7 +28,7 @@ const AiPlannerBanner = () => {
           color="primary"
           className="ai-banner__btn"
           component={RouterLink}
-          to="/travelPreference"
+          to="/survey"
         >
           AI 추천 받기 →
         </Button>
