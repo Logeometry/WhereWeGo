@@ -5,18 +5,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 ## from routeres.search_router import router as search_router
 from routeres.category_router import router as category_router
+from routeres.google_login_router import router as google_login_router
 ## from routeres.survey_router import router as survey_router
 ## from routeres.logging_router import router as logging_router
 from schemas import SurveyRequest
 import os
 
-
+SECRET_KEY = os.getenv("SECRET_KEY")
 app = FastAPI()
 
 ## app.include_router(search_router, prefix="/api/v1") 
 app.include_router(category_router, prefix="/api/v1")
 ## app.include_router(survey_router, prefix="/api/v1")
-## app.include_router(logging_router)
+## app.include_router(logging_router, prefix="/api/v1")
+app.include_router(google_login_router, prefix="/api/v1")
 
 origins = [
     "http://localhost",
