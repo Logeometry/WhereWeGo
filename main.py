@@ -6,6 +6,7 @@ from fastapi.templating import Jinja2Templates
 ## from routeres.search_router import router as search_router
 from routeres.category_router import router as category_router
 from routeres.google_login_router import router as google_login_router
+from fastapi.security import OAuth2PasswordBearer
 ## from routeres.survey_router import router as survey_router
 ## from routeres.logging_router import router as logging_router
 from schemas import SurveyRequest
@@ -13,6 +14,15 @@ import os
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 app = FastAPI()
+
+# CORS 설정 추가
+# app.add_middleware(
+#    CORSMiddleware,
+#    allow_origins=["http://localhost:3000"],  # 리액트 개발 서버 주소
+#    allow_credentials=True,
+#    allow_methods=["*"],  # 모든 HTTP 메서드 허용
+#    allow_headers=["*"],  # 모든 헤더 허용
+#)
 
 ## app.include_router(search_router, prefix="/api/v1") 
 app.include_router(category_router, prefix="/api/v1")
@@ -70,3 +80,8 @@ async def category_test_page(request: Request):
 ## @app.get("/survey_test", response_class=HTMLResponse)
 ## async def survey_test_page(request: Request):
 ##     return templates.TemplateResponse("survey_test.html", {"request": request})
+
+# 로그인 테스트
+@app.get("/login")
+def serve_test_page():
+    return FileResponse("test/login_test.html")
