@@ -40,7 +40,7 @@ def login_with_google():
 def google_callback(request: Request):
     code = request.query_params.get("code")
     if not code :
-        return JSONResponse({"error": "액세스 토큰을 가져오는 데 실패했습니다"}, status_code=400)
+        raise HTTPException(status_code=400)
     
     # google에 access_token 요청하기
     token_resp = requests.post("https://oauth2.googleapis.com/token", data={
@@ -53,7 +53,7 @@ def google_callback(request: Request):
     if token_resp.status_code != 200:
         print("[ERROR]", token_resp.status_code)
         print("[RESPONSE]", token_resp.text) 
-        return JSONResponse({"error": "액세스 토큰을 가져오는 데 실패했습니다"}, status_code=500)
+        raise HTTPException(status_code=500)
 
     token_data = token_resp.json()
     access_token = token_data.get("access_token")
@@ -65,7 +65,7 @@ def google_callback(request: Request):
     )
 
     if user_info_resp.status_code != 200:
-        return JSONResponse({"error": "사용자 정보를 가져오는 데 실패했습니다"}, status_code=500)
+        raise HTTPException(status_code=500)
 
     user_info = user_info_resp.json()
     email = user_info.get("email")
@@ -109,18 +109,18 @@ def google_callback(request: Request):
 def get_current_user(request: Request):
     token = request.cookies.get("access_token") 
     if not token:
-        raise HTTPException(status_code=401, detail="인증되지 않았습니다")
+        raise HTTPException(status_code=401)
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         return payload.get("sub")  # emali(유저확인 용도)
     except JWTError:
-        raise HTTPException(status_code=401, detail="유효하지 않은 토큰")
+        raise HTTPException(status_code=401)
 
 @router.get("/me")
 def read_me(user_email=Depends(get_current_user)):
     user = find_user_by_email(user_email)
     if not user:
-        raise HTTPException(status_code=404, detail="유저를 찾을 없습니다")
+        raise HTTPException(status_code=404)
     return {
         "email": user["email"],
         "name": user["name"],  # 닉네임
