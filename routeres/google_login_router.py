@@ -122,9 +122,9 @@ def read_me(user_email=Depends(get_current_user)):
     if not user:
         raise HTTPException(status_code=404, detail="유저를 찾을 없습니다")
     return {
-        "email": user.email,
-        "name": user.name,  # 닉네임
-        "picture": user.picture  # 프로필 이미지
+        "email": user["email"],
+        "name": user["name"],  # 닉네임
+        "picture": user["picture"]  # 프로필 이미지
     }
 
 
