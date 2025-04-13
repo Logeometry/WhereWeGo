@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import SurveyForm from './pages/SurveyForm/SurveyForm';
 import CategoryDetailPage from './pages/CategoryDetailPage';
+import SearchResultPage from './pages/SearchResultPage';
 import Header from './components/Header';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import './App.scss';
@@ -66,6 +67,7 @@ function App() {
             }
           />
           <Route path="/wishlist" element={<WishlistPage />} />
+          <Route path="/search" element={<SearchResultPage />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
