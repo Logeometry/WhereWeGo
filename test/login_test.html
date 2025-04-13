@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>로그인 테스트</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f9f9f9;
+      padding: 40px;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 4px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background: #ff1150;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #e01048;
+    }
+    #user-info {
+      text-align: center;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="login-form">
+      <button onclick="loginWithGoogle()">구글 로그인</button>
+    </div>
+
+    <div id="user-info" style="display:none;">
+      <p><strong id="user-name"></strong>님 환영합니다.</p>
+      <img id="user-picture" alt="프로필 이미지" style="width: 100px; height: 100px; border-radius: 50%;" />
+      <button onclick="logout()">로그아웃</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    function loginWithGoogle() {
+      window.location.href = "/api/v1/auth/google/login";
+    }
+
+    async function checkLogin() {
+      try {
+        const res = await axios.get("/api/v1/me", {
+          withCredentials: true
+        });
+
+        if (res.data.email) {
+          document.getElementById("login-form").style.display = "none";
+          document.getElementById("user-info").style.display = "block";
+          document.getElementById("user-name").textContent = res.data.name;
+          document.getElementById("user-picture").src = res.data.picture;
+        }
+      } catch (err) {
+        console.error("checkLogin 실패:", err);
+        document.getElementById("login-form").style.display = "block";
+        document.getElementById("user-info").style.display = "none";
+      }
+    }
+
+    async function logout() {
+      try {
+        await axios.post("/api/v1/logout", {}, {
+          withCredentials: true
+        });
+        location.reload();
+      } catch (err) {
+        console.error("logout 실패:", err);
+        alert("로그아웃 실패");
+      }
+    }
+
+    window.onload = checkLogin;
+  </script>
+</body>
+</html>
