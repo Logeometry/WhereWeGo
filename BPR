@@ -1,0 +1,1291 @@
+import numpy as np
+import json
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
+import os
+import time
+import copy
+from datetime import datetime
+import matplotlib.pyplot as plt
+import sys
+
+# GPU 디버깅 함수 추가
+def check_gpu_status():
+    """GPU 상태 확인 및 디버깅 정보 출력"""
+    print("\n" + "="*50)
+    print("GPU 및 시스템 정보")
+    print("="*50)
+    
+    print(f"Python 버전: {sys.version}")
+    print(f"PyTorch 버전: {torch.__version__}")
+    print(f"CUDA 사용 가능: {torch.cuda.is_available()}")
+    
+    if torch.cuda.is_available():
+        print(f"CUDA 버전: {torch.version.cuda}")
+        print(f"CUDA 기기 수: {torch.cuda.device_count()}")
+        print(f"현재 CUDA 기기: {torch.cuda.current_device()}")
+        print(f"CUDA 기기 이름: {torch.cuda.get_device_name(0)}")
+        
+        # 간단한 GPU 메모리 테스트
+        try:
+            # 텐서 생성
+            print("\nGPU 메모리 테스트 중...")
+            x = torch.rand(1000, 1000).cuda()
+            y = torch.matmul(x, x.t())
+            
+            # 메모리 정보
+            allocated = torch.cuda.memory_allocated() / 1024**2
+            reserved = torch.cuda.memory_reserved() / 1024**2
+            print(f"GPU 테스트 성공!")
+            print(f"  할당된 메모리: {allocated:.2f} MB")
+            print(f"  예약된 메모리: {reserved:.2f} MB")
+            del x, y
+            torch.cuda.empty_cache()
+        except Exception as e:
+            print(f"GPU 테스트 실패: {str(e)}")
+    else:
+        print("GPU 사용 불가 - CPU 모드로 실행됩니다.")
+    
+    print("\nCUDA 환경 변수:")
+    for env_var in ["CUDA_VISIBLE_DEVICES", "CUDA_HOME", "LD_LIBRARY_PATH"]:
+        print(f"  {env_var}: {os.environ.get(env_var, '설정되지 않음')}")
+    
+    print("="*50 + "\n")
+    
+    return torch.cuda.is_available()
+
+# 1. 데이터셋 클래스 정의
+class BPRDataset(Dataset):
+    def __init__(self, triplet_file):
+        """
+        트리플렛 파일로부터 BPR 데이터셋 생성
+        
+        Args:
+            triplet_file: 트리플렛 JSON 파일 경로
+        """
+        start_time = time.time()
+        
+        # 메모리 절약을 위한 JSON 로딩 설정
+        print(f"데이터셋 로드 중: {triplet_file}")
+        with open(triplet_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            
+        self.triplets = data['triplets']
+        self.metadata = data['metadata']
+        self.user_id_map = data.get('user_id_map', {})
+        self.business_id_map = data.get('business_id_map', {})
+        
+        # 데이터셋 정보 출력
+        print(f"데이터셋 로드 완료:")
+        print(f"- 총 트리플렛 수: {len(self.triplets)}")
+        print(f"- 사용자 수: {self.metadata.get('num_users', 0)}")
+        print(f"- 비즈니스 수: {self.metadata.get('num_businesses', 0)}")
+        
+        # NumPy 배열로 변환 (더 빠른 처리를 위해)
+        if isinstance(self.triplets[0], list):
+            self.data = np.array(self.triplets, dtype=np.int64)
+        else:
+            # triplets가 딕셔너리 형태인 경우
+            self.data = np.array([[t.get('user', 0), t.get('item', 0), t.get('rating', 0)] 
+                               for t in self.triplets], dtype=np.int64)
+        
+        # Positive와 Negative 샘플 분리
+        self.pos_samples = self.data[self.data[:, 2] == 1]
+        self.neg_samples = self.data[self.data[:, 2] == 0]
+        
+        # 더 효율적인 검색을 위해 사용자별 negative 아이템 인덱스 미리 계산
+        self.user_neg_items = {}
+        for user_id in np.unique(self.pos_samples[:, 0]):
+            neg_indices = np.where((self.neg_samples[:, 0] == user_id))[0]
+            if len(neg_indices) > 0:
+                self.user_neg_items[int(user_id)] = neg_indices
+        
+        # 모든 사용자의 모든 positive 아이템 저장 (추천에서 제외하기 위해)
+        self.user_pos_items = {}
+        for user_id in np.unique(self.pos_samples[:, 0]):
+            pos_items = self.pos_samples[self.pos_samples[:, 0] == user_id][:, 1]
+            self.user_pos_items[int(user_id)] = pos_items
+        
+        # 아이템 인기도 계산 (개선된 네거티브 샘플링에 사용)
+        item_counts = np.bincount(self.pos_samples[:, 1])
+        self.item_popularity = item_counts / np.sum(item_counts)
+        
+        print(f"- Positive 샘플: {len(self.pos_samples)}")
+        print(f"- Negative 샘플: {len(self.neg_samples)}")
+        print(f"- 데이터 로딩 시간: {time.time() - start_time:.2f}초")
+    
+    def __len__(self):
+        return len(self.pos_samples)
+    
+    def __getitem__(self, idx):
+        """
+        BPR 학습을 위한 (user, pos_item, neg_item) 샘플 반환
+        
+        모든 Positive 샘플에 대해 무작위 Negative 샘플 선택
+        """
+        # Positive 샘플 가져오기
+        user_id, pos_item, _ = self.pos_samples[idx]
+        user_id = int(user_id)  # numpy int64를 python int로 변환
+        
+        # 이 사용자를 위한 Negative 샘플 선택
+        if user_id in self.user_neg_items and len(self.user_neg_items[user_id]) > 0:
+            # 저장된 negative 샘플에서 선택
+            neg_idx = np.random.choice(self.user_neg_items[user_id])
+            _, neg_item, _ = self.neg_samples[neg_idx]
+        else:
+            # 개선된 네거티브 샘플링 - 인기도 기반 & 하드 네거티브
+            num_items = self.metadata.get('num_businesses', 10000)
+            
+            if user_id in self.user_pos_items and len(self.user_pos_items[user_id]) > 0:
+                # 모든 아이템 중에서 현재 사용자의 positive 아이템 제외
+                pos_items = self.user_pos_items[user_id]
+                candidate_items = np.setdiff1d(np.arange(num_items), pos_items)
+                
+                if len(candidate_items) > 0:
+                    # 인기도 기반 샘플링 (인기 있는 아이템을 더 자주 선택)
+                    # 80%는 인기도 기반 샘플링, 20%는 완전 무작위 샘플링
+                    if np.random.random() < 0.8 and hasattr(self, 'item_popularity'):
+                        # 인기도에 따른 가중치를 적용한 샘플링
+                        probs = self.item_popularity[candidate_items]
+                        probs = probs / np.sum(probs)  # 정규화
+                        neg_item = np.random.choice(candidate_items, p=probs)
+                    else:
+                        neg_item = np.random.choice(candidate_items)
+                else:
+                    # 극단적인 경우: 모든 아이템이 positive인 경우
+                    neg_item = np.random.randint(0, num_items)
+            else:
+                # 사용자에 대한 positive 정보가 없으면 랜덤 선택
+                neg_item = np.random.randint(0, num_items)
+        
+        return {
+            'user': torch.tensor([user_id], dtype=torch.long),
+            'pos_item': torch.tensor([pos_item], dtype=torch.long),
+            'neg_item': torch.tensor([neg_item], dtype=torch.long)
+        }
+
+
+# 2. BPR 모델 정의
+class BPRModel(nn.Module):
+    def __init__(self, num_users, num_items, embedding_dim=128):
+        """
+        Bayesian Personalized Ranking 모델
+        
+        Args:
+            num_users: 사용자 수
+            num_items: 아이템(비즈니스) 수
+            embedding_dim: 임베딩 차원
+        """
+        super(BPRModel, self).__init__()
+        
+        # 임베딩 차원 저장 (출력용)
+        self.embedding_dim = embedding_dim
+        print(f"BPRModel 초기화: 임베딩 차원 = {embedding_dim}")
+        
+        # 사용자 임베딩
+        self.user_embeddings = nn.Embedding(num_users, embedding_dim)
+        # 아이템 임베딩
+        self.item_embeddings = nn.Embedding(num_items, embedding_dim)
+        
+        # 임베딩 초기화 (표준편차 감소)
+        nn.init.normal_(self.user_embeddings.weight, std=0.01)
+        nn.init.normal_(self.item_embeddings.weight, std=0.01)
+        
+        # 차원 저장 (모델 직렬화를 위해)
+        self.num_users = num_users
+        self.num_items = num_items
+    
+    def forward(self, user, pos_item, neg_item):
+        """
+        BPR 모델 포워드 패스
+        
+        Args:
+            user: 사용자 인덱스
+            pos_item: 긍정적 아이템 인덱스
+            neg_item: 부정적 아이템 인덱스
+            
+        Returns:
+            pos_scores: 사용자-긍정적 아이템 점수
+            neg_scores: 사용자-부정적 아이템 점수
+        """
+        # 임베딩 검색
+        user_embedding = self.user_embeddings(user)
+        pos_item_embedding = self.item_embeddings(pos_item)
+        neg_item_embedding = self.item_embeddings(neg_item)
+        
+        # 점수 계산 (내적)
+        pos_scores = torch.sum(user_embedding * pos_item_embedding, dim=-1)
+        neg_scores = torch.sum(user_embedding * neg_item_embedding, dim=-1)
+        
+        return pos_scores, neg_scores
+    
+    def predict(self, user_indices, item_indices=None):
+        """
+        사용자-아이템 점수 예측
+        
+        Args:
+            user_indices: 사용자 인덱스 배열 또는 단일 인덱스
+            item_indices: 아이템 인덱스 배열 또는 단일 인덱스 (None이면 모든 아이템)
+            
+        Returns:
+            예측 점수
+        """
+        device = self.user_embeddings.weight.device
+        
+        # 단일 사용자, 모든 아이템 점수 계산
+        if item_indices is None:
+            users = torch.tensor([user_indices], dtype=torch.long, device=device)
+            user_embedding = self.user_embeddings(users)
+            all_item_embeddings = self.item_embeddings.weight
+            
+            # 행렬 곱으로 모든 아이템 점수 계산
+            scores = torch.matmul(user_embedding, all_item_embeddings.t())
+            return scores.squeeze()
+        
+        # 지정된 사용자-아이템 페어 점수 계산
+        users = torch.tensor(user_indices, dtype=torch.long, device=device)
+        items = torch.tensor(item_indices, dtype=torch.long, device=device)
+        
+        user_embedding = self.user_embeddings(users)
+        item_embedding = self.item_embeddings(items)
+        
+        # 요소별 곱 및 합산
+        return torch.sum(user_embedding * item_embedding, dim=-1)
+
+
+# 3. BPR 손실 함수
+class BPRLoss(nn.Module):
+    def __init__(self):
+        super(BPRLoss, self).__init__()
+    
+    def forward(self, pos_scores, neg_scores):
+        """
+        BPR 손실 계산: -log(sigmoid(pos_scores - neg_scores))
+        
+        Args:
+            pos_scores: 사용자-긍정적 아이템 점수
+            neg_scores: 사용자-부정적 아이템 점수
+            
+        Returns:
+            손실값
+        """
+        # 숫자 안정성을 위한 epsilon 최적화
+        epsilon = 1e-8  # 너무 작은 값은 숫자 불안정성, 너무 큰 값은 정확도 손실
+        loss = -torch.log(torch.sigmoid(pos_scores - neg_scores) + epsilon)
+        return loss.mean()
+
+
+# 모델 버전 관리 위한 함수 추가
+def get_next_model_version(output_dir):
+    """
+    다음 모델 버전 번호를 결정
+    
+    Args:
+        output_dir: 모델 저장 디렉토리
+        
+    Returns:
+        다음 모델 버전 번호
+    """
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        return 1
+    
+    # 디렉토리 내 모든 모델 파일 검색
+    model_files = [f for f in os.listdir(output_dir) if f.startswith('bpr_model_') and f.endswith('.pt')]
+    
+    if not model_files:
+        return 1
+    
+    # 버전 번호 추출 및 최대값 찾기
+    versions = []
+    for file in model_files:
+        try:
+            # bpr_model_X.pt 형식에서 X 추출
+            version_str = file.replace('bpr_model_', '').replace('.pt', '')
+            version = int(version_str)
+            versions.append(version)
+        except ValueError:
+            continue
+    
+    if versions:
+        return max(versions) + 1
+    else:
+        return 1
+
+
+# 데이터셋 분할 함수 추가
+def split_dataset(dataset, train_ratio=0.6, val_ratio=0.2, test_ratio=0.2, min_interactions=3):
+    """
+    데이터셋을 학습/검증/테스트 세트로 분할
+    
+    Args:
+        dataset: BPR 데이터셋
+        train_ratio: 학습 데이터 비율
+        val_ratio: 검증 데이터 비율
+        test_ratio: 테스트 데이터 비율
+        min_interactions: 사용자별 최소 상호작용 수
+    
+    Returns:
+        분할된 데이터셋 (학습/검증/테스트)
+    """
+    assert train_ratio + val_ratio + test_ratio == 1.0, "비율의 합은 1.0이어야 합니다."
+    
+    # 사용자별 상호작용 데이터 수집
+    user_interactions = {}
+    
+    # 전체 상호작용 데이터에서 사용자별로 그룹화
+    for user_id in np.unique(dataset.pos_samples[:, 0]):
+        user_id = int(user_id)
+        # 현재 사용자의 모든 positive 상호작용
+        user_items = dataset.pos_samples[dataset.pos_samples[:, 0] == user_id][:, 1]
+        
+        # 최소 상호작용 수 필터링
+        if len(user_items) >= min_interactions:
+            # 셔플
+            np.random.shuffle(user_items)
+            
+            # 학습/검증/테스트 분할 경계 계산
+            train_idx = int(len(user_items) * train_ratio)
+            val_idx = train_idx + int(len(user_items) * val_ratio)
+            
+            train_items = user_items[:train_idx]
+            val_items = user_items[train_idx:val_idx]
+            test_items = user_items[val_idx:]
+            
+            user_interactions[user_id] = {
+                'train': train_items,
+                'val': val_items,
+                'test': test_items
+            }
+    
+    print(f"Dataset split completed:")
+    print(f"- Users processed: {len(user_interactions)}")
+    print(f"- Split ratio: Train {train_ratio:.1f}, Validation {val_ratio:.1f}, Test {test_ratio:.1f}")
+    
+    return user_interactions
+
+
+# 메트릭 계산 유틸리티 함수 추가 (중복 코드 제거)
+def calculate_recommendation_metrics(recommended_items, test_items, k):
+    """
+    추천 시스템 평가 메트릭 계산을 위한 유틸리티 함수
+    
+    Args:
+        recommended_items: 추천된 아이템 인덱스 배열
+        test_items: 테스트(또는 검증) 아이템 인덱스 배열
+        k: 추천 아이템 수
+        
+    Returns:
+        precision_at_k, recall_at_k, ndcg_score 튜플
+    """
+    # MAP@K (Mean Average Precision at K)
+    precision_at_k = len(set(recommended_items) & set(test_items)) / k
+    
+    # Recall@K
+    recall_at_k = 0
+    if len(test_items) > 0:
+        recall_at_k = len(set(recommended_items) & set(test_items)) / len(test_items)
+    
+    # NDCG@K
+    dcg = 0
+    for i, item in enumerate(recommended_items[:k]):
+        if item in test_items:
+            # 순위에 따른 가중치 적용
+            dcg += 1 / np.log2(i + 2)  # log2(1+1) = 1이므로 (i+2)로 계산
+    
+    # IDCG@K 계산 (이상적인 경우)
+    idcg = 0
+    for i in range(min(len(test_items), k)):
+        idcg += 1 / np.log2(i + 2)
+    
+    # NDCG@K = DCG@K / IDCG@K
+    ndcg_score = dcg / idcg if idcg > 0 else 0.0
+    
+    return precision_at_k, recall_at_k, ndcg_score
+
+
+# 공통 평가 로직을 위한 함수 추가
+def evaluate_recommendations(
+    model, 
+    users,
+    interactions_dict,
+    top_k=10, 
+    interaction_type='test',  # 'test' 또는 'val'
+    mask_items_key='train',   # 마스킹할 아이템 ('train' 또는 ['train', 'val'])
+    device="cuda" if torch.cuda.is_available() else "cpu"
+):
+    """
+    모델 추천 성능 평가를 위한 통합 함수
+    
+    Args:
+        model: 평가할 BPR 모델
+        users: 평가할 사용자 ID 리스트
+        interactions_dict: 사용자별 상호작용 딕셔너리 (user_id -> {'train': [...], 'val': [...], 'test': [...]})
+        top_k: 추천 아이템 수
+        interaction_type: 평가할 상호작용 유형 ('test' 또는 'val')
+        mask_items_key: 마스킹할 아이템 키 ('train' 또는 ['train', 'val'])
+        device: 계산 장치
+    
+    Returns:
+        평가 메트릭 딕셔너리
+    """
+    model.eval()
+    
+    # 메트릭 초기화
+    metrics = {
+        f'MAP@{top_k}': [],
+        f'Recall@{top_k}': [],
+        f'NDCG@{top_k}': []
+    }
+    
+    with torch.no_grad():
+        for i, user_id in enumerate(users):
+            if i % 100 == 0 and i > 0:
+                print(f"  {i}/{len(users)} users evaluated")
+            
+            # 학습 및 테스트/검증 아이템 가져오기
+            if isinstance(mask_items_key, list):
+                # 여러 아이템 세트 마스킹 (예: train + val)
+                mask_items = np.concatenate([interactions_dict[user_id][key] for key in mask_items_key])
+            else:
+                # 단일 아이템 세트 마스킹 (예: train)
+                mask_items = interactions_dict[user_id][mask_items_key]
+            
+            # 테스트/검증 아이템
+            eval_items = interactions_dict[user_id][interaction_type]
+            
+            if len(eval_items) == 0:
+                continue
+            
+            # 사용자 아이템 점수 예측
+            scores = model.predict(user_id)
+            scores = scores.cpu().numpy()
+            
+            # 학습 아이템 마스킹
+            scores[mask_items] = -np.inf
+            
+            # Top-K 아이템 추출
+            recommended_items = np.argsort(-scores)[:top_k]
+            
+            # 메트릭 계산
+            precision, recall, ndcg = calculate_recommendation_metrics(
+                recommended_items, eval_items, top_k
+            )
+            
+            metrics[f'MAP@{top_k}'].append(precision)
+            metrics[f'Recall@{top_k}'].append(recall)
+            metrics[f'NDCG@{top_k}'].append(ndcg)
+    
+    # 평균 메트릭 계산
+    avg_metrics = {}
+    for metric, values in metrics.items():
+        if values:
+            avg_metrics[metric] = np.mean(values)
+        else:
+            avg_metrics[metric] = 0.0
+    
+    return avg_metrics
+
+
+# validate_epoch 함수 수정
+def validate_epoch(model, user_interactions, top_k=10, max_users=1000, device="cuda" if torch.cuda.is_available() else "cpu"):
+    """
+    검증 세트에서 모델 성능 평가
+    
+    Args:
+        model: BPR 모델
+        user_interactions: 분할된 사용자 상호작용 데이터
+        top_k: 추천 아이템 수
+        max_users: 평가할 최대 사용자 수
+        device: 계산 장치
+    
+    Returns:
+        검증 성능 지표 (MAP, Recall, NDCG)
+    """
+    # 평가할 사용자 선택 (최대 max_users명)
+    eval_users = list(user_interactions.keys())
+    if len(eval_users) > max_users:
+        eval_users = np.random.choice(eval_users, max_users, replace=False)
+    
+    # 공통 평가 함수 사용
+    metrics = evaluate_recommendations(
+        model, 
+        eval_users, 
+        user_interactions, 
+        top_k=top_k, 
+        interaction_type='val',  # 검증 세트 사용
+        mask_items_key='train',  # 학습 아이템만 마스킹
+        device=device
+    )
+    
+    # 키 이름 변환 (MAP@10 -> MAP 등)으로 train_bpr_model과 호환되도록 함
+    return {
+        'MAP': metrics[f'MAP@{top_k}'],
+        'Recall': metrics[f'Recall@{top_k}'],
+        'NDCG': metrics[f'NDCG@{top_k}']
+    }
+
+
+# evaluate_test_set 함수 수정 (공통 함수 사용)
+def evaluate_test_set(model, user_interactions, top_k=10, device="cuda" if torch.cuda.is_available() else "cpu"):
+    """
+    테스트 세트에서 모델 성능 평가
+    
+    Args:
+        model: BPR 모델
+        user_interactions: 분할된 사용자 상호작용 데이터
+        top_k: 추천 아이템 수
+        device: 계산 장치
+    
+    Returns:
+        테스트 성능 지표 (MAP, Recall, NDCG)
+    """
+    # 테스트 사용자 가져오기
+    test_users = list(user_interactions.keys())
+    
+    print(f"Test users: {len(test_users)}")
+    
+    # 공통 평가 함수 사용
+    return evaluate_recommendations(
+        model, 
+        test_users, 
+        user_interactions, 
+        top_k=top_k, 
+        interaction_type='test',          # 테스트 세트 사용
+        mask_items_key=['train', 'val'],  # 학습 및 검증 아이템 마스킹
+        device=device
+    )
+
+
+# 모델 평가 함수도 통합 함수 사용하도록 수정
+def evaluate_model(
+    model,
+    dataset,
+    top_k=10,
+    num_users=None,
+    test_ratio=0.2,
+    min_interactions=3,
+    device="cuda" if torch.cuda.is_available() else "cpu"
+):
+    """
+    모델 성능 평가: MAP@K, Recall@K, NDCG@K
+    
+    Args:
+        model: 학습된 BPR 모델
+        dataset: BPR 데이터셋
+        top_k: 추천 아이템 수 (Default: 10)
+        num_users: 평가할 사용자 수 (None이면 모든 사용자)
+        test_ratio: 테스트 비율 (Default: 0.2)
+        min_interactions: 평가에 포함할 사용자의 최소 상호작용 수 (Default: 3)
+        device: 계산 장치
+        
+    Returns:
+        평가 결과 딕셔너리 (MAP@K, Recall@K, NDCG@K)
+    """
+    print(f"\n{'='*50}")
+    print(f"모델 성능 평가 (K={top_k})")
+    print(f"{'='*50}")
+    
+    model.eval()
+    model = model.to(device)
+    
+    # 사용자별 상호작용 분리 (학습/테스트) - 데이터셋 분할 함수와 로직이 중복됨
+    # 이 함수를 직접 호출하는 경우는 드물기 때문에 내부 로직은 유지
+    user_interactions = {}
+    user_interaction_counts = {}
+    
+    # 전체 상호작용 데이터에서 사용자별로 그룹화
+    for user_id in np.unique(dataset.pos_samples[:, 0]):
+        user_id = int(user_id)
+        # 현재 사용자의 모든 positive 상호작용
+        user_items = dataset.pos_samples[dataset.pos_samples[:, 0] == user_id][:, 1]
+        user_interaction_counts[user_id] = len(user_items)
+        
+        # 최소 상호작용 수 필터링
+        if len(user_items) >= min_interactions:
+            # 셔플
+            np.random.shuffle(user_items)
+            
+            # 학습/테스트 분할
+            split_idx = max(1, int(len(user_items) * (1 - test_ratio)))
+            train_items = user_items[:split_idx]
+            test_items = user_items[split_idx:]
+            
+            if len(test_items) > 0:
+                user_interactions[user_id] = {
+                    'train': train_items,
+                    'val': np.array([]),  # 이 함수에서는 검증 세트를 사용하지 않음
+                    'test': test_items
+                }
+    
+    # 평가할 사용자 선택
+    eval_users = list(user_interactions.keys())
+    if num_users is not None and num_users < len(eval_users):
+        eval_users = np.random.choice(eval_users, num_users, replace=False)
+    
+    # 상호작용 통계 계산 및 출력 (유지)
+    interactions_stats = [user_interaction_counts[u] for u in eval_users]
+    avg_interactions = np.mean(interactions_stats)
+    median_interactions = np.median(interactions_stats)
+    min_inter = np.min(interactions_stats)
+    max_inter = np.max(interactions_stats)
+    
+    print(f"평가 대상: {len(eval_users)}명의 사용자")
+    print(f"사용자 상호작용 통계:")
+    print(f"  - 평균 상호작용 수: {avg_interactions:.2f}")
+    print(f"  - 중앙값 상호작용 수: {median_interactions:.2f}")
+    print(f"  - 최소 상호작용 수: {min_inter}")
+    print(f"  - 최대 상호작용 수: {max_inter}")
+    
+    # 통합 평가 함수 사용
+    metrics = evaluate_recommendations(
+        model, 
+        eval_users, 
+        user_interactions, 
+        top_k=top_k, 
+        interaction_type='test',
+        mask_items_key='train',
+        device=device
+    )
+    
+    # 상호작용 수에 따른 성능 분석
+    # 이 부분은 evaluate_model 함수에만 있는 고유한 기능이므로 유지
+    interaction_bins = {
+        '3-5': {'users': 0, 'MAP': [], 'Recall': [], 'NDCG': []},
+        '6-10': {'users': 0, 'MAP': [], 'Recall': [], 'NDCG': []},
+        '11+': {'users': 0, 'MAP': [], 'Recall': [], 'NDCG': []}
+    }
+    
+    # 상호작용 수에 따른 성능 데이터 수집
+    with torch.no_grad():
+        for user_id in eval_users:
+            # 학습/테스트 아이템
+            train_items = user_interactions[user_id]['train']
+            test_items = user_interactions[user_id]['test']
+            
+            # 현재 사용자에 대한 모든 아이템 점수 예측
+            scores = model.predict(user_id)
+            scores = scores.cpu().numpy()
+            
+            # 학습 아이템 마스킹 (추천에서 제외)
+            scores[train_items] = -np.inf
+            
+            # Top-K 아이템 추출
+            recommended_items = np.argsort(-scores)[:top_k]
+            
+            # 평가 지표 계산
+            precision, recall, ndcg = calculate_recommendation_metrics(
+                recommended_items, test_items, top_k
+            )
+            
+            # 사용자 상호작용 수에 따른 성능 데이터 수집
+            interaction_count = user_interaction_counts[user_id]
+            if interaction_count <= 5:
+                bin_key = '3-5'
+            elif interaction_count <= 10:
+                bin_key = '6-10'
+            else:
+                bin_key = '11+'
+                
+            interaction_bins[bin_key]['users'] += 1
+            interaction_bins[bin_key]['MAP'].append(precision)
+            interaction_bins[bin_key]['Recall'].append(recall)
+            interaction_bins[bin_key]['NDCG'].append(ndcg)
+    
+    # 결과 출력
+    print("\n전체 평가 결과:")
+    for metric, value in metrics.items():
+        print(f"  {metric}: {value:.4f}")
+    
+    # 상호작용 수에 따른 성능 출력
+    print("\n상호작용 수에 따른 성능 분석:")
+    for bin_key, data in interaction_bins.items():
+        if data['users'] > 0:
+            print(f"  상호작용 {bin_key} ({data['users']}명):")
+            print(f"    - MAP@{top_k}: {np.mean(data['MAP']):.4f}")
+            print(f"    - Recall@{top_k}: {np.mean(data['Recall']):.4f}")
+            print(f"    - NDCG@{top_k}: {np.mean(data['NDCG']):.4f}")
+    
+    return metrics
+
+
+# 4. 모델 학습 함수 수정
+def train_bpr_model(
+    triplet_file,
+    output_dir="./models",
+    embedding_dim=128,   
+    learning_rate=0.005,
+    weight_decay=0.00001, 
+    batch_size=4096,
+    epochs=50,
+    validation_interval=1,
+    device="cuda" if torch.cuda.is_available() else "cpu",
+    verbose=True,
+    save_model=True,
+    dataloader_params=None
+):
+    """
+    BPR 모델 학습 - 검증 성능 모니터링 및 과적합 방지 개선
+    
+    Args:
+        triplet_file: 트리플렛 JSON 파일 경로
+        output_dir: 모델 저장 디렉토리
+        embedding_dim: 임베딩 차원
+        learning_rate: 학습률
+        weight_decay: 가중치 감소 (L2 정규화)
+        batch_size: 배치 크기
+        epochs: 에포크 수
+        validation_interval: 검증 간격 (에포크 단위)
+        device: 학습 장치 ('cuda' 또는 'cpu')
+        verbose: 자세한 출력 여부
+        save_model: 모델 저장 여부
+        dataloader_params: 데이터로더 파라미터
+    """
+    # 학습 파라미터 출력 확인
+    print(f"\nTraining parameters:")
+    print(f"- Embedding dimension: {embedding_dim}")
+    print(f"- Learning rate: {learning_rate}")
+    print(f"- Weight decay (regularization): {weight_decay}")
+    print(f"- Batch size: {batch_size}")
+    print(f"- Epochs: {epochs}")
+    print(f"- Validation interval: {validation_interval} epochs")
+    
+    # CUDA 메모리 캐시 비우기
+    if device == 'cuda':
+        torch.cuda.empty_cache()
+    
+    start_time = time.time()
+    print(f"BPR model training started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Device: {device}")
+    
+    # 기본 데이터로더 파라미터 설정
+    if dataloader_params is None:
+        dataloader_params = {
+            'batch_size': batch_size,
+            'shuffle': True,
+            'num_workers': 0 if device == 'cuda' else 4,
+            'pin_memory': True if device == 'cuda' else False
+        }
+    
+    # 데이터셋 로드
+    dataset = BPRDataset(triplet_file)
+    
+    # 데이터셋 분할 (학습/검증/테스트)
+    user_interactions = split_dataset(dataset, train_ratio=0.6, val_ratio=0.2, test_ratio=0.2, min_interactions=3)
+    
+    dataloader = DataLoader(
+        dataset, 
+        batch_size=dataloader_params.get('batch_size', batch_size),
+        shuffle=dataloader_params.get('shuffle', True),
+        num_workers=dataloader_params.get('num_workers', 0 if device == 'cuda' else 4),
+        pin_memory=dataloader_params.get('pin_memory', True if device == 'cuda' else False)
+    )
+    
+    # 모델 초기화
+    num_users = dataset.metadata.get('num_users', 0)
+    num_items = dataset.metadata.get('num_businesses', 0)
+    
+    # 명시적으로 embedding_dim 전달
+    model = BPRModel(num_users, num_items, embedding_dim)
+    model = model.to(device)
+    
+    # CUDA 메모리 사용량 확인
+    if device == 'cuda':
+        print(f"Initial CUDA memory usage: {torch.cuda.memory_allocated() / 1024**2:.2f} MB")
+    
+    # 손실 함수 및 옵티마이저 설정
+    loss_function = BPRLoss()
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    
+    # 학습률 스케줄러 추가 (10 에포크마다 학습률 감소)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
+    
+    # 학습 과정 추적
+    train_losses = []
+    val_metrics_history = []
+    
+    # 조기 종료 설정 (검증 손실 기준)
+    patience = 7
+    min_delta = 0.0005
+    best_val_ndcg = 0.0  # 검증 NDCG 기준으로 변경
+    wait = 0
+    best_model = None
+    best_epoch = 0
+    
+    # 학습 루프
+    for epoch in range(epochs):
+        model.train()
+        epoch_loss = 0
+        epoch_start = time.time()
+        
+        for batch_idx, batch in enumerate(dataloader):
+            # 배치 데이터 가져오기
+            user = batch['user'].to(device, non_blocking=True)
+            pos_item = batch['pos_item'].to(device, non_blocking=True)
+            neg_item = batch['neg_item'].to(device, non_blocking=True)
+            
+            # 그래디언트 초기화
+            optimizer.zero_grad(set_to_none=True)  # 메모리 효율성 향상
+            
+            # 모델 포워드 패스
+            pos_scores, neg_scores = model(user, pos_item, neg_item)
+            
+            # 손실 계산
+            loss = loss_function(pos_scores, neg_scores)
+            
+            # 역전파 및 최적화
+            loss.backward()
+            optimizer.step()
+            
+            epoch_loss += loss.item()
+            
+            # GPU 메모리 모니터링 (100 배치마다)
+            if device == 'cuda' and batch_idx % 100 == 0 and batch_idx > 0 and verbose:
+                print(f"  Batch {batch_idx}/{len(dataloader)} - CUDA memory: {torch.cuda.memory_allocated() / 1024**2:.2f} MB")
+        
+        # 학습률 스케줄러 단계 진행
+        scheduler.step()
+        
+        # 에포크 평균 손실
+        epoch_loss /= len(dataloader)
+        train_losses.append(epoch_loss)
+        
+        # 에포크 정보 출력
+        epoch_time = time.time() - epoch_start
+        lr = scheduler.get_last_lr()[0]
+        print(f"Epoch {epoch+1}/{epochs} - Training loss: {epoch_loss:.6f} - Time: {epoch_time:.2f}s - Learning rate: {lr:.6f}")
+        
+        # 검증 성능 측정 (지정된 간격마다)
+        if (epoch + 1) % validation_interval == 0:
+            val_metrics = validate_epoch(model, user_interactions, top_k=10, max_users=500, device=device)
+            val_metrics_history.append(val_metrics)
+            
+            print(f"  Validation - MAP@10: {val_metrics['MAP']:.4f}, Recall@10: {val_metrics['Recall']:.4f}, NDCG@10: {val_metrics['NDCG']:.4f}")
+            
+            # 검증 NDCG 기준으로 최고 모델 갱신
+            if val_metrics['NDCG'] > best_val_ndcg + min_delta:
+                best_val_ndcg = val_metrics['NDCG']
+                wait = 0
+                best_model = copy.deepcopy(model.state_dict())
+                best_epoch = epoch + 1
+                print(f"   👍 New best validation NDCG: {best_val_ndcg:.4f} (Epoch {best_epoch})")
+            else:
+                wait += 1
+                if wait >= patience:
+                    print(f"Epoch {epoch+1}/{epochs}: Early stopping (no improvement for {patience} epochs)")
+                    if best_model is not None:
+                        model.load_state_dict(best_model)  # 최적 모델 복원
+                    break
+    
+    # 학습 완료
+    train_time = time.time() - start_time
+    print(f"\nBPR model training completed - Total time: {train_time:.2f}s")
+    
+    if best_model is not None:
+        model.load_state_dict(best_model)
+        print(f"Restored best model (Epoch {best_epoch}, Validation NDCG: {best_val_ndcg:.4f})")
+    
+    # 손실 및 검증 지표 그래프 그리기
+    plt.figure(figsize=(15, 6))
+    
+    # 학습 손실 그래프
+    plt.subplot(1, 2, 1)
+    plt.plot(range(1, len(train_losses)+1), train_losses)
+    plt.xlabel('Epoch')
+    plt.ylabel('Training Loss')
+    plt.title('BPR Model Training Loss')
+    plt.grid(True)
+    
+    # 검증 지표 그래프
+    if val_metrics_history:
+        plt.subplot(1, 2, 2)
+        epochs_with_val = [i * validation_interval for i in range(1, len(val_metrics_history)+1)]
+        plt.plot(epochs_with_val, [m['MAP'] for m in val_metrics_history], 'b-', label='MAP@10')
+        plt.plot(epochs_with_val, [m['Recall'] for m in val_metrics_history], 'r-', label='Recall@10')
+        plt.plot(epochs_with_val, [m['NDCG'] for m in val_metrics_history], 'g-', label='NDCG@10')
+        plt.xlabel('Epoch')
+        plt.ylabel('Validation Metrics')
+        plt.title('BPR Model Validation Performance')
+        plt.legend()
+        plt.grid(True)
+    
+    # 손실 그래프 저장
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    plt.savefig(os.path.join(output_dir, "bpr_training_metrics.png"))
+    
+    # 모델 저장 (버전 관리)
+    if save_model:
+        # 다음 모델 버전 번호 가져오기
+        model_version = get_next_model_version(output_dir)
+        model_filename = f"bpr_model_{model_version}.pt"
+        model_path = os.path.join(output_dir, model_filename)
+        
+        # 최신 모델 정보 포함하여 저장
+        model_info = {
+            'model_state': model.state_dict(),
+            'metadata': dataset.metadata,
+            'embedding_dim': embedding_dim,
+            'user_id_map': dataset.user_id_map,
+            'business_id_map': dataset.business_id_map,
+            'timestamp': datetime.now().isoformat(),
+            'version': model_version,
+            'learning_rate': learning_rate,
+            'weight_decay': weight_decay,
+            'batch_size': batch_size,
+            'epochs_trained': len(train_losses),
+            'final_loss': train_losses[-1],
+            'best_epoch': best_epoch,
+            'best_val_ndcg': best_val_ndcg,
+            'validation_metrics_history': val_metrics_history
+        }
+        torch.save(model_info, model_path)
+        print(f"Model saved (Version {model_version}): {model_path}")
+        
+        # 최신 모델 심볼릭 링크 생성 (항상 최신 모델을 가리키도록)
+        latest_model_path = os.path.join(output_dir, "bpr_model_latest.pt")
+        torch.save(model_info, latest_model_path)
+        print(f"Latest model link updated: {latest_model_path}")
+    
+    return model, dataset, model_version if save_model else None, user_interactions
+
+
+# 5. 모델 평가 지표 및 추천 생성
+def evaluate_and_recommend(
+    model,
+    dataset,
+    top_k=10,
+    num_users=None,
+    device="cuda" if torch.cuda.is_available() else "cpu"
+):
+    """
+    모델 평가 및 추천 생성
+    
+    Args:
+        model: 학습된 BPR 모델
+        dataset: BPR 데이터셋
+        top_k: 추천할 아이템 수
+        num_users: 평가할 사용자 수 (None이면 모든 사용자)
+    """
+    model.eval()
+    model = model.to(device)
+    
+    # 평가할 사용자 선택
+    unique_users = np.unique(dataset.data[:, 0])
+    if num_users is not None and num_users < len(unique_users):
+        sample_users = np.random.choice(unique_users, num_users, replace=False)
+    else:
+        sample_users = unique_users
+    
+    print(f"\n{len(sample_users)}명의 사용자에 대한 추천 생성 중...")
+    
+    # 추천 결과 저장
+    recommendations = {}
+    
+    with torch.no_grad():
+        for user_idx in sample_users:
+            # 사용자의 긍정적 아이템 (이미 상호작용한 아이템)
+            user_positives = dataset.pos_samples[dataset.pos_samples[:, 0] == user_idx][:, 1]
+            
+            # 사용자에 대한 모든 아이템 점수 예측
+            user_tensor = torch.tensor([user_idx], dtype=torch.long, device=device)
+            scores = model.predict(user_idx)
+            
+            # 이미 상호작용한 아이템 마스킹 (추천에서 제외)
+            scores = scores.cpu().numpy()
+            scores[user_positives] = -np.inf
+            
+            # Top-K 아이템 추출
+            top_items = np.argsort(-scores)[:top_k]
+            
+            # 아이템 ID와 점수 저장
+            recommendations[int(user_idx)] = [
+                (int(item_idx), float(scores[item_idx])) for item_idx in top_items
+            ]
+    
+    # 결과 예시 출력
+    print("\n추천 예시:")
+    for i, (user_idx, items) in enumerate(list(recommendations.items())[:3]):
+        original_user_id = None
+        if dataset.user_id_map and 'idx_to_id' in dataset.user_id_map:
+            original_user_id = dataset.user_id_map['idx_to_id'].get(str(user_idx), user_idx)
+        
+        print(f"사용자 {user_idx} (원본 ID: {original_user_id}):")
+        for j, (item_idx, score) in enumerate(items[:5]):
+            original_item_id = None
+            if dataset.business_id_map and 'idx_to_id' in dataset.business_id_map:
+                original_item_id = dataset.business_id_map['idx_to_id'].get(str(item_idx), item_idx)
+            
+            print(f"  {j+1}. 아이템 {item_idx} (원본 ID: {original_item_id}) - 점수: {score:.4f}")
+    
+    return recommendations
+
+
+# 파일에 있는 evaluate_and_recommend 함수 다음에 아래 코드 추가
+def load_bpr_model(model_path_or_dir, version=None, device="cuda" if torch.cuda.is_available() else "cpu"):
+    """
+    저장된 BPR 모델 로드
+    
+    Args:
+        model_path_or_dir: 모델 파일 경로 또는 모델 디렉토리
+        version: 로드할 모델 버전 (None이면 최신 버전 또는 지정된 경로 사용)
+        device: 로드할 장치
+    
+    Returns:
+        model: 로드된 BPR 모델
+        model_info: 모델 메타데이터
+    """
+    if os.path.isdir(model_path_or_dir):
+        # 디렉토리가 제공된 경우
+        if version is None:
+            # 최신 버전 찾기
+            model_path = os.path.join(model_path_or_dir, "bpr_model_latest.pt")
+            if not os.path.exists(model_path):
+                # latest 링크가 없는 경우 가장 높은 버전 찾기
+                next_version = get_next_model_version(model_path_or_dir) - 1
+                if next_version < 1:
+                    raise FileNotFoundError(f"모델 디렉토리에 모델 파일이 없음: {model_path_or_dir}")
+                model_path = os.path.join(model_path_or_dir, f"bpr_model_{next_version}.pt")
+        else:
+            # 특정 버전 로드
+            model_path = os.path.join(model_path_or_dir, f"bpr_model_{version}.pt")
+    else:
+        # 파일 경로가 직접 제공된 경우
+        model_path = model_path_or_dir
+    
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"모델 파일을 찾을 수 없음: {model_path}")
+    
+    # 모델 정보 로드
+    model_info = torch.load(model_path, map_location=device)
+    
+    # 모델 파라미터 추출
+    num_users = model_info['metadata'].get('num_users', 0)
+    num_items = model_info['metadata'].get('num_businesses', 0)
+    embedding_dim = model_info.get('embedding_dim', 128)
+    
+    # 모델 초기화 및 가중치 로드
+    model = BPRModel(num_users, num_items, embedding_dim)
+    model.load_state_dict(model_info['model_state'])
+    model = model.to(device)
+    model.eval()  # 평가 모드로 설정
+    
+    # 모델 버전 정보
+    version_info = f"(버전 {model_info.get('version', '알 수 없음')})" if 'version' in model_info else ""
+    
+    print(f"BPR 모델 로드 완료: {model_path} {version_info}")
+    print(f"- 사용자 수: {num_users}")
+    print(f"- 비즈니스 수: {num_items}")
+    print(f"- 임베딩 차원: {embedding_dim}")
+    
+    # 추가 모델 정보 표시
+    if 'learning_rate' in model_info:
+        print(f"- 학습률: {model_info['learning_rate']}")
+    if 'epochs_trained' in model_info:
+        print(f"- 학습 에포크: {model_info['epochs_trained']}")
+    if 'final_loss' in model_info:
+        print(f"- 최종 손실: {model_info['final_loss']:.6f}")
+    if 'timestamp' in model_info:
+        print(f"- 저장 시간: {model_info['timestamp']}")
+    
+    return model, model_info
+
+
+# 6. 메인 함수
+if __name__ == "__main__":
+    # 파일 경로 설정
+    triplet_file = "philly_bpr_triplets.json"
+    output_dir = "./bpr_model"
+    
+    # 현재 실행 환경 정보 출력
+    print("\n" + "="*50)
+    print("Environment Information")
+    print("="*50)
+    print(f"PyTorch version: {torch.__version__}")
+    print(f"CUDA available: {torch.cuda.is_available()}")
+    
+    # CUDA 버전 정보 출력
+    if torch.cuda.is_available():
+        print(f"CUDA version: {torch.version.cuda}")
+        print(f"CUDNN version: {torch.backends.cudnn.version()}")
+        print(f"CUDA device count: {torch.cuda.device_count()}")
+        print(f"Current CUDA device: {torch.cuda.current_device()}")
+        print(f"CUDA device name: {torch.cuda.get_device_name(0)}")
+        
+        # CUDNN 자동 튜너 설정
+        torch.backends.cudnn.benchmark = True
+        print("CUDNN benchmark enabled: Using CUDNN auto-tuner for performance optimization")
+    
+    # GPU 설정 및 최적화
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    
+    if device == 'cuda':
+        print(f"Using GPU {torch.cuda.get_device_name(0)}")
+        batch_size = 4096
+        num_workers = 0
+        pin_memory = True
+    else:
+        print("Using CPU")
+        batch_size = 1024
+        num_workers = 4
+        pin_memory = False
+    
+    # 학습 설정
+    embedding_dim = 128   # 128로 복원
+    learning_rate = 0.005
+    weight_decay = 0.00001  # 0.00001로 복원
+    epochs = 50
+    
+    print(f"\nTraining settings:")
+    print(f"  Device: {device}")
+    print(f"  Batch size: {batch_size}")
+    print(f"  Embedding dimension: {embedding_dim}")
+    print(f"  Learning rate: {learning_rate}")
+    print(f"  Weight decay (regularization): {weight_decay}")
+    print(f"  Epochs: {epochs}")
+    
+    # GPU 호환성 테스트
+    if device == 'cuda':
+        try:
+            print("\nGPU compatibility test...")
+            test_tensor = torch.FloatTensor([1.0, 2.0, 3.0]).to(device)
+            test_result = test_tensor * 2
+            print(f"Test result: {test_result.cpu().numpy()}")
+            
+            # 메모리 테스트
+            print("GPU memory test...")
+            x = torch.rand(1000, 1000).to(device)
+            y = torch.matmul(x, x.t())
+            allocated = torch.cuda.memory_allocated() / 1024**2
+            print(f"Allocated memory: {allocated:.2f} MB")
+            del x, y
+            torch.cuda.empty_cache()
+            
+            print("GPU compatibility test successful!")
+        except Exception as e:
+            print(f"GPU compatibility test failed: {str(e)}")
+            print("Switching to CPU.")
+            device = "cpu"
+            batch_size = 1024
+            num_workers = 4
+            pin_memory = False
+    
+    # 데이터로더 설정 파라미터
+    dataloader_params = {
+        'batch_size': batch_size,
+        'shuffle': True,
+        'num_workers': num_workers,
+        'pin_memory': pin_memory,
+        'drop_last': True  # 마지막 불완전한 배치 무시 (성능 향상)
+    }
+    
+    # 기존 모델 로드 여부 확인
+    latest_model_path = os.path.join(output_dir, "bpr_model_latest.pt")
+    train_model = True  # 기본값: 학습 진행
+    model_version = None
+    
+    # 사용 가능한 모델 버전 표시
+    available_versions = []
+    if os.path.exists(output_dir):
+        model_files = [f for f in os.listdir(output_dir) if f.startswith('bpr_model_') and f.endswith('.pt')]
+        for file in model_files:
+            try:
+                if file != "bpr_model_latest.pt":
+                    version_str = file.replace('bpr_model_', '').replace('.pt', '')
+                    version = int(version_str)
+                    available_versions.append(version)
+            except ValueError:
+                continue
+    
+    if available_versions:
+        available_versions.sort(reverse=True)
+        print(f"\nAvailable model versions: {available_versions}")
+    
+    if os.path.exists(latest_model_path):
+        print(f"\nExisting model found: {latest_model_path}")
+        use_model = input("Use existing model? (y/n): ")
+        
+        if use_model.lower() == 'y':
+            train_model = False
+            
+            # 기존 모델 버전 선택 여부
+            if len(available_versions) > 1:
+                select_version = input(f"Use specific version? Available versions: {available_versions} (y/n): ")
+                if select_version.lower() == 'y':
+                    while True:
+                        try:
+                            version_input = input("Enter version number: ")
+                            model_version = int(version_input)
+                            if model_version in available_versions:
+                                break
+                            else:
+                                print(f"Invalid version number. Available versions: {available_versions}")
+                        except ValueError:
+                            print("Please enter a number.")
+            
+            # 모델 로드
+            model, model_info = load_bpr_model(output_dir, version=model_version, device=device)
+            
+            # 데이터셋 로드 (평가 위해)
+            dataset = BPRDataset(triplet_file)
+            
+            # 데이터셋 분할 (기존 모델 사용 시에도 평가를 위해)
+            user_interactions = split_dataset(dataset, train_ratio=0.6, val_ratio=0.2, test_ratio=0.2, min_interactions=3)
+        else:
+            print("Training new model.")
+    
+    # 모델 학습
+    if train_model:
+        model, dataset, model_version, user_interactions = train_bpr_model(
+            triplet_file, 
+            output_dir, 
+            embedding_dim,
+            learning_rate,
+            weight_decay,
+            batch_size,
+            epochs,
+            validation_interval=1,  # 매 에포크마다 검증
+            device=device,
+            verbose=True,
+            save_model=True,
+            dataloader_params=dataloader_params
+        )
+    
+    # 성능 평가 (테스트 세트 사용)
+    print("\nFinal performance evaluation on test set...")
+    
+    # 테스트 성능 평가
+    metrics_k10 = evaluate_test_set(model, user_interactions, top_k=10, device=device)
+    
+    # 추천 생성 예시
+    recommendations = evaluate_and_recommend(
+        model, 
+        dataset, 
+        top_k=10, 
+        num_users=5,
+        device=device
+    )
+    
+    print("\nTraining and recommendation generation completed!")
+    
+    # 모델 정보
+    print("\nModel information:")
+    print(f"- Model version: {model_version}")
+    print(f"- Embedding dimension: {embedding_dim}")
+    print(f"- Training device: {device}")
+    print(f"- Batch size: {batch_size}")
+    print(f"- Regularization: {weight_decay}")
+    
+    # 학습 시간 비교 정보 추가
+    if 'train_losses' in train_bpr_model.__globals__ and train_model:
+        final_loss = train_bpr_model.__globals__['train_losses'][-1]
+        print(f"- Final loss: {final_loss:.6f}")
+    
+    # 테스트 성능 지표 요약
+    print("\nTest performance metrics:")
+    for metric, value in metrics_k10.items():
+        print(f"- {metric}: {value:.4f}")
+    
+    print("\nTraining logs and graphs: bpr_training_metrics.png") 
