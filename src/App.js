@@ -8,13 +8,15 @@ import Header from './components/Header';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import './App.scss';
 import { categoriesData } from './data/categoriesData';
+import WishlistPage from './pages/WishlistPage';
 
 const theme = createTheme({
   palette: {
     primary: { main: '#ff1150' },
     secondary: { main: '#ff6f61' },
   },
-  typography: { fontFamily: 'Noto Sans KR, sans-serif' },
+  typography: { fontFamily: `'Pretendard', sans-serif` },
+  
   components: {
     MuiButton: {
       styleOverrides: {
@@ -63,6 +65,7 @@ function App() {
               />
             }
           />
+          <Route path="/wishlist" element={<WishlistPage />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

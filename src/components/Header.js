@@ -25,7 +25,7 @@ import CottageIcon from '@mui/icons-material/Cottage';
 import ParkIcon from '@mui/icons-material/Park';
 import './Header.scss';
 
-const Header = ({ onSelectCategory = () => {} }) => {
+const Header = ({ onSelectCategory = () => { } }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -113,7 +113,14 @@ const Header = ({ onSelectCategory = () => {} }) => {
             <IconButton edge="start" className="header__icon-button" onClick={toggleDrawer(true)}>
               <MenuIcon />
             </IconButton>
-            <Typography variant="h6" className="header__logo">부산 투어</Typography>
+            <Typography
+              variant="h4"
+              className="header__logo"
+              onClick={() => navigate('/')}
+              sx={{ fontFamily: 'Jua' }}
+            >
+              부산 투어
+            </Typography>
           </Box>
           <Box className="header__center" sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
             <TextField
@@ -132,7 +139,12 @@ const Header = ({ onSelectCategory = () => {} }) => {
           </Box>
           <Box className="header__right">
             <IconButton className="header__icon-button"><PublicIcon /></IconButton>
-            <IconButton className="header__icon-button"><FavoriteBorderIcon /></IconButton>
+            <IconButton
+              className="header__icon-button"
+              onClick={() => navigate('/wishlist')}
+            >
+              <FavoriteBorderIcon />
+            </IconButton>
             <IconButton className="header__icon-button"><PersonOutlineIcon /></IconButton>
           </Box>
         </Toolbar>
