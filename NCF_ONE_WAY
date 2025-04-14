@@ -41,17 +41,19 @@ neg_samples = data[data[:, 2] == 0]
 n_users = int(data[:, 0].max() + 1)
 n_items = int(data[:, 1].max() + 1)
 
-print(f"유저 수: {n_users}, 아이템 수: {n_items}")
-print(f"긍정 샘플 수: {len(pos_samples)}, 부정 샘플 수: {len(neg_samples)}")
-print(f"긍정:부정 비율 = 1:{len(neg_samples) / len(pos_samples):.1f}")
+print(f"Number of users: {n_users}, Number of items: {n_items}")
+print(f"Positive samples: {len(pos_samples)}, Negative samples: {len(neg_samples)}")
+print(f"Pos:Neg ratio = 1:{len(neg_samples) / len(pos_samples):.1f}")
 
-# 데이터 분할: 학습(70%), 검증(10%), 테스트(20%)
+# 데이터 분할: 학습(60%), 검증(20%), 테스트(20%)
 # 먼저 학습+검증 vs 테스트 분할
 train_val_data, test_data = train_test_split(data, test_size=0.2, random_state=42)
-# 다음으로 학습 vs 검증 분할
-train_data, val_data = train_test_split(train_val_data, test_size=0.125, random_state=42)  # 0.125 = 10/80
+# 다음으로 학습 vs 검증 분할 (0.25 = 20/80)
+train_data, val_data = train_test_split(train_val_data, test_size=0.25, random_state=42)
 
-print(f"학습 데이터: {len(train_data)}, 검증 데이터: {len(val_data)}, 테스트 데이터: {len(test_data)}")
+print(f"Training data: {len(train_data)}, Validation data: {len(val_data)}, Test data: {len(test_data)}")
+print(
+    f"Split ratio - Train: {len(train_data) / len(data):.1%}, Val: {len(val_data) / len(data):.1%}, Test: {len(test_data) / len(data):.1%}")
 
 
 # ----------- 2. Dataset 정의 ----------- #
@@ -64,7 +66,7 @@ class InteractionDataset(Dataset):
 
         # 긍정:부정 샘플 비율 계산
         self.pos_weight = len(self.neg_samples) / len(self.pos_samples) if len(self.pos_samples) > 0 else 1.0
-        print(f"데이터셋 가중치 (긍정:부정 = 1:{self.pos_weight:.1f})")
+        print(f"Dataset weight (Pos:Neg = 1:{self.pos_weight:.1f})")
 
     def __len__(self):
         return len(self.data)
@@ -374,95 +376,196 @@ def train(model, train_loader, optimizer, criterion, device):
 def save_model(model, path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     torch.save(model.state_dict(), path)
-    print(f"모델 저장 완료: {path}")
+    print(f"Model saved: {path}")
 
 
 def load_model(model, path):
     model.load_state_dict(torch.load(path))
-    print(f"모델 로드 완료: {path}")
+    print(f"Model loaded: {path}")
     return model
 
 
-# ----------- 8. 학습 그래프 그리기 함수 ----------- #
-def plot_metrics(train_metrics, val_metrics, metric_name, title, filename):
-    plt.figure(figsize=(10, 6))
-    plt.plot(train_metrics, label=f'Train {metric_name}')
-    plt.plot(val_metrics, label=f'Validation {metric_name}')
-    plt.xlabel('Epochs')
-    plt.ylabel(metric_name)
-    plt.title(title)
-    plt.legend()
-    plt.grid(True)
+# ----------- 8. 종합 학습 그래프 그리기 함수 ----------- #
+def plot_comprehensive_metrics(train_metrics_dict, val_metrics_dict, model_name, filename):
+    plt.figure(figsize=(16, 12))
+
+    # 지표 이름과 색상 정의
+    metrics = {
+        'loss': {'color': 'tab:blue', 'linestyle': '-', 'marker': 'o', 'name': 'Loss'},
+        'accuracy': {'color': 'tab:green', 'linestyle': '-', 'marker': 's', 'name': 'Accuracy'},
+        'pos_accuracy': {'color': 'tab:red', 'linestyle': '-', 'marker': '^', 'name': 'Pos. Accuracy'},
+        'neg_accuracy': {'color': 'tab:purple', 'linestyle': '-', 'marker': 'D', 'name': 'Neg. Accuracy'}
+    }
+
+    epochs = range(1, len(train_metrics_dict['loss']) + 1)
+
+    # 두 개의 y축 생성 (왼쪽: 손실, 오른쪽: 정확도)
+    fig, ax1 = plt.subplots(figsize=(16, 10))
+    ax2 = ax1.twinx()
+
+    # 손실 축 (왼쪽)
+    ax1.set_xlabel('Epochs', fontsize=14)
+    ax1.set_ylabel('Loss', fontsize=14, color='tab:blue')
+    ax1.tick_params(axis='y', labelcolor='tab:blue')
+    ax1.grid(True, linestyle='--', alpha=0.3, which='both')
+
+    # 정확도 축 (오른쪽)
+    ax2.set_ylabel('Accuracy', fontsize=14, color='tab:green')
+    ax2.tick_params(axis='y', labelcolor='tab:green')
+
+    # 선 간격 조정
+    line_offset = 0.02
+
+    # 각 지표 플로팅
+    lines = []
+    for i, (metric, props) in enumerate(metrics.items()):
+        if metric == 'loss':
+            # 손실 - 왼쪽 축 사용
+            ln1, = ax1.plot(epochs, train_metrics_dict[metric],
+                            color=props['color'], linestyle=props['linestyle'], marker=props['marker'],
+                            markersize=8, linewidth=2, label=f"Train {props['name']}", alpha=0.7)
+            ln2, = ax1.plot(epochs, val_metrics_dict[metric],
+                            color=props['color'], linestyle='--', marker=props['marker'],
+                            markersize=8, linewidth=2, label=f"Val {props['name']}", alpha=1.0)
+            lines.extend([ln1, ln2])
+
+            # 최적 손실 포인트 표시
+            best_val_epoch = val_metrics_dict[metric].index(min(val_metrics_dict[metric])) + 1
+            best_val_value = min(val_metrics_dict[metric])
+            ax1.plot(best_val_epoch, best_val_value, 'o', color='tab:blue', markersize=12, fillstyle='none')
+            ax1.annotate(f'Best: {best_val_value:.4f}',
+                         xy=(best_val_epoch, best_val_value),
+                         xytext=(best_val_epoch + 0.3, best_val_value + 0.01),
+                         fontsize=12, color='tab:blue')
+        else:
+            # 정확도 지표 - 오른쪽 축 사용
+            offset = (i - 1) * line_offset
+            ln1, = ax2.plot(epochs, [x + offset for x in train_metrics_dict[metric]],
+                            color=props['color'], linestyle=props['linestyle'], marker=props['marker'],
+                            markersize=8, linewidth=2, label=f"Train {props['name']}", alpha=0.7)
+            ln2, = ax2.plot(epochs, [x + offset for x in val_metrics_dict[metric]],
+                            color=props['color'], linestyle='--', marker=props['marker'],
+                            markersize=8, linewidth=2, label=f"Val {props['name']}", alpha=1.0)
+            lines.extend([ln1, ln2])
+
+            # 최적 정확도 포인트 표시 (최댓값)
+            best_val_epoch = val_metrics_dict[metric].index(max(val_metrics_dict[metric])) + 1
+            best_val_value = max(val_metrics_dict[metric])
+            ax2.plot(best_val_epoch, best_val_value + offset, 'o', color=props['color'], markersize=12,
+                     fillstyle='none')
+            ax2.annotate(f'Best: {best_val_value:.4f}',
+                         xy=(best_val_epoch, best_val_value + offset),
+                         xytext=(best_val_epoch + 0.3, best_val_value + offset + 0.01),
+                         fontsize=12, color=props['color'])
+
+    # 축 범위 설정
+    loss_min = min(min(train_metrics_dict['loss']), min(val_metrics_dict['loss']))
+    loss_max = max(max(train_metrics_dict['loss']), max(val_metrics_dict['loss']))
+    loss_margin = (loss_max - loss_min) * 0.1
+    ax1.set_ylim(loss_min - loss_margin, loss_max + loss_margin)
+
+    acc_min = min([min(train_metrics_dict[k]) for k in ['accuracy', 'pos_accuracy', 'neg_accuracy']] +
+                  [min(val_metrics_dict[k]) for k in ['accuracy', 'pos_accuracy', 'neg_accuracy']])
+    acc_max = max([max(train_metrics_dict[k]) for k in ['accuracy', 'pos_accuracy', 'neg_accuracy']] +
+                  [max(val_metrics_dict[k]) for k in ['accuracy', 'pos_accuracy', 'neg_accuracy']])
+    acc_margin = (acc_max - acc_min) * 0.2
+    ax2.set_ylim(acc_min - acc_margin, acc_max + acc_margin + 3 * line_offset)
+
+    # 타이틀 및 레전드 설정
+    plt.title(f'{model_name} - Comprehensive Training Metrics', fontsize=16, fontweight='bold')
+
+    # 레전드 통합
+    labels = [l.get_label() for l in lines]
+    ax1.legend(lines, labels, loc='lower center', bbox_to_anchor=(0.5, -0.15),
+               ncol=4, fontsize=12, frameon=True, facecolor='white', edgecolor='gray')
+
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.15)  # 레전드 공간 확보
+
+    # 폴더 생성 및 저장
     os.makedirs('plots', exist_ok=True)
-    plt.savefig(f'plots/{filename}.png')
+    plt.savefig(f'plots/{filename}.png', dpi=300, bbox_inches='tight')
+    print(f"Comprehensive graph saved: plots/{filename}.png")
     plt.close()
 
 
 # ----------- 9. 모델별 학습 함수 (GMF, MLP, NeuMF) ----------- #
-# 이 함수들은 별도의 파일로 분리할 수 있습니다
 def train_gmf_model(n_users, n_items, factor_num, device, train_dataloader, val_dataloader, n_epochs):
-    print("\n===== GMF 모델 학습 =====")
+    print("\n===== Training GMF Model =====")
     model_path = 'models/gmf_model.pth'
     best_model_path = 'models/gmf_model_best.pth'
 
     # 모델 초기화
     model = GMF(n_users, n_items, factor_num).to(device)
+    print(f"GMF model parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")
 
     # 손실 함수 - 가중치 조정 (불균형 보정)
-    # 실제 비율보다 낮게 설정하여 과도한 편향 방지
     pos_weight_value = min(train_dataset.pos_weight, 3.0)  # 상한선 설정
     pos_weight = torch.tensor([pos_weight_value]).to(device)
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    print(f"Loss function: BCEWithLogitsLoss (positive weight: {pos_weight_value:.2f})")
 
-    # L2 정규화 추가 (weight_decay 파라미터)
+    # 최적화기 설정
     optimizer = optim.Adam(model.parameters(), lr=0.0005, weight_decay=0.00001)
-
-    # 학습률 스케줄러 추가 (성능 정체 시 학습률 감소)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3, verbose=True)
 
     # 학습 추적을 위한 지표
-    train_losses = []
-    val_losses = []
-    train_accuracies = []
-    val_accuracies = []
+    train_metrics = {'loss': [], 'accuracy': [], 'pos_accuracy': [], 'neg_accuracy': []}
+    val_metrics = {'loss': [], 'accuracy': [], 'pos_accuracy': [], 'neg_accuracy': []}
 
     best_val_loss = float('inf')
+    best_epoch = 0
+    no_improve = 0
+    patience = 5
+
+    print(
+        f"\n{'Epoch':^6} | {'Train Loss':^10} | {'Val Loss':^10} | {'Train Acc':^10} | {'Val Acc':^10} | {'Val Pos Acc':^12} | {'Val Neg Acc':^12}")
+    print('-' * 82)
 
     for epoch in range(1, n_epochs + 1):
         # 훈련
         train_loss = train(model, train_dataloader, optimizer, criterion, device)
 
         # 검증
-        train_metrics = evaluate(model, train_dataloader, criterion, device)
-        val_metrics = evaluate(model, val_dataloader, criterion, device)
+        train_results = evaluate(model, train_dataloader, criterion, device)
+        val_results = evaluate(model, val_dataloader, criterion, device)
 
         # 지표 저장
-        train_losses.append(train_metrics['loss'])
-        val_losses.append(val_metrics['loss'])
-        train_accuracies.append(train_metrics['accuracy'])
-        val_accuracies.append(val_metrics['accuracy'])
+        for metric in ['loss', 'accuracy', 'pos_accuracy', 'neg_accuracy']:
+            train_metrics[metric].append(train_results[metric])
+            val_metrics[metric].append(val_results[metric])
 
         # 결과 출력
-        print(f'GMF 에포크 {epoch}/{n_epochs}:')
-        print(f'  훈련 - 손실: {train_metrics["loss"]:.6f}, 정확도: {train_metrics["accuracy"]:.4f}')
-        print(f'  검증 - 손실: {val_metrics["loss"]:.6f}, 정확도: {val_metrics["accuracy"]:.4f}')
-        print(f'  긍정 정확도: {val_metrics["pos_accuracy"]:.4f}, 부정 정확도: {val_metrics["neg_accuracy"]:.4f}')
+        print(
+            f"\n{'Epoch':^6} | {'Train Loss':^10} | {'Val Loss':^10} | {'Train Acc':^10} | {'Val Acc':^10} | {'Val Pos Acc':^12} | {'Val Neg Acc':^12}")
+        print('-' * 82)
+        print(
+            f"{epoch:6d} | {train_results['loss']:10.6f} | {val_results['loss']:10.6f} | {train_results['accuracy']:10.4f} | {val_results['accuracy']:10.4f} | {val_results['pos_accuracy']:12.4f} | {val_results['neg_accuracy']:12.4f}")
 
         # 최고 모델 저장
-        if val_metrics['loss'] < best_val_loss:
-            best_val_loss = val_metrics['loss']
+        if val_results['loss'] < best_val_loss:
+            best_val_loss = val_results['loss']
+            best_epoch = epoch
+            no_improve = 0
             save_model(model, best_model_path)
-            print(f'  새로운 최고 모델 저장! (검증 손실: {best_val_loss:.6f})')
+            print(f"  [Improved] New best model saved! (Val Loss: {best_val_loss:.6f})")
+        else:
+            no_improve += 1
+            if no_improve >= patience:
+                print(f"\nEarly stopping after {patience} epochs without improvement.")
+                print(f"Best epoch: {best_epoch}, Best validation loss: {best_val_loss:.6f}")
+                break
 
         # 학습률 스케줄러 업데이트
-        scheduler.step(val_metrics['loss'])
+        scheduler.step(val_results['loss'])
 
     # 마지막 모델 저장
     save_model(model, model_path)
 
-    # 그래프 그리기
-    plot_metrics(train_losses, val_losses, 'Loss', 'GMF Model - Loss per Epoch', 'gmf_loss')
-    plot_metrics(train_accuracies, val_accuracies, 'Accuracy', 'GMF Model - Accuracy per Epoch', 'gmf_accuracy')
+    print(f"\nGMF model training completed! Best epoch: {best_epoch}, Best val loss: {best_val_loss:.6f}")
+
+    # 종합 그래프 그리기
+    plot_comprehensive_metrics(train_metrics, val_metrics, 'GMF Model', 'gmf_comprehensive')
 
     # 최고 모델 로드
     model = load_model(model, best_model_path)
@@ -472,67 +575,81 @@ def train_gmf_model(n_users, n_items, factor_num, device, train_dataloader, val_
 
 def train_mlp_model(n_users, n_items, factor_num, num_layers, dropout, device, train_dataloader, val_dataloader,
                     n_epochs):
-    print("\n===== MLP 모델 학습 =====")
+    print("\n===== Training MLP Model =====")
     model_path = 'models/mlp_model.pth'
     best_model_path = 'models/mlp_model_best.pth'
 
-    # 모델 초기화 (드롭아웃 비율 증가)
-    dropout = 0.7  # 드롭아웃 비율 증가 (과적합 방지)
+    # 모델 초기화
     model = MLP(n_users, n_items, factor_num, num_layers, dropout).to(device)
+    print(f"MLP model parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")
 
     # 손실 함수 및 불균형 처리 개선
-    # 불균형 가중치에 로그 스케일 적용하여 극단적 가중치 완화
     pos_weight_value = math.log(1 + train_dataset.pos_weight) * 2
     pos_weight = torch.tensor([pos_weight_value]).to(device)
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    print(f"Loss function: BCEWithLogitsLoss (positive weight: {pos_weight_value:.2f})")
 
-    # L2 정규화 추가 및 학습률 감소
+    # 최적화기 설정
     optimizer = optim.Adam(model.parameters(), lr=0.0003, weight_decay=0.0001)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3, verbose=True)
 
     # 학습 추적을 위한 지표
-    train_losses = []
-    val_losses = []
-    train_accuracies = []
-    val_accuracies = []
+    train_metrics = {'loss': [], 'accuracy': [], 'pos_accuracy': [], 'neg_accuracy': []}
+    val_metrics = {'loss': [], 'accuracy': [], 'pos_accuracy': [], 'neg_accuracy': []}
 
     best_val_loss = float('inf')
+    best_epoch = 0
+    no_improve = 0
+    patience = 5
+
+    print(
+        f"\n{'Epoch':^6} | {'Train Loss':^10} | {'Val Loss':^10} | {'Train Acc':^10} | {'Val Acc':^10} | {'Val Pos Acc':^12} | {'Val Neg Acc':^12}")
+    print('-' * 82)
 
     for epoch in range(1, n_epochs + 1):
         # 훈련
         train_loss = train(model, train_dataloader, optimizer, criterion, device)
 
         # 검증
-        train_metrics = evaluate(model, train_dataloader, criterion, device)
-        val_metrics = evaluate(model, val_dataloader, criterion, device)
+        train_results = evaluate(model, train_dataloader, criterion, device)
+        val_results = evaluate(model, val_dataloader, criterion, device)
 
         # 지표 저장
-        train_losses.append(train_metrics['loss'])
-        val_losses.append(val_metrics['loss'])
-        train_accuracies.append(train_metrics['accuracy'])
-        val_accuracies.append(val_metrics['accuracy'])
+        for metric in ['loss', 'accuracy', 'pos_accuracy', 'neg_accuracy']:
+            train_metrics[metric].append(train_results[metric])
+            val_metrics[metric].append(val_results[metric])
 
         # 결과 출력
-        print(f'MLP 에포크 {epoch}/{n_epochs}:')
-        print(f'  훈련 - 손실: {train_metrics["loss"]:.6f}, 정확도: {train_metrics["accuracy"]:.4f}')
-        print(f'  검증 - 손실: {val_metrics["loss"]:.6f}, 정확도: {val_metrics["accuracy"]:.4f}')
-        print(f'  긍정 정확도: {val_metrics["pos_accuracy"]:.4f}, 부정 정확도: {val_metrics["neg_accuracy"]:.4f}')
+        print(
+            f"\n{'Epoch':^6} | {'Train Loss':^10} | {'Val Loss':^10} | {'Train Acc':^10} | {'Val Acc':^10} | {'Val Pos Acc':^12} | {'Val Neg Acc':^12}")
+        print('-' * 82)
+        print(
+            f"{epoch:6d} | {train_results['loss']:10.6f} | {val_results['loss']:10.6f} | {train_results['accuracy']:10.4f} | {val_results['accuracy']:10.4f} | {val_results['pos_accuracy']:12.4f} | {val_results['neg_accuracy']:12.4f}")
 
         # 최고 모델 저장
-        if val_metrics['loss'] < best_val_loss:
-            best_val_loss = val_metrics['loss']
+        if val_results['loss'] < best_val_loss:
+            best_val_loss = val_results['loss']
+            best_epoch = epoch
+            no_improve = 0
             save_model(model, best_model_path)
-            print(f'  새로운 최고 모델 저장! (검증 손실: {best_val_loss:.6f})')
+            print(f"  [Improved] New best model saved! (Val Loss: {best_val_loss:.6f})")
+        else:
+            no_improve += 1
+            if no_improve >= patience:
+                print(f"\nEarly stopping after {patience} epochs without improvement.")
+                print(f"Best epoch: {best_epoch}, Best validation loss: {best_val_loss:.6f}")
+                break
 
-        # 검증 후 스케줄러 업데이트 추가
-        scheduler.step(val_metrics['loss'])
+        # 학습률 스케줄러 업데이트
+        scheduler.step(val_results['loss'])
 
     # 마지막 모델 저장
     save_model(model, model_path)
 
-    # 그래프 그리기
-    plot_metrics(train_losses, val_losses, 'Loss', 'MLP Model - Loss per Epoch', 'mlp_loss')
-    plot_metrics(train_accuracies, val_accuracies, 'Accuracy', 'MLP Model - Accuracy per Epoch', 'mlp_accuracy')
+    print(f"\nMLP model training completed! Best epoch: {best_epoch}, Best val loss: {best_val_loss:.6f}")
+
+    # 종합 그래프 그리기
+    plot_comprehensive_metrics(train_metrics, val_metrics, 'MLP Model', 'mlp_comprehensive')
 
     # 최고 모델 로드
     model = load_model(model, best_model_path)
@@ -542,64 +659,85 @@ def train_mlp_model(n_users, n_items, factor_num, num_layers, dropout, device, t
 
 def train_neumf_model(n_users, n_items, factor_num, num_layers, dropout, alpha, device,
                       train_dataloader, val_dataloader, gmf_model, mlp_model, n_epochs):
-    print("\n===== NeuMF 모델 학습 (사전 학습 가중치 사용) =====")
+    print("\n===== Training NeuMF Model (with pre-trained weights) =====")
     model_path = 'models/neumf_model.pth'
     best_model_path = 'models/neumf_model_best.pth'
 
     # 모델 초기화
     model = NeuMF(n_users, n_items, factor_num, num_layers, dropout, alpha).to(device)
+    print(f"NeuMF model parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")
 
     # 사전 학습된 가중치 로드
     model.load_pretrained(gmf_model, mlp_model)
+    print("Pre-trained weights loaded successfully")
 
-    # 손실 함수 - 이진 교차 엔트로피
-    # pos_weight 파라미터를 사용하여 클래스 불균형 처리
-    pos_weight = torch.tensor([train_dataset.pos_weight]).to(device)
+    # 손실 함수
+    pos_weight_value = train_dataset.pos_weight
+    pos_weight = torch.tensor([pos_weight_value]).to(device)
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    print(f"Loss function: BCEWithLogitsLoss (positive weight: {pos_weight_value:.2f})")
 
-    # SGD 옵티마이저 사용 (논문 요구사항)
+    # 최적화기 설정
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3, verbose=True)
 
     # 학습 추적을 위한 지표
-    train_losses = []
-    val_losses = []
-    train_accuracies = []
-    val_accuracies = []
+    train_metrics = {'loss': [], 'accuracy': [], 'pos_accuracy': [], 'neg_accuracy': []}
+    val_metrics = {'loss': [], 'accuracy': [], 'pos_accuracy': [], 'neg_accuracy': []}
 
     best_val_loss = float('inf')
+    best_epoch = 0
+    no_improve = 0
+    patience = 5
+
+    print(
+        f"\n{'Epoch':^6} | {'Train Loss':^10} | {'Val Loss':^10} | {'Train Acc':^10} | {'Val Acc':^10} | {'Val Pos Acc':^12} | {'Val Neg Acc':^12}")
+    print('-' * 82)
 
     for epoch in range(1, n_epochs + 1):
         # 훈련
         train_loss = train(model, train_dataloader, optimizer, criterion, device)
 
         # 검증
-        train_metrics = evaluate(model, train_dataloader, criterion, device)
-        val_metrics = evaluate(model, val_dataloader, criterion, device)
+        train_results = evaluate(model, train_dataloader, criterion, device)
+        val_results = evaluate(model, val_dataloader, criterion, device)
 
         # 지표 저장
-        train_losses.append(train_metrics['loss'])
-        val_losses.append(val_metrics['loss'])
-        train_accuracies.append(train_metrics['accuracy'])
-        val_accuracies.append(val_metrics['accuracy'])
+        for metric in ['loss', 'accuracy', 'pos_accuracy', 'neg_accuracy']:
+            train_metrics[metric].append(train_results[metric])
+            val_metrics[metric].append(val_results[metric])
 
         # 결과 출력
-        print(f'NeuMF 에포크 {epoch}/{n_epochs}:')
-        print(f'  훈련 - 손실: {train_metrics["loss"]:.6f}, 정확도: {train_metrics["accuracy"]:.4f}')
-        print(f'  검증 - 손실: {val_metrics["loss"]:.6f}, 정확도: {val_metrics["accuracy"]:.4f}')
-        print(f'  긍정 정확도: {val_metrics["pos_accuracy"]:.4f}, 부정 정확도: {val_metrics["neg_accuracy"]:.4f}')
+        print(
+            f"\n{'Epoch':^6} | {'Train Loss':^10} | {'Val Loss':^10} | {'Train Acc':^10} | {'Val Acc':^10} | {'Val Pos Acc':^12} | {'Val Neg Acc':^12}")
+        print('-' * 82)
+        print(
+            f"{epoch:6d} | {train_results['loss']:10.6f} | {val_results['loss']:10.6f} | {train_results['accuracy']:10.4f} | {val_results['accuracy']:10.4f} | {val_results['pos_accuracy']:12.4f} | {val_results['neg_accuracy']:12.4f}")
 
         # 최고 모델 저장
-        if val_metrics['loss'] < best_val_loss:
-            best_val_loss = val_metrics['loss']
+        if val_results['loss'] < best_val_loss:
+            best_val_loss = val_results['loss']
+            best_epoch = epoch
+            no_improve = 0
             save_model(model, best_model_path)
-            print(f'  새로운 최고 모델 저장! (검증 손실: {best_val_loss:.6f})')
+            print(f"  [Improved] New best model saved! (Val Loss: {best_val_loss:.6f})")
+        else:
+            no_improve += 1
+            if no_improve >= patience:
+                print(f"\nEarly stopping after {patience} epochs without improvement.")
+                print(f"Best epoch: {best_epoch}, Best validation loss: {best_val_loss:.6f}")
+                break
+
+        # 학습률 스케줄러 업데이트
+        scheduler.step(val_results['loss'])
 
     # 마지막 모델 저장
     save_model(model, model_path)
 
-    # 그래프 그리기
-    plot_metrics(train_losses, val_losses, 'Loss', 'NeuMF Model - Loss per Epoch', 'neumf_loss')
-    plot_metrics(train_accuracies, val_accuracies, 'Accuracy', 'NeuMF Model - Accuracy per Epoch', 'neumf_accuracy')
+    print(f"\nNeuMF model training completed! Best epoch: {best_epoch}, Best val loss: {best_val_loss:.6f}")
+
+    # 종합 그래프 그리기
+    plot_comprehensive_metrics(train_metrics, val_metrics, 'NeuMF Model', 'neumf_comprehensive')
 
     # 최고 모델 로드
     model = load_model(model, best_model_path)
