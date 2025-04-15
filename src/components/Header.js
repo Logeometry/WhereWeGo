@@ -1,8 +1,8 @@
 // src/components/Header.js
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import {
   AppBar, Toolbar, Typography, IconButton, Box, Drawer, List, ListItem,
-  ListItemIcon, ListItemText, Divider, Avatar, TextField, InputAdornment
+  ListItemIcon, ListItemText, Divider, Avatar, TextField, InputAdornment, Button
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
@@ -17,49 +17,55 @@ import CelebrationIcon from '@mui/icons-material/Celebration';
 import CottageIcon from '@mui/icons-material/Cottage';
 import ParkIcon from '@mui/icons-material/Park';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
-import { useNavigate } from 'react-router-dom';
+import CloseIcon from '@mui/icons-material/Close';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './Header.scss';
+import { SearchContext } from '../SearchContext';
 
-const Header = ({ onSelectCategory = () => {} }) => {
+const Header = ({ onSelectCategory = () => { } }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredSpots, setFilteredSpots] = useState([]);
-  const [isFocused, setIsFocused] = useState(false);
-  const [recentSearches, setRecentSearches] = useState(() => {
-    const saved = localStorage.getItem('recentSearches');
-    return saved ? JSON.parse(saved) : ['해운대', '광안리', '감천문화마을'];
-  });
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  
+  const { recentSearches, updateSearches, removeSearch, clearAllSearches } = useContext(SearchContext);
 
-  const handleSearchChange = (e) => {
-  setSearchTerm(e.target.value);
-};
-
-  const performSearch = () => {
-    if (searchTerm.trim()) {
-      setRecentSearches(prev => {
-      const updated = [searchTerm, ...prev.filter(s => s !== searchTerm)].slice(0, 5);
-      localStorage.setItem('recentSearches', JSON.stringify(updated));
-      return updated;
-    });
-    }
+  const handleRemoveSearch = (index) => {
+    removeSearch(index);
   };
 
   const handleSpotSelect = (spot) => {
-    setRecentSearches(prev => {
-      const updated = [spot, ...prev.filter(s => s !== spot)].slice(0, 5);
-      localStorage.setItem('recentSearches', JSON.stringify(updated));
-      return updated;
-    });
+    updateSearches(spot);
     navigate(`/search?query=${encodeURIComponent(spot)}`);
+    setIsDropdownOpen(false);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const performSearch = () => {
+    if (searchTerm.trim()) {
+      updateSearches(searchTerm.trim());
+      navigate(`/search?query=${encodeURIComponent(searchTerm.trim())}`);
+      setSearchTerm('');
+      setIsDropdownOpen(false);
+    }
+  };
+
+  const handleClearAll = () => {
+    clearAllSearches();
   };
 
   const toggleDrawer = (open) => (event) => {
     if (event && event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) return;
     setDrawerOpen(open);
   };
+
+  useEffect(() => {
+    setIsDropdownOpen(false);
+  }, [location.pathname]);
 
   const categoryList = [
     { label: '자연/해변', icon: <TerrainIcon /> },
@@ -78,24 +84,99 @@ const Header = ({ onSelectCategory = () => {} }) => {
     { label: '할인 티켓', icon: <StarBorderIcon /> },
   ];
 
+  const liveKeywords = [
+    '해운대', '광안리', '감천문화마을', '태종대', '자갈치시장',
+    '부산타워', '부산시민공원', '이기대공원', '송정해수욕장', '영도다리'
+  ];
+
+  const renderSearchDropdown = () => {
+    if (!isDropdownOpen) return null;
+    console.log('[Header] Rendering 통합된 검색 드롭다운. Recent searches:', recentSearches, 'Live keywords:', liveKeywords);
+
+    return (
+      <Box sx={{
+        position: 'absolute',
+        top: '40px',
+        width: '600px',
+        backgroundColor: '#fff',
+        border: '1px solid #ccc',
+        borderRadius: 1,
+        boxShadow: 2,
+        zIndex: 1000,
+        color: '#000',
+        maxHeight: '400px',
+        overflowY: 'auto',
+      }}>
+        {recentSearches.length > 0 && (
+          <Box sx={{ p: 1, borderBottom: '1px solid #eee' }}>
+            <Typography fontWeight="bold" fontSize={14} mb={1}>최근 검색어</Typography>
+            {recentSearches.map((spot, i) => (
+              <Box
+                key={`recent-${i}-${spot}`}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => handleSpotSelect(spot)}
+                sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', cursor: 'pointer', '&:hover': { backgroundColor: '#f0f0f0' } }}
+              >
+                <SearchIcon fontSize="small" sx={{ mr: 1 }} />
+                <Typography variant="body2" sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{spot}</Typography>
+                <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleRemoveSearch(i); }} sx={{ ml: 1 }}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            ))}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+              <Button onClick={handleClearAll} size="small">전체삭제</Button>
+            </Box>
+          </Box>
+        )}
+
+        {liveKeywords.length > 0 && (
+          <Box sx={{ p: 1 }}>
+            <Typography fontWeight="bold" fontSize={14} mb={1}>실시간 인기 검색어</Typography>
+            {liveKeywords.map((keyword, index) => (
+              <Box
+                key={`live-${index}-${keyword}`}
+                onClick={() => handleSpotSelect(keyword)}
+                sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', cursor: 'pointer', '&:hover': { backgroundColor: '#f0f0f0' } }}
+              >
+                <Typography variant="body2" sx={{ width: 20 }}>{index + 1}</Typography>
+                <Typography variant="body2" sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ml: 1 }}>{keyword}</Typography>
+                <Typography variant="body2" sx={{ color: index % 2 === 0 ? 'red' : 'blue', ml: 1 }}>
+                  {index % 2 === 0 ? '▲' : '▼'}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        )}
+
+        {recentSearches.length === 0 && liveKeywords.length === 0 && (
+          <Box sx={{ p: 2, color: '#777', textAlign: 'center' }}>
+            검색 기록 또는 실시간 인기 검색어가 없습니다.
+          </Box>
+        )}
+      </Box>
+    );
+  };
+
   return (
     <>
-      <AppBar position="fixed" className="header">
+      <AppBar position="fixed" className="header" sx={{ backgroundColor: '#fff', color: '#000' }}>
         <Toolbar className="header__toolbar">
-          <Box className="header__left" sx={{ display: 'flex', alignItems: 'center' , color: '#000' }}>
-            <IconButton edge="start" className="header__icon-button" onClick={toggleDrawer(true)}>
+          <Box className="header__left" sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton edge="start" className="header__icon-button" onClick={toggleDrawer(true)} sx={{ color: '#000' }}>
               <MenuIcon />
             </IconButton>
             <Typography
               variant="h4"
               className="header__logo"
               onClick={() => navigate('/')}
-              sx={{ cursor: 'pointer', fontFamily: 'Jua', color: '#fff' , color: '#000' }}
+              sx={{ cursor: 'pointer', fontFamily: 'Jua', color: '#000' }}
             >
               부산 투어
             </Typography>
           </Box>
-          <Box className="header__center" sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' , color: '#000' }}>
+
+          <Box className="header__center" sx={{ flex: 1, display: 'flex', justifyContent: 'center', position: 'relative' }}>
             <TextField
               placeholder="관광지를 검색해보세요"
               variant="outlined"
@@ -103,62 +184,58 @@ const Header = ({ onSelectCategory = () => {} }) => {
               className="header__search"
               value={searchTerm}
               onChange={handleSearchChange}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+              onFocus={() => { console.log('[Header] Search focused.'); setIsDropdownOpen(true); }}
+              onBlur={() => setTimeout(() => { console.log('[Header] Search blur triggered.'); setIsDropdownOpen(false); }, 200)}
               onKeyDown={(e) => e.key === 'Enter' && performSearch()}
+              autoComplete="off"
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={performSearch}>
+                    <IconButton onClick={performSearch} sx={{ color: '#000' }}>
                       <SearchIcon />
                     </IconButton>
                   </InputAdornment>
                 ),
               }}
-              sx={{ width: '300px', backgroundColor: '#fff', borderRadius: 1 , color: '#000' }}
+              sx={{
+                width: '300px',
+                backgroundColor: '#fff',
+                borderRadius: 1,
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: '#ccc',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#aaa',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: theme => theme.palette.primary.main,
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  color: '#000',
+                }
+              }}
             />
-            {isFocused && (
-              <Box sx={{ position: 'absolute', top: '40px', width: '300px', backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: 1, boxShadow: 2, zIndex: 1000 , color: '#000' }}>
-                {searchTerm ? (
-                  <Box
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => handleSpotSelect(searchTerm)}
-                    sx={{ px: 2, py: 1, cursor: 'pointer', color: '#000', '&:hover': { backgroundColor: '#f0f0f0' } }}
-                  >
-                    "{searchTerm} 검색"
-                  </Box>
-                ) : (!searchTerm && recentSearches.length > 0) ? (
-                  recentSearches.map((spot, i) => (
-                    <Box
-                      key={i}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleSpotSelect(spot)}
-                      sx={{ px: 2, py: 1, cursor: 'pointer', color: '#000', '&:hover': { backgroundColor: '#f0f0f0' } }}
-
-                    >
-                      {spot}
-                    </Box>
-                  ))
-                ) : null}
-              </Box>
-            )}
+            {renderSearchDropdown()} {/* 조건 제거 */}
           </Box>
+
           <Box className="header__right">
-            <IconButton className="header__icon-button"><PublicIcon /></IconButton>
-            <IconButton className="header__icon-button" onClick={() => navigate('/wishlist')}><FavoriteBorderIcon /></IconButton>
-            <IconButton className="header__icon-button"><PersonOutlineIcon /></IconButton>
+            <IconButton className="header__icon-button" sx={{ color: '#000' }}><PublicIcon /></IconButton>
+            <IconButton className="header__icon-button" onClick={() => navigate('/wishlist')} sx={{ color: '#000' }}><FavoriteBorderIcon /></IconButton>
+            <IconButton className="header__icon-button" sx={{ color: '#000' }}><PersonOutlineIcon /></IconButton>
           </Box>
         </Toolbar>
       </AppBar>
 
       <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)}>
-        <Box sx={{ width: 250 , color: '#000' }} role="presentation" onKeyDown={toggleDrawer(false)}>
-          <Box sx={{ display: 'flex', alignItems: 'center', padding: '16px' , color: '#000' }}>
-            <Avatar sx={{ marginRight: '8px' , color: '#000' }} />
+        <Box sx={{ width: 250, color: '#000' }} role="presentation" onKeyDown={toggleDrawer(false)}>
+          <Box sx={{ display: 'flex', alignItems: 'center', padding: '16px' }}>
+            <Avatar sx={{ marginRight: '8px', backgroundColor: '#ccc' }} />
             <Typography variant="body1">로그인</Typography>
           </Box>
           <Divider />
-          <Typography variant="subtitle1" sx={{ p: 2 , color: '#000' }}>카테고리</Typography>
+          <Typography variant="subtitle1" sx={{ p: 2 }}>카테고리</Typography>
           <List>
             {categoryList.map((item) => (
               <ListItem
@@ -169,21 +246,24 @@ const Header = ({ onSelectCategory = () => {} }) => {
                   onSelectCategory(item.label);
                   navigate('/category');
                 }}
-                sx={{ px: 2, py: 1, cursor: 'pointer', color: '#000', '&:hover': { backgroundColor: '#f0f0f0' } }}
-
+                sx={{ px: 2, py: 1, cursor: 'pointer', '&:hover': { backgroundColor: '#f0f0f0' } }}
               >
-                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemIcon sx={{ color: '#000' }}>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.label} />
               </ListItem>
             ))}
           </List>
           <Divider />
-          <Typography variant="subtitle1" sx={{ p: 2 , color: '#000' }}>주요 서비스</Typography>
+          <Typography variant="subtitle1" sx={{ p: 2 }}>주요 서비스</Typography>
           <List>
             {serviceList.map((item) => (
-              <ListItem button key={item.label} onClick={toggleDrawer(false)} sx={{ px: 2, py: 1, cursor: 'pointer', color: '#000', '&:hover': { backgroundColor: '#f0f0f0' } }}
->
-                <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItem
+                button
+                key={item.label}
+                onClick={toggleDrawer(false)}
+                sx={{ px: 2, py: 1, cursor: 'pointer', '&:hover': { backgroundColor: '#f0f0f0' } }}
+              >
+                <ListItemIcon sx={{ color: '#000' }}>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.label} />
               </ListItem>
             ))}

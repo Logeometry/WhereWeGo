@@ -10,6 +10,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import './App.scss';
 import { categoriesData } from './data/categoriesData';
 import WishlistPage from './pages/WishlistPage';
+import { SearchProvider } from './SearchContext'; // Import SearchProvider
 
 const theme = createTheme({
   palette: {
@@ -17,7 +18,7 @@ const theme = createTheme({
     secondary: { main: '#ff6f61' },
   },
   typography: { fontFamily: `'Pretendard', sans-serif` },
-  
+
   components: {
     MuiButton: {
       styleOverrides: {
@@ -47,12 +48,13 @@ const theme = createTheme({
 });
 
 function App() {
-  // 초기 값으로 categoriesData의 첫번째 대분류 사용 (예: '자연/해변')
   const [selectedCategory, setSelectedCategory] = useState(categoriesData[0]?.label || '');
 
   return (
     <ThemeProvider theme={theme}>
+      <SearchProvider>
       <BrowserRouter>
+        {/* Header 컴포넌트를 Routes 바깥에 렌더링하여 항상 보이게 함 */}
         <Header onSelectCategory={setSelectedCategory} />
         <Routes>
           <Route path="/" element={<LandingPage />} />
@@ -60,8 +62,8 @@ function App() {
           <Route
             path="/category"
             element={
-              <CategoryDetailPage 
-                selectedCategory={selectedCategory} 
+              <CategoryDetailPage
+                selectedCategory={selectedCategory}
                 onSelectSubCategory={(subLabel) => console.log("선택된 소분류:", subLabel)}
               />
             }
@@ -70,6 +72,7 @@ function App() {
           <Route path="/search" element={<SearchResultPage />} />
         </Routes>
       </BrowserRouter>
+      </SearchProvider>
     </ThemeProvider>
   );
 }

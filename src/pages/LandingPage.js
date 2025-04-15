@@ -9,7 +9,7 @@ import TravelNewsBanner from '../components/TravelNewsBanner';
 const LandingPage = () => {
   return (
     <div className="landing-page">
-      <Header />
+      <Header />H
       <AiPlannerBanner />
       <Container maxWidth="lg" className="landing-page__content">
 
