@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import {
   AppBar, Toolbar, Typography, IconButton, Box, Drawer, List, ListItem,
-  ListItemIcon, ListItemText, Divider, Avatar, TextField, InputAdornment, Button
+  ListItemIcon, ListItemText, Divider, Avatar, TextField, InputAdornment, Button, Image
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
@@ -21,6 +21,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Header.scss';
 import { SearchContext } from '../SearchContext';
+import logoImage from '../assets/Logo.png';
 
 const Header = ({ onSelectCategory = () => { } }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -166,14 +167,19 @@ const Header = ({ onSelectCategory = () => { } }) => {
             <IconButton edge="start" className="header__icon-button" onClick={toggleDrawer(true)} sx={{ color: '#000' }}>
               <MenuIcon />
             </IconButton>
-            <Typography
-              variant="h4"
-              className="header__logo"
+            <Box
               onClick={() => navigate('/')}
-              sx={{ cursor: 'pointer', fontFamily: 'Jua', color: '#000' }}
+              sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', ml: 1 }} // 햄버거 버튼과의 간격 추가
             >
-              부산 투어
-            </Typography>
+              <img src={logoImage} alt="Where We Go 로고" style={{ marginRight: '8px', height: '30px' }} />
+              <Typography
+                variant="h4"
+                className="header__logo"
+                sx={{ fontFamily: 'Jua', color: '#000' }}
+              >
+                Where We Go
+              </Typography>
+            </Box>
           </Box>
 
           <Box className="header__center" sx={{ flex: 1, display: 'flex', justifyContent: 'center', position: 'relative' }}>

@@ -1,91 +1,100 @@
 .ai-banner {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 80px 100px;
-    background: url('../assets/banner.jpg') center center / cover no-repeat;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 80px 100px;
+  background: url('../assets/banner.jpg') center center / cover no-repeat; // 기존 배경 유지
 
-    // 반응형: 960px 이하에서 세로 배치
+  // 반응형: 960px 이하에서 세로 배치
+  @media (max-width: 960px) {
+    flex-direction: column;
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.5); // 배경 위에 약간의 반투명 오버레이 추가 (선택 사항)
+    z-index: 0;
+  }
+
+  & > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  &__left {
+    max-width: 50%;
     @media (max-width: 960px) {
-      flex-direction: column;
-      text-align: center;
-      padding: 40px 20px;
-    }
-  
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(255, 255, 255, 0.3);
-      z-index: 0;
-    }
-  
-    & > * {
-      position: relative;
-      z-index: 1;
-    }
-  
-    &__left {
-      max-width: 50%;
-      @media (max-width: 960px) {
-        max-width: 100%;
-        margin-bottom: 40px;
-      }
-    }
-  
-    &__title {
-      font-weight: bold;
-      margin-bottom: 16px;
-      line-height: 1.2;
-      font-size: 2.4rem;
-      color: #3972ff;
-    }
-  
-    &__subtitle {
-      margin-bottom: 24px;
-      color: #555;
-      font-size: 1.2rem;
-      line-height: 1.8;
-    }
-  
-    &__hashtags {
-      margin-bottom: 32px;
-      span {
-        display: inline-block;
-        background-color: #eaf1ff;
-        color: #1777ff;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        margin-right: 8px;
-        &:last-child {
-          margin-right: 0;
-        }
-      }
-    }
-  
-    &__btn {
-      text-transform: none;
-      font-weight: bold;
-      border-radius: 24px;
-      padding: 12px 24px;
-      font-size: 1rem;
-    }
-  
-    &__right {
-      max-width: 45%;
-      display: flex;
-      justify-content: flex-end;
-      @media (max-width: 960px) {
-        max-width: 100%;
-        justify-content: center;
-      }
-    }
-  
-    &__image {
-      width: 80%;
-      max-width: 450px;
+      max-width: 100%;
+      margin-bottom: 40px;
     }
   }
-  
+
+  &__title {
+    font-weight: 700;
+    margin-bottom: 45px; /* 제목과 부제목 사이 간격 유지 */
+    line-height: 1.3;
+    font-size: 2.8rem;
+    color: #2c3e50;
+  }
+
+  &__subtitle {
+    margin-bottom:  30px !important; 
+    color: #555;
+    font-size: 1.1rem;
+    line-height: 1.7;
+  }
+
+  &__hashtags {
+    margin-bottom: 40px; /* 해시태그와 버튼 사이 간격 감소 */
+    display: flex;
+    gap: 25px; /* 해시태그 내부 간격 유지 */
+  }
+
+  &__hashtags > span.hashtag {
+    display: inline-block;
+    background-color: #e6f7ff;
+    color: #1890ff;
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-size: 0.95rem;
+  }
+
+  &__btn {
+    margin-top: 0; /* 버튼 위쪽 margin 초기화 */
+    text-transform: none;
+    font-weight: 600;
+    border-radius: 25px;
+    padding: 14px 30px;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: #1d39c4;
+    }
+  }
+
+  &__right {
+    max-width: 45%;
+    display: flex;
+    justify-content: flex-end;
+    @media (max-width: 960px) {
+      max-width: 80%;
+      justify-content: center;
+      margin-top: 40px;
+    }
+  }
+
+  &__image {
+    width: 80%;
+    max-width: 450px;
+  }
+}

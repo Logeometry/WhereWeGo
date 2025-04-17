@@ -9,18 +9,18 @@ const AiPlannerBanner = () => {
       {/* 왼쪽 텍스트 영역 */}
       <Box className="ai-banner__left">
         <Typography variant="h3" className="ai-banner__title">
-          코스픽 부산 (COSPICK BUSAN)
+          AI 맞춤 부산 여행, 지금 바로 시작하세요!
         </Typography>
-        <Typography variant="body1" className="ai-banner__subtitle">
-          AI가 분석해 추천하는 부산 여행 BEST 코스!
-          <br />
-          나만을 위한 맞춤 여행 코스를 시작해보세요.
+        <Typography variant="subtitle1" className="ai-banner__subtitle">
+          복잡한 계획은 AI에게 맡기고, <br />
+          나만을 위한 특별한 부산 여행 코스를 경험해보세요.
         </Typography>
 
         <Stack direction="row" spacing={1} className="ai-banner__hashtags">
-          <span>#해운대 코스</span>
-          <span>#개인화된 취향 반영</span>
-          <span>#BEST 코스</span>
+          <span className="hashtag">#해운대</span>
+          <span className="hashtag">#광안리</span>
+          <span className="hashtag">#맞춤여행</span>
+          <span className="hashtag">#부산맛집</span>
         </Stack>
 
         <Button
@@ -30,7 +30,7 @@ const AiPlannerBanner = () => {
           component={RouterLink}
           to="/survey"
         >
-          AI 추천 받기 →
+          나만의 여행 코스 만들기 →
         </Button>
       </Box>
 
