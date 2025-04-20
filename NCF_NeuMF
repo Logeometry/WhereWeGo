@@ -1,0 +1,637 @@
+import json
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+from torch.utils.data import Dataset, DataLoader
+import random
+import os
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+import math
+
+
+# ----------- 0. 시드 고정 ----------- #
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    os.environ['PYTHONHASHSEED'] = str(seed)
+
+
+# 시드 설정
+set_seed(42)
+
+# ----------- 1. 데이터 로딩 및 전처리 ----------- #
+# JSON 파일 로딩
+with open('philly_bpr_triplets.json', 'r') as f:
+    raw_data = json.load(f)
+
+data = np.array(raw_data['triplets'])
+
+# Positive / Negative 샘플 분리
+pos_samples = data[data[:, 2] == 1]
+neg_samples = data[data[:, 2] == 0]
+
+# 유저 수, 아이템 수 계산
+n_users = int(data[:, 0].max() + 1)
+n_items = int(data[:, 1].max() + 1)
+
+print(f"Number of users: {n_users}, Number of items: {n_items}")
+print(f"Positive samples: {len(pos_samples)}, Negative samples: {len(neg_samples)}")
+print(f"Pos:Neg ratio = 1:{len(neg_samples) / len(pos_samples):.1f}")
+
+# 데이터 분할: 학습(60%), 검증(20%), 테스트(20%)
+# 먼저 학습+검증 vs 테스트 분할
+train_val_data, test_data = train_test_split(data, test_size=0.2, random_state=42)
+# 다음으로 학습 vs 검증 분할 (0.25 = 20/80)
+train_data, val_data = train_test_split(train_val_data, test_size=0.25, random_state=42)
+
+print(f"Training data: {len(train_data)}, Validation data: {len(val_data)}, Test data: {len(test_data)}")
+print(
+    f"Split ratio - Train: {len(train_data) / len(data):.1%}, Val: {len(val_data) / len(data):.1%}, Test: {len(test_data) / len(data):.1%}")
+
+
+# ----------- 2. Dataset 정의 ----------- #
+class InteractionDataset(Dataset):
+    def __init__(self, data):
+        self.data = data
+        self.pos_samples = data[data[:, 2] == 1]
+        self.neg_samples = data[data[:, 2] == 0]
+        self.labels = data[:, 2]
+
+        # 긍정:부정 샘플 비율 계산
+        self.pos_weight = len(self.neg_samples) / len(self.pos_samples) if len(self.pos_samples) > 0 else 1.0
+        print(f"Dataset weight (Pos:Neg = 1:{self.pos_weight:.1f})")
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        user, item, label = self.data[idx]
+        # 가중치 계산 (긍정 샘플에 더 큰 가중치)
+        weight = self.pos_weight if label == 1 else 1.0
+        return torch.LongTensor([user]), torch.LongTensor([item]), torch.FloatTensor([label]), torch.FloatTensor(
+            [weight])
+
+
+# DataLoader 생성
+train_dataset = InteractionDataset(train_data)
+val_dataset = InteractionDataset(val_data)
+test_dataset = InteractionDataset(test_data)
+
+train_dataloader = DataLoader(train_dataset, batch_size=1024, shuffle=True)
+val_dataloader = DataLoader(val_dataset, batch_size=1024, shuffle=False)
+test_dataloader = DataLoader(test_dataset, batch_size=1024, shuffle=False)
+
+
+# ----------- 3. GMF 및 MLP 모델 정의 (참조용) ----------- #
+class GMF(nn.Module):
+    def __init__(self, n_users, n_items, factor_num):
+        super(GMF, self).__init__()
+        self.user_embedding = nn.Embedding(n_users, factor_num)
+        self.item_embedding = nn.Embedding(n_items, factor_num)
+
+        # 출력 레이어
+        self.affine_output = nn.Linear(factor_num, 1)
+
+        # 가중치 초기화
+        self._init_weight_()
+
+    def _init_weight_(self):
+        # 임베딩 레이어 초기화 (Xavier uniform)
+        nn.init.xavier_uniform_(self.user_embedding.weight)
+        nn.init.xavier_uniform_(self.item_embedding.weight)
+
+        # 출력 레이어 초기화
+        nn.init.xavier_uniform_(self.affine_output.weight)
+        nn.init.zeros_(self.affine_output.bias)
+
+    def forward(self, user_indices, item_indices):
+        user_embedding = self.user_embedding(user_indices).squeeze(1)
+        item_embedding = self.item_embedding(item_indices).squeeze(1)
+
+        # 요소별 곱셈 (element-wise product)
+        element_product = torch.mul(user_embedding, item_embedding)
+
+        # 선형 레이어로 출력
+        logits = self.affine_output(element_product)
+
+        return logits.view(-1)
+
+
+class MLP(nn.Module):
+    def __init__(self, n_users, n_items, factor_num, num_layers, dropout):
+        super(MLP, self).__init__()
+        """
+        MLP 모델
+        :param n_users: 사용자 수
+        :param n_items: 아이템 수
+        :param factor_num: 잠재 요인(latent factor) 차원
+        :param num_layers: MLP 레이어 수
+        :param dropout: 드롭아웃 비율
+        """
+        self.dropout = dropout
+
+        # 사용자 임베딩 레이어
+        self.user_embedding = nn.Embedding(n_users, factor_num * (2 ** (num_layers - 1)))
+
+        # 아이템 임베딩 레이어
+        self.item_embedding = nn.Embedding(n_items, factor_num * (2 ** (num_layers - 1)))
+
+        # MLP 층 구성
+        MLP_modules = []
+        for i in range(num_layers):
+            input_size = factor_num * (2 ** (num_layers - i))
+
+            # 첫 번째 층은 합치기만 하므로 2배
+            if i == 0:
+                input_size = input_size * 2
+
+            output_size = input_size // 2
+
+            MLP_modules.append(nn.Linear(input_size, output_size))
+            MLP_modules.append(nn.BatchNorm1d(output_size))
+            MLP_modules.append(nn.ReLU())
+            MLP_modules.append(nn.Dropout(p=self.dropout))
+
+        self.MLP_layers = nn.Sequential(*MLP_modules)
+
+        # 출력 레이어
+        self.output_layer = nn.Linear(factor_num, 1)
+
+        # 가중치 초기화
+        self._init_weight_()
+
+    def _init_weight_(self):
+        # 임베딩 레이어 초기화
+        nn.init.normal_(self.user_embedding.weight, std=0.01)
+        nn.init.normal_(self.item_embedding.weight, std=0.01)
+
+        # MLP 레이어 초기화
+        for m in self.MLP_layers:
+            if isinstance(m, nn.Linear):
+                nn.init.kaiming_uniform_(m.weight)
+                nn.init.zeros_(m.bias)
+
+        # 출력 레이어 초기화
+        nn.init.kaiming_uniform_(self.output_layer.weight)
+        nn.init.zeros_(self.output_layer.bias)
+
+    def forward(self, user_indices, item_indices):
+        user_embedding = self.user_embedding(user_indices).squeeze(1)
+        item_embedding = self.item_embedding(item_indices).squeeze(1)
+
+        # 임베딩 벡터 연결
+        vector = torch.cat([user_embedding, item_embedding], dim=-1)
+
+        # MLP 레이어 통과
+        vector = self.MLP_layers(vector)
+
+        # 출력 레이어
+        logits = self.output_layer(vector)
+
+        return logits.view(-1)
+
+
+# ----------- 4. NeuMF 모델 정의 ----------- #
+class NeuMF(nn.Module):
+    def __init__(self, n_users, n_items, factor_num_mf, factor_num_mlp, num_layers, dropout):
+        super(NeuMF, self).__init__()
+        """
+        Neural Matrix Factorization (NeuMF) 모델
+        :param n_users: 사용자 수
+        :param n_items: 아이템 수
+        :param factor_num_mf: GMF 부분의 잠재 요인 차원
+        :param factor_num_mlp: MLP 부분의 최종 잠재 요인 차원
+        :param num_layers: MLP 레이어 수
+        :param dropout: 드롭아웃 비율
+        """
+        self.dropout = dropout
+
+        # GMF 부분
+        self.user_embedding_mf = nn.Embedding(n_users, factor_num_mf)
+        self.item_embedding_mf = nn.Embedding(n_items, factor_num_mf)
+
+        # MLP 부분
+        self.user_embedding_mlp = nn.Embedding(n_users, factor_num_mlp * (2 ** (num_layers - 1)))
+        self.item_embedding_mlp = nn.Embedding(n_items, factor_num_mlp * (2 ** (num_layers - 1)))
+
+        # MLP 층 구성
+        MLP_modules = []
+        for i in range(num_layers):
+            input_size = factor_num_mlp * (2 ** (num_layers - i))
+
+            # 첫 번째 층은 합치기만 하므로 2배
+            if i == 0:
+                input_size = input_size * 2
+
+            output_size = input_size // 2
+
+            MLP_modules.append(nn.Linear(input_size, output_size))
+            MLP_modules.append(nn.BatchNorm1d(output_size))
+            MLP_modules.append(nn.ReLU())
+            MLP_modules.append(nn.Dropout(p=self.dropout))
+
+        self.MLP_layers = nn.Sequential(*MLP_modules)
+
+        # 예측 레이어 - GMF와 MLP 결과 결합
+        self.output_layer = nn.Linear(factor_num_mf + factor_num_mlp, 1)
+
+        # 가중치 초기화
+        self._init_weight_()
+
+    def _init_weight_(self):
+        """ 모델 파라미터 초기화 """
+
+        # GMF 부분
+        nn.init.normal_(self.user_embedding_mf.weight, std=0.01)
+        nn.init.normal_(self.item_embedding_mf.weight, std=0.01)
+
+        # MLP 부분
+        nn.init.normal_(self.user_embedding_mlp.weight, std=0.01)
+        nn.init.normal_(self.item_embedding_mlp.weight, std=0.01)
+
+        # MLP 레이어 초기화
+        for m in self.MLP_layers:
+            if isinstance(m, nn.Linear):
+                nn.init.kaiming_uniform_(m.weight)
+                nn.init.zeros_(m.bias)
+
+        # 출력 레이어 초기화
+        nn.init.kaiming_uniform_(self.output_layer.weight)
+        nn.init.zeros_(self.output_layer.bias)
+
+    def load_pretrained(self, gmf_model, mlp_model):
+        """ GMF와 MLP 모델의 사전 학습된 가중치 로드 """
+
+        # GMF 가중치 복사
+        self.user_embedding_mf.weight.data.copy_(gmf_model.user_embedding.weight.data)
+        self.item_embedding_mf.weight.data.copy_(gmf_model.item_embedding.weight.data)
+
+        # MLP 가중치 복사
+        self.user_embedding_mlp.weight.data.copy_(mlp_model.user_embedding.weight.data)
+        self.item_embedding_mlp.weight.data.copy_(mlp_model.item_embedding.weight.data)
+
+        # MLP 레이어 가중치 복사
+        for idx, layer in enumerate(self.MLP_layers):
+            if isinstance(layer, nn.Linear):
+                mlp_seq_idx = idx // 4 * 4  # MLP 레이어 인덱스 (4개 레이어 그룹 단위)
+                layer.weight.data.copy_(list(mlp_model.MLP_layers)[mlp_seq_idx].weight.data)
+                layer.bias.data.copy_(list(mlp_model.MLP_layers)[mlp_seq_idx].bias.data)
+
+        # 출력 레이어 가중치 결합
+        # NeuMF 출력 레이어의 GMF 부분은 GMF 모델의 출력 레이어에서 가져옴
+        self.output_layer.weight.data[:, :gmf_model.affine_output.weight.data.shape[1]].copy_(
+            gmf_model.affine_output.weight.data)
+
+        # NeuMF 출력 레이어의 MLP 부분은 MLP 모델의 출력 레이어에서 가져옴
+        self.output_layer.weight.data[:, gmf_model.affine_output.weight.data.shape[1]:].copy_(
+            mlp_model.output_layer.weight.data)
+
+        # 바이어스 평균으로 초기화
+        self.output_layer.bias.data.copy_(
+            (gmf_model.affine_output.bias.data + mlp_model.output_layer.bias.data) / 2)
+
+        print("Pretrained GMF and MLP model weights loaded successfully!")
+
+    def forward(self, user_indices, item_indices):
+        """ 순전파 """
+
+        # GMF 부분
+        user_embedding_mf = self.user_embedding_mf(user_indices).squeeze(1)
+        item_embedding_mf = self.item_embedding_mf(item_indices).squeeze(1)
+        mf_vector = torch.mul(user_embedding_mf, item_embedding_mf)  # 요소별 곱
+
+        # MLP 부분
+        user_embedding_mlp = self.user_embedding_mlp(user_indices).squeeze(1)
+        item_embedding_mlp = self.item_embedding_mlp(item_indices).squeeze(1)
+        mlp_vector = torch.cat([user_embedding_mlp, item_embedding_mlp], dim=-1)
+        mlp_vector = self.MLP_layers(mlp_vector)
+
+        # 두 결과 결합하여 최종 예측
+        vector = torch.cat([mf_vector, mlp_vector], dim=-1)
+        logits = self.output_layer(vector)
+
+        return logits.view(-1)
+
+
+# ----------- 5. 학습 함수 정의 ----------- #
+def train(model, dataloader, optimizer, criterion, device):
+    model.train()
+    total_loss = 0.0
+
+    for user, item, label, weight in dataloader:
+        user, item, label, weight = user.to(device), item.to(device), label.to(device), weight.to(device)
+
+        # 경사 초기화
+        optimizer.zero_grad()
+
+        # 순전파
+        logits = model(user, item)
+        loss = criterion(logits, label)
+
+        # 역전파
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item() * user.size(0)
+
+    return total_loss / len(dataloader.dataset)
+
+
+# ----------- 6. 평가 함수 정의 ----------- #
+def evaluate(model, dataloader, criterion, device):
+    model.eval()
+    total_loss = 0.0
+    all_preds = []
+    all_labels = []
+
+    with torch.no_grad():
+        for user, item, label, weight in dataloader:
+            user, item, label, weight = user.to(device), item.to(device), label.to(device), weight.to(device)
+
+            # 순전파
+            logits = model(user, item)
+            loss = criterion(logits, label)
+
+            # 손실 및 예측 저장
+            total_loss += loss.item() * user.size(0)
+
+            preds = torch.sigmoid(logits).detach().cpu().numpy()
+            all_preds.extend(preds)
+            all_labels.extend(label.detach().cpu().numpy())
+
+    # 배열 변환
+    all_preds = np.array(all_preds)
+    all_labels = np.array(all_labels)
+
+    # 분류 지표 계산
+    binary_preds = (all_preds >= 0.5).astype(int)
+    accuracy = np.mean(binary_preds == all_labels)
+
+    # 긍정/부정 샘플별 정확도 계산
+    pos_indices = (all_labels == 1)
+    neg_indices = (all_labels == 0)
+
+    pos_accuracy = np.mean(binary_preds[pos_indices] == all_labels[pos_indices]) if np.any(pos_indices) else 0.0
+    neg_accuracy = np.mean(binary_preds[neg_indices] == all_labels[neg_indices]) if np.any(neg_indices) else 0.0
+
+    return {
+        'loss': total_loss / len(dataloader.dataset),
+        'accuracy': accuracy,
+        'pos_accuracy': pos_accuracy,
+        'neg_accuracy': neg_accuracy
+    }
+
+
+# ----------- 7. 모델 저장 및 로드 함수 ----------- #
+def save_model(model, path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    torch.save(model.state_dict(), path)
+    print(f"Model saved: {path}")
+
+
+def load_model(model, path):
+    if os.path.exists(path):
+        model.load_state_dict(torch.load(path))
+        print(f"Model loaded: {path}")
+    else:
+        print(f"Warning: Model file not found at {path}")
+    return model
+
+
+# ----------- 8. 종합 학습 그래프 그리기 함수 ----------- #
+def plot_comprehensive_metrics(train_metrics_dict, val_metrics_dict, model_name, filename):
+    plt.figure(figsize=(16, 12))
+
+    # 지표 이름과 색상 정의
+    metrics = {
+        'loss': {'color': 'tab:blue', 'linestyle': '-', 'marker': 'o', 'name': 'Loss'},
+        'accuracy': {'color': 'tab:green', 'linestyle': '-', 'marker': 's', 'name': 'Accuracy'},
+        'pos_accuracy': {'color': 'tab:red', 'linestyle': '-', 'marker': '^', 'name': 'Pos. Accuracy'},
+        'neg_accuracy': {'color': 'tab:purple', 'linestyle': '-', 'marker': 'D', 'name': 'Neg. Accuracy'}
+    }
+
+    epochs = range(1, len(train_metrics_dict['loss']) + 1)
+
+    # 두 개의 y축 생성 (왼쪽: 손실, 오른쪽: 정확도)
+    fig, ax1 = plt.subplots(figsize=(16, 10))
+    ax2 = ax1.twinx()
+
+    # 손실 축 (왼쪽)
+    ax1.set_xlabel('Epochs', fontsize=14)
+    ax1.set_ylabel('Loss', fontsize=14, color='tab:blue')
+    ax1.tick_params(axis='y', labelcolor='tab:blue')
+    ax1.grid(True, linestyle='--', alpha=0.3, which='both')
+
+    # 정확도 축 (오른쪽)
+    ax2.set_ylabel('Accuracy', fontsize=14, color='tab:green')
+    ax2.tick_params(axis='y', labelcolor='tab:green')
+
+    # 선 간격 조정
+    line_offset = 0.02
+
+    # 각 지표 플로팅
+    lines = []
+    for i, (metric, props) in enumerate(metrics.items()):
+        if metric == 'loss':
+            # 손실 - 왼쪽 축 사용
+            ln1, = ax1.plot(epochs, train_metrics_dict[metric],
+                            color=props['color'], linestyle=props['linestyle'], marker=props['marker'],
+                            markersize=8, linewidth=2, label=f"Train {props['name']}", alpha=0.7)
+            ln2, = ax1.plot(epochs, val_metrics_dict[metric],
+                            color=props['color'], linestyle='--', marker=props['marker'],
+                            markersize=8, linewidth=2, label=f"Val {props['name']}", alpha=1.0)
+            lines.extend([ln1, ln2])
+
+            # 최적 손실 포인트 표시
+            best_val_epoch = val_metrics_dict[metric].index(min(val_metrics_dict[metric])) + 1
+            best_val_value = min(val_metrics_dict[metric])
+            ax1.plot(best_val_epoch, best_val_value, 'o', color='tab:blue', markersize=12, fillstyle='none')
+            ax1.annotate(f'Best: {best_val_value:.4f}',
+                         xy=(best_val_epoch, best_val_value),
+                         xytext=(best_val_epoch + 0.3, best_val_value + 0.01),
+                         fontsize=12, color='tab:blue')
+        else:
+            # 정확도 지표 - 오른쪽 축 사용
+            offset = (i - 1) * line_offset
+            ln1, = ax2.plot(epochs, [x + offset for x in train_metrics_dict[metric]],
+                            color=props['color'], linestyle=props['linestyle'], marker=props['marker'],
+                            markersize=8, linewidth=2, label=f"Train {props['name']}", alpha=0.7)
+            ln2, = ax2.plot(epochs, [x + offset for x in val_metrics_dict[metric]],
+                            color=props['color'], linestyle='--', marker=props['marker'],
+                            markersize=8, linewidth=2, label=f"Val {props['name']}", alpha=1.0)
+            lines.extend([ln1, ln2])
+
+            # 최적 정확도 포인트 표시 (최댓값)
+            best_val_epoch = val_metrics_dict[metric].index(max(val_metrics_dict[metric])) + 1
+            best_val_value = max(val_metrics_dict[metric])
+            ax2.plot(best_val_epoch, best_val_value + offset, 'o', color=props['color'], markersize=12,
+                     fillstyle='none')
+            ax2.annotate(f'Best: {best_val_value:.4f}',
+                         xy=(best_val_epoch, best_val_value + offset),
+                         xytext=(best_val_epoch + 0.3, best_val_value + offset + 0.01),
+                         fontsize=12, color=props['color'])
+
+    # 축 범위 설정
+    loss_min = min(min(train_metrics_dict['loss']), min(val_metrics_dict['loss']))
+    loss_max = max(max(train_metrics_dict['loss']), max(val_metrics_dict['loss']))
+    loss_margin = (loss_max - loss_min) * 0.1
+    ax1.set_ylim(loss_min - loss_margin, loss_max + loss_margin)
+
+    acc_min = min([min(train_metrics_dict[k]) for k in ['accuracy', 'pos_accuracy', 'neg_accuracy']] +
+                  [min(val_metrics_dict[k]) for k in ['accuracy', 'pos_accuracy', 'neg_accuracy']])
+    acc_max = max([max(train_metrics_dict[k]) for k in ['accuracy', 'pos_accuracy', 'neg_accuracy']] +
+                  [max(val_metrics_dict[k]) for k in ['accuracy', 'pos_accuracy', 'neg_accuracy']])
+    acc_margin = (acc_max - acc_min) * 0.2
+    ax2.set_ylim(acc_min - acc_margin, acc_max + acc_margin + 3 * line_offset)
+
+    # 타이틀 및 레전드 설정
+    plt.title(f'{model_name} - Comprehensive Training Metrics', fontsize=16, fontweight='bold')
+
+    # 레전드 통합
+    labels = [l.get_label() for l in lines]
+    ax1.legend(lines, labels, loc='lower center', bbox_to_anchor=(0.5, -0.15),
+               ncol=4, fontsize=12, frameon=True, facecolor='white', edgecolor='gray')
+
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.15)  # 레전드 공간 확보
+
+    # 폴더 생성 및 저장
+    os.makedirs('plots', exist_ok=True)
+    plt.savefig(f'plots/{filename}.png', dpi=300, bbox_inches='tight')
+    print(f"Comprehensive graph saved: plots/{filename}.png")
+    plt.close()
+
+
+# ----------- 9. NeuMF 모델 학습 함수 ----------- #
+def train_neumf_model(n_users, n_items, factor_num_mf, factor_num_mlp, num_layers, dropout, device,
+                      train_dataloader, val_dataloader, n_epochs, gmf_model_path, mlp_model_path):
+    print("\n===== Training NeuMF Model =====")
+    model_path = 'models/neumf_model.pth'
+    best_model_path = 'models/neumf_model_best.pth'
+
+    # 모델 초기화
+    model = NeuMF(n_users, n_items, factor_num_mf, factor_num_mlp, num_layers, dropout).to(device)
+    print(f"NeuMF model parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")
+
+    # GMF 및 MLP 모델 로드하여 가중치 초기화
+    gmf_model = GMF(n_users, n_items, factor_num_mf).to(device)
+    mlp_model = MLP(n_users, n_items, factor_num_mlp, num_layers, dropout).to(device)
+
+    # 사전 학습된 모델 로드
+    gmf_model = load_model(gmf_model, gmf_model_path)
+    mlp_model = load_model(mlp_model, mlp_model_path)
+
+    # NeuMF 모델에 사전 학습된 가중치 적용
+    model.load_pretrained(gmf_model, mlp_model)
+    print("Pre-trained weights loaded successfully")
+
+    # 손실 함수
+    pos_weight_value = train_dataset.pos_weight
+    pos_weight = torch.tensor([pos_weight_value]).to(device)
+    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    print(f"Loss function: BCEWithLogitsLoss (positive weight: {pos_weight_value:.2f})")
+
+    # 최적화기 설정
+    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3, verbose=True)
+
+    # 학습 추적을 위한 지표
+    train_metrics = {'loss': [], 'accuracy': [], 'pos_accuracy': [], 'neg_accuracy': []}
+    val_metrics = {'loss': [], 'accuracy': [], 'pos_accuracy': [], 'neg_accuracy': []}
+
+    best_val_loss = float('inf')
+    best_epoch = 0
+    no_improve = 0
+    patience = 5
+
+    print(
+        f"\n{'Epoch':^6} | {'Train Loss':^10} | {'Val Loss':^10} | {'Train Acc':^10} | {'Val Acc':^10} | {'Val Pos Acc':^12} | {'Val Neg Acc':^12}")
+    print('-' * 82)
+
+    for epoch in range(1, n_epochs + 1):
+        # 훈련
+        train_loss = train(model, train_dataloader, optimizer, criterion, device)
+
+        # 검증
+        train_results = evaluate(model, train_dataloader, criterion, device)
+        val_results = evaluate(model, val_dataloader, criterion, device)
+
+        # 지표 저장
+        for metric in ['loss', 'accuracy', 'pos_accuracy', 'neg_accuracy']:
+            train_metrics[metric].append(train_results[metric])
+            val_metrics[metric].append(val_results[metric])
+
+        # 결과 출력
+        print(
+            f"{epoch:6d} | {train_results['loss']:10.6f} | {val_results['loss']:10.6f} | {train_results['accuracy']:10.4f} | {val_results['accuracy']:10.4f} | {val_results['pos_accuracy']:12.4f} | {val_results['neg_accuracy']:12.4f}")
+
+        # 최고 모델 저장
+        if val_results['loss'] < best_val_loss:
+            best_val_loss = val_results['loss']
+            best_epoch = epoch
+            no_improve = 0
+            save_model(model, best_model_path)
+            print(f"  [Improved] New best model saved! (Val Loss: {best_val_loss:.6f})")
+        else:
+            no_improve += 1
+            if no_improve >= patience:
+                print(f"\nEarly stopping after {patience} epochs without improvement.")
+                print(f"Best epoch: {best_epoch}, Best validation loss: {best_val_loss:.6f}")
+                break
+
+        # 학습률 스케줄러 업데이트
+        scheduler.step(val_results['loss'])
+
+    # 마지막 모델 저장
+    save_model(model, model_path)
+
+    print(f"\nNeuMF model training completed! Best epoch: {best_epoch}, Best val loss: {best_val_loss:.6f}")
+
+    # 종합 그래프 그리기
+    plot_comprehensive_metrics(train_metrics, val_metrics, 'NeuMF Model', 'neumf_comprehensive')
+
+    # 최고 모델 로드
+    model = load_model(model, best_model_path)
+
+    return model
+
+
+# ----------- 10. 메인 실행 코드 ----------- #
+if __name__ == "__main__":
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Using device: {device}")
+
+    # 하이퍼파라미터 설정
+    factor_num_mf = 64  # GMF 부분의 잠재 요인 차원
+    factor_num_mlp = 32  # MLP 부분의 최종 잠재 요인 차원
+    num_layers = 3  # MLP 레이어 수
+    dropout = 0.2  # 드롭아웃 비율
+    n_epochs = 20  # 학습 에포크 수
+
+    # 사전 학습된 모델 경로
+    gmf_model_path = 'models/gmf_model_best.pth'
+    mlp_model_path = 'models/mlp_model_best.pth'
+
+    # NeuMF 모델 학습
+    neumf_model = train_neumf_model(n_users, n_items, factor_num_mf, factor_num_mlp, num_layers, dropout,
+                                    device, train_dataloader, val_dataloader, n_epochs,
+                                    gmf_model_path, mlp_model_path)
+
+    # 테스트 데이터로 최종 평가
+    print("\n===== Final Test Evaluation =====")
+    test_criterion = nn.BCEWithLogitsLoss()
+
+    print("\nNeuMF Model Test:")
+    neumf_test_metrics = evaluate(neumf_model, test_dataloader, test_criterion, device)
+    print(f"  Test Loss: {neumf_test_metrics['loss']:.6f}, Accuracy: {neumf_test_metrics['accuracy']:.4f}")
+    print(
+        f"  Positive Accuracy: {neumf_test_metrics['pos_accuracy']:.4f}, Negative Accuracy: {neumf_test_metrics['neg_accuracy']:.4f}")
+
+    print("\nTraining and evaluation completed!")
