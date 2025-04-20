@@ -4,7 +4,7 @@
 
 ## 프로젝트 소개
 
-이 프로젝트는 사용자의 선호도와 여행 스타일에 맞는 부산 지역 관광지를 추천하는 서비스 개발을 목표로 합니다.<br>
+이 프로젝트는 사용자의 선호도와 여행 스타일에 맞는 부산 지역 관광지를 추천하는 서비스 개발을 목표로 합니다.    
 Foursquare API를 통해 수집한 관광지 데이터와 머신러닝 알고리즘을 활용하여 사용자의 취향에 맞는 관광지를 추천합니다.
 
 ## 기술 스택
@@ -13,7 +13,7 @@ Foursquare API를 통해 수집한 관광지 데이터와 머신러닝 알고리
 - **Database**: MongoDB, PyMongo
 - **머신러닝**: pytorch
 - **API 통합**: Foursquare Places API
-- **Frontend**: react.js, MUI, SCSS
+- **Frontend**: React.Js, MUI, SCSS
 
 ## 코드 컨벤션
 
