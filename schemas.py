@@ -24,3 +24,21 @@ class SurveyRequest(BaseModel):
     budget: str
     duration: str
     companion: str
+
+class WishRequest(BaseModel):
+    user_id : str
+    place_id : str
+
+class WishItem(BaseModel):
+    place_id : str
+    place_name : str
+
+class LogData(BaseModel):
+    user_id: str
+    place_id: str
+    timestamp: str
+
+class RankingItem(BaseModel):
+    place_id: str
+    visits: int
+
