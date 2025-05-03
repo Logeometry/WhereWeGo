@@ -1,0 +1,26 @@
+.resultsPage {
+    margin-top: 32px;
+  
+    h4 {
+      margin-bottom: 16px;
+    }
+  
+    h6 {
+      margin-top: 24px;
+      margin-bottom: 8px;
+    }
+  
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+  
+    li {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+  
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }

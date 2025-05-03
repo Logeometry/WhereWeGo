@@ -162,25 +162,27 @@ const Header = ({ onSelectCategory = () => { } }) => {
   return (
     <>
       <AppBar position="fixed" className="header" sx={{ backgroundColor: '#fff', color: '#000' }}>
-        <Toolbar className="header__toolbar">
-          <Box className="header__left" sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton edge="start" className="header__icon-button" onClick={toggleDrawer(true)} sx={{ color: '#000' }}>
-              <MenuIcon />
-            </IconButton>
-            <Box
-              onClick={() => navigate('/')}
-              sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', ml: 1 }} // 햄버거 버튼과의 간격 추가
-            >
-              <img src={logoImage} alt="Where We Go 로고" style={{ marginRight: '8px', height: '30px' }} />
-              <Typography
-                variant="h4"
-                className="header__logo"
-                sx={{ fontFamily: 'Jua', color: '#000' }}
-              >
-                Where We Go
-              </Typography>
-            </Box>
-          </Box>
+  <Toolbar className="header__toolbar" sx={{ height: '100px' }}> {/* Toolbar 높이 늘림 */}
+    <Box className="header__left" sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+      <IconButton edge="start" className="header__icon-button" onClick={toggleDrawer(true)} sx={{ color: '#000' }}>
+        <MenuIcon />
+      </IconButton>
+
+      <Box
+        onClick={() => navigate('/')}
+        sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', ml: 1, height: '100%' }}
+      >
+        <img
+          src="/WhereWeGo.PNG"
+          alt="Where We Go 로고"
+          style={{
+            height: '80px', // 2배로 키움
+            width: '120px', // 3배로 키움
+            objectFit: 'contain',
+          }}
+        />
+      </Box>
+    </Box>
 
           <Box className="header__center" sx={{ flex: 1, display: 'flex', justifyContent: 'center', position: 'relative' }}>
             <TextField

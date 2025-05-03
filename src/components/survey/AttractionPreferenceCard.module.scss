@@ -1,0 +1,27 @@
+.card {
+    width: 350px;
+    margin: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .media {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+  
+  .content {
+    padding: 16px;
+    text-align: center;
+  }
+  
+  .buttons {
+    padding: 16px;
+    justify-content: center;
+    width: 100%;
+  }

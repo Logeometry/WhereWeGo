@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
-import SurveyForm from './pages/SurveyForm/SurveyForm';
 import CategoryDetailPage from './pages/CategoryDetailPage';
 import SearchResultPage from './pages/SearchResultPage';
 import Header from './components/Header';
@@ -11,6 +10,7 @@ import './App.scss';
 import { categoriesData } from './data/categoriesData';
 import WishlistPage from './pages/WishlistPage';
 import { SearchProvider } from './SearchContext'; // Import SearchProvider
+import SurveyPage from './pages/SurveyPage'; // 새로 만든 설문조사 페이지 import
 
 const theme = createTheme({
   palette: {
@@ -53,25 +53,25 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <SearchProvider>
-      <BrowserRouter>
-        {/* Header 컴포넌트를 Routes 바깥에 렌더링하여 항상 보이게 함 */}
-        <Header onSelectCategory={setSelectedCategory} />
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/survey" element={<SurveyForm />} />
-          <Route
-            path="/category"
-            element={
-              <CategoryDetailPage
-                selectedCategory={selectedCategory}
-                onSelectSubCategory={(subLabel) => console.log("선택된 소분류:", subLabel)}
-              />
-            }
-          />
-          <Route path="/wishlist" element={<WishlistPage />} />
-          <Route path="/search" element={<SearchResultPage />} />
-        </Routes>
-      </BrowserRouter>
+        <BrowserRouter>
+          {/* Header 컴포넌트를 Routes 바깥에 렌더링하여 항상 보이게 함 */}
+          <Header onSelectCategory={setSelectedCategory} />
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/survey" element={<SurveyPage />} /> {/* SurveyForm 대신 SurveyPage 사용 */}
+            <Route
+              path="/category"
+              element={
+                <CategoryDetailPage
+                  selectedCategory={selectedCategory}
+                  onSelectSubCategory={(subLabel) => console.log("선택된 소분류:", subLabel)}
+                />
+              }
+            />
+            <Route path="/wishlist" element={<WishlistPage />} />
+            <Route path="/search" element={<SearchResultPage />} />
+          </Routes>
+        </BrowserRouter>
       </SearchProvider>
     </ThemeProvider>
   );

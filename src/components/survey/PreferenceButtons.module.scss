@@ -1,0 +1,12 @@
+.preferenceButtons {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  
+    button {
+      margin-top: 4px;
+    }
+  }

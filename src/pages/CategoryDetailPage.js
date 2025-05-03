@@ -46,7 +46,8 @@ const CategoryDetailPage = ({ selectedCategory }) => {
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>
       <Typography variant="h4" gutterBottom>
-        {selectedCategory}의 소분류
+        여행지
+        #전체
       </Typography>
 
       <SubCategoryTags

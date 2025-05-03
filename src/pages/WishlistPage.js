@@ -15,10 +15,10 @@ const WishlistPage = () => {
   const wishlist = [];
 
   const recommendedSpots = [
-    { name: '해운대', image: '/image/haeundae.jpg' },
-    { name: '광안리', image: '/image/gwangalli.jpg' },
-    { name: '감천문화마을', image: '/image/gamcheon.jpg' },
-    { name: '태종대', image: '/image/taejongdae.jpg' },
+    { name: '해운대', image: '/image/HaeundaeBeach.jpg' },
+    { name: '광안리', image: '/image/HaeundaeBeach.jpg' },
+    { name: '감천문화마을', image: '/image/Gamcheon.jpg' },
+    { name: '태종대', image: '/image/Taejong-daeAmusementPark.jpg' },
   ];
 
   const planningSpots = [
