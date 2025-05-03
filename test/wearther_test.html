@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>단기예보 테스트</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    label { display: block; margin: 15px 0 5px; }
+    select, input, button { padding: 8px; font-size: 1rem; }
+    .forecast-list { list-style: none; padding: 0; }
+    .forecast-item { border-bottom: 1px solid #ddd; padding: 8px 0; }
+  </style>
+</head>
+<body>
+  <h1>단기예보 테스트</h1>
+
+  <label for="region">지역 선택:</label>
+  <select id="region">
+    <option value="">-- 선택하세요 --</option>
+    <option>강서구</option>
+    <option>금정구</option>
+    <option>기장군</option>
+    <option>남구</option>
+    <option>동구</option>
+    <option>동래구</option>
+    <option>부산진구</option>
+    <option>북구</option>
+    <option>사상구</option>
+    <option>사하구</option>
+    <option>서구</option>
+    <option>수영구</option>
+    <option>연제구</option>
+    <option>영도구</option>
+    <option>중구</option>
+    <option>해운대구</option>
+  </select>
+
+  <label for="date">날짜 선택:</label>
+  <input type="date" id="date" value="" />
+
+  <button id="btn">조회하기</button>
+
+  <h2>예보 결과 (<span id="sel-date"></span>)</h2>
+  <ul id="forecast-list" class="forecast-list"></ul>
+
+  <script>
+    // 기본값: 오늘 날짜 세팅
+    const today = new Date().toISOString().slice(0,10);
+    document.getElementById("date").value = today;
+
+    document.getElementById("btn").addEventListener("click", async () => {
+      const region = document.getElementById("region").value;
+      const date   = document.getElementById("date").value.replace(/-/g, "");
+
+      if (!region) return alert("지역을 선택하세요.");
+      if (!date)   return alert("날짜를 선택하세요.");
+
+      document.getElementById("sel-date").textContent =
+        date.slice(0,4) + "-" + date.slice(4,6) + "-" + date.slice(6);
+
+      const res = await fetch(
+        `/api/v1/weather?region=${encodeURIComponent(region)}&date=${date}`
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        return alert(`에러: ${err.detail || res.status}`);
+      }
+
+      const data = await res.json();
+      const list = data.forecasts;
+
+      if (list.length === 0) {
+        document.getElementById("forecast-list").innerHTML =
+          "<li>해당 날짜 예보가 없습니다.</li>";
+        return;
+      }
+
+      // 렌더링
+      const html = list.map(it => `
+        <li class="forecast-item">
+          <strong>${it.time.slice(0,2)}:${it.time.slice(2)}</strong> —
+          ${it.category}: ${it.value}
+        </li>
+      `).join("");
+      document.getElementById("forecast-list").innerHTML = html;
+    });
+  </script>
+</body>
+</html>
