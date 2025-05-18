@@ -1,257 +1,387 @@
-
+// SurveyPage.module.scss
 .container {
+  width: 100%;
   min-height: 100vh;
-  background: linear-gradient(to bottom, #eef2ff, #f3e8ff);
-  padding: 3rem 1rem; // 기존 패딩 유지
-  padding-top: calc(3rem + 60px); /* 기존 3rem 패딩에 헤더 높이 60px를 더함 */
-  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  padding: 20px;
 }
 
 .contentWrapper {
-  max-width: 56rem; /* max-w-4xl */
-  margin: 0 auto; /* mx-auto */
+  width: 100%;
+  max-width: 800px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: white;
 }
 
-/* 설문 시작 전 화면 스타일 */
+// 시작 화면 스타일
 .startScreen {
-  text-align: center; /* text-center */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
 }
 
 .startTitle {
-  font-size: 2.25rem; /* text-4xl */
-  font-weight: 700; /* font-bold */
-  margin-bottom: 1.5rem; /* mb-6 */
-  color: #3730a3; /* text-indigo-800 유사 */
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #333;
 }
 
 .startButtonText {
-  font-size: 1.125rem; /* text-lg */
-  margin-bottom: 2rem; /* mb-8 */
-  color: #4b5563; /* text-gray-600 */
+  font-size: 18px;
+  margin-bottom: 30px;
+  color: #666;
+  max-width: 80%;
+  line-height: 1.5;
 }
 
 .startButton {
-  background-color: #4f46e5; /* bg-indigo-600 */
-  color: white; /* text-white */
-  font-weight: 600; /* font-semibold */
-  padding: 0.75rem 2rem; /* py-3 px-8 */
-  border-radius: 9999px; /* rounded-full */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* shadow-lg */
-  transition: all 0.15s ease-in-out; /* transform transition */
+  background-color: #1e88e5;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 12px 36px;
+  border-radius: 30px;
   border: none;
   cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(30, 136, 229, 0.3);
 
   &:hover {
-    background-color: #4338ca; /* hover:bg-indigo-700 */
-    transform: scale(1.05); /* hover:scale-105 */
+    background-color: #1565c0;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(30, 136, 229, 0.4);
   }
 }
 
-/* 설문 완료 후 결과 화면 스타일 */
+// 설문 진행 화면 스타일
+.surveyScreen {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.progressBarContainer {
+  width: 100%;
+  height: 6px;
+  background-color: #eee;
+}
+
+.progressBar {
+  height: 100%;
+  background-color: #1e88e5;
+  transition: width 0.3s ease;
+}
+
+.questionCounter {
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+}
+
+.attractionCard {
+  width: 100%;
+  height: 400px;
+  position: relative;
+  overflow: hidden;
+}
+
+.attractionImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.attractionOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  padding: 20px;
+  color: white;
+}
+
+.attractionName {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.attractionDescription {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.preferenceButtons {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px;
+}
+
+.preferenceButton {
+  border: none;
+  background-color: white;
+  border-radius: 50px;
+  padding: 12px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.buttonIcon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.buttonText {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.likeButton {
+  color: #4caf50;
+  &:hover {
+    background-color: #f0fff0;
+  }
+}
+
+.neutralButton {
+  color: #ff9800;
+  &:hover {
+    background-color: #fff8e1;
+  }
+}
+
+.dislikeButton {
+  color: #f44336;
+  &:hover {
+    background-color: #ffebee;
+  }
+}
+
+// 결과 화면 스타일
 .resultsScreen {
-  background-color: white; /* bg-white */
-  border-radius: 0.75rem; /* rounded-xl */
-  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); /* shadow-xl */
-  padding: 2rem; /* p-8 */
+  padding: 30px 20px;
 }
 
 .resultsTitle {
-  font-size: 1.875rem; /* text-3xl */
-  font-weight: 700; /* font-bold */
-  margin-bottom: 1.5rem; /* mb-6 */
-  text-align: center; /* text-center */
-  color: #3730a3; /* text-indigo-800 유사 */
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 30px;
+  text-align: center;
+  color: #333;
 }
 
 .resultsList {
-  margin-bottom: 2rem; /* mb-8 */
+  margin-bottom: 40px;
 }
 
 .resultsSubtitle {
-  font-size: 1.25rem; /* text-xl */
-  font-weight: 600; /* font-semibold */
-  margin-bottom: 1rem; /* mb-4 */
-  color: #374151; /* text-gray-700 */
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #555;
 }
 
 .categoryScores {
   display: flex;
   flex-direction: column;
-  gap: 1rem; /* space-y-4 */
+  gap: 15px;
 }
 
 .categoryItem {
-  display: flex; /* flex */
-  align-items: center; /* items-center */
+  display: flex;
+  align-items: center;
 }
 
 .categoryRank {
-  width: 2rem; /* w-8 */
-  height: 2rem; /* h-8 */
-  border-radius: 9999px; /* rounded-full */
-  background-color: #4f46e5; /* bg-indigo-600 */
-  display: flex; /* flex */
-  align-items: center; /* items-center */
-  justify-content: center; /* justify-center */
-  color: white; /* text-white */
-  font-weight: 700; /* font-bold */
-  margin-right: 0.75rem; /* mr-3 */
-  flex-shrink: 0; // 컨텐츠가 길어져도 크기 고정
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #1e88e5;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin-right: 15px;
 }
 
 .categoryInfo {
-    flex-grow: 1; /* flex-1 */
+  flex: 1;
 }
 
 .categoryName {
-  font-size: 1.125rem; /* text-lg */
-  font-weight: 500; /* font-medium */
+  font-weight: 600;
+  margin-bottom: 5px;
 }
 
 .scoreBarContainer {
-  width: 100%; /* w-full */
-  background-color: #e5e7eb; /* bg-gray-200 */
-  border-radius: 9999px; /* rounded-full */
-  height: 0.625rem; /* h-2.5 */
-  overflow: hidden; // 바가 넘치지 않도록 숨김
+  width: 100%;
+  height: 8px;
+  background-color: #eee;
+  border-radius: 4px;
+  overflow: hidden;
 }
 
 .scoreBar {
-  background-color: #4f46e5; /* bg-indigo-600 */
-  height: 0.625rem; /* h-2.5 */
-  border-radius: 9999px; /* rounded-full */
-  transition: width 0.3s ease; /* transition-all duration-300 (width만 적용) */
+  height: 100%;
+  background-color: #1e88e5;
+  border-radius: 4px;
 }
 
 .resultsFooter {
-  text-align: center; /* text-center */
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
 }
 
 .restartButton {
-  background-color: #4f46e5; /* bg-indigo-600 */
-  color: white; /* text-white */
-  font-weight: 600; /* font-semibold */
-  padding: 0.5rem 1.5rem; /* py-2 px-6 */
-  border-radius: 9999px; /* rounded-full */
-  border: none;
+  background-color: #fff;
+  color: #1e88e5;
+  border: 2px solid #1e88e5;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 30px;
   cursor: pointer;
+  transition: all 0.3s ease;
 
   &:hover {
-    background-color: #4338ca; /* hover:bg-indigo-700 */
+    background-color: #1e88e5;
+    color: white;
   }
 }
 
-
-/* 설문 진행 중 화면 스타일 */
-.surveyScreen {
-  background-color: white; /* bg-white */
-  border-radius: 0.75rem; /* rounded-xl */
-  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); /* shadow-xl */
-  overflow: hidden; /* overflow-hidden */
+// 로딩 화면 스타일
+.loadingScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  text-align: center;
 }
 
-.progressBarContainer {
-  background-color: #f3f4f6; /* bg-gray-100 */
-  height: 0.5rem; /* h-2 */
+.loadingTitle {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 30px;
+  color: #333;
 }
 
-.progressBar {
-  background-color: #4f46e5; /* bg-indigo-600 */
-  height: 0.5rem; /* h-2 */
-  transition: width 0.3s ease; /* transition-all duration-300 */
+.loadingProgressContainer {
+  width: 100%;
+  height: 10px;
+  background-color: #eee;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 20px;
 }
 
-.questionCounter {
-  padding: 0.5rem; /* p-2 */
-  text-align: center; /* text-center */
-  font-size: 0.875rem; /* text-sm */
-  color: #6b7280; /* text-gray-500 */
+.loadingProgressBar {
+  height: 100%;
+  background-color: #1e88e5;
+  transition: width 0.5s ease;
 }
 
-.attractionCard {
-  position: relative; /* relative */
+.loadingMessage {
+  font-size: 18px;
+  margin-bottom: 40px;
+  color: #555;
 }
 
-.attractionImage {
-  width: 100%; /* w-full */
-  height: 16rem; /* h-64 (Tailwind h-64) */
-  object-fit: cover; /* object-cover */
+.factBox {
+  background-color: #f5f5f5;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 20px;
+  max-width: 90%;
 }
 
-.attractionOverlay {
-  position: absolute; /* absolute */
-  inset: 0; /* inset-0 */
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent); /* bg-gradient-to-t from-black/70 to-transparent */
-  display: flex; /* flex */
-  align-items: flex-end; /* items-end */
+.factTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #555;
 }
 
-.attractionText {
-  padding: 1.5rem; /* p-6 */
-  color: white; /* text-white */
+.factText {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #666;
 }
 
-.attractionName {
-  font-size: 1.5rem; /* text-2xl */
-  font-weight: 700; /* font-bold */
-  margin-bottom: 0.5rem; /* mb-2 */
+// 추천 여행지 섹션 스타일
+.recommendationsSection {
+  margin-top: 40px;
 }
 
-.attractionDescription {
-  font-size: 0.875rem; /* text-sm */
-  color: #d1d5db; /* text-gray-200 */
+.recommendationsTitle {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #555;
 }
 
-/* 선호도 버튼 스타일 */
-.preferenceButtons {
-  display: grid; /* grid */
-  grid-template-columns: repeat(3, 1fr); /* grid-cols-3 */
-  gap: 0.75rem; /* gap-3 */
-  padding: 1.5rem; /* p-6 */
+.recommendationsList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.preferenceButton {
-  padding: 0.75rem 1rem; /* py-3 px-4 */
-  border-radius: 0.75rem; /* rounded-xl */
-  display: flex; /* flex */
-  flex-direction: column; /* flex-col */
-  align-items: center; /* items-center */
-  transition: all 0.15s ease-in-out; /* transition-all */
-  border: none;
-  cursor: pointer;
-  color: white; /* 버튼 텍스트 색상 (공통) */
-
-  &:hover {
-    transform: translateY(-0.25rem); /* hover:translate-y-1 */
-  }
+.recommendationCard {
+  display: flex;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.likeButton {
-  background-color: #22c55e; /* bg-green-500 */
-  &:hover {
-    background-color: #16a34a; /* hover:bg-green-600 */
-  }
+.recommendationImage {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
 }
 
-.neutralButton {
-  background-color: #9ca3af; /* bg-gray-400 */
-  &:hover {
-    background-color: #6b7280; /* hover:bg-gray-500 */
-  }
+.recommendationContent {
+  flex: 1;
+  padding: 15px;
 }
 
-.dislikeButton {
-  background-color: #ef4444; /* bg-red-500 */
-  &:hover {
-    background-color: #dc2626; /* hover:bg-red-600 */
-  }
+.recommendationName {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #333;
 }
 
-.buttonIcon {
-  font-size: 1.5rem; /* text-2xl */
-  margin-bottom: 0.25rem; /* mb-1 */
+.recommendationDescription {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 10px;
 }
 
-.buttonText {
-  font-weight: 500; /* font-medium */
+.recommendationReason {
+  font-size: 13px;
+  color: #1e88e5;
+  font-style: italic;
 }
