@@ -152,21 +152,88 @@ class PairwiseImplicitDataset(Dataset):
         return torch.tensor(u), torch.tensor(i), torch.tensor(j), torch.tensor(0), torch.tensor(1.0)
 
 
-# ----------- 3. 모델 정의 (NeuMF 구조) ----------- #
+# ----------- 3.1 GMF 모델 정의 ----------- #
+class GMF(nn.Module):
+    def __init__(self, user_num, item_num, factor_num):
+        super(GMF, self).__init__()
+        self.user_gmf_emb = nn.Embedding(user_num, factor_num)
+        self.item_gmf_emb = nn.Embedding(item_num, factor_num)
+        self.predict_layer = nn.Linear(factor_num, 1)
+
+        # 초기화
+        self._init_weight_()
+
+    def _init_weight_(self):
+        nn.init.normal_(self.user_gmf_emb.weight, std=0.01)
+        nn.init.normal_(self.item_gmf_emb.weight, std=0.01)
+        nn.init.xavier_uniform_(self.predict_layer.weight)
+        if self.predict_layer.bias is not None:
+            self.predict_layer.bias.data.zero_()
+
+    def forward(self, user, item):
+        user_gmf = self.user_gmf_emb(user)
+        item_gmf = self.item_gmf_emb(item)
+        gmf_output = user_gmf * item_gmf  # 요소별 곱셈
+        prediction = self.predict_layer(gmf_output)
+        return prediction.view(-1)
+
+
+# ----------- 3.2 MLP 모델 정의 ----------- #
+class MLP(nn.Module):
+    def __init__(self, user_num, item_num, factor_num, num_layers, dropout):
+        super(MLP, self).__init__()
+        self.user_mlp_emb = nn.Embedding(user_num, factor_num)
+        self.item_mlp_emb = nn.Embedding(item_num, factor_num)
+
+        # MLP 레이어 구성
+        MLP_modules = []
+        input_size = factor_num * 2  # 사용자+아이템 임베딩
+
+        for i in range(num_layers):
+            output_size = input_size // 2
+            MLP_modules.append(nn.Linear(input_size, output_size))
+            MLP_modules.append(nn.ReLU())
+            MLP_modules.append(nn.Dropout(dropout))
+            input_size = output_size
+
+        self.mlp_layers = nn.Sequential(*MLP_modules)
+        self.predict_layer = nn.Linear(input_size, 1)
+
+        # 초기화
+        self._init_weight_()
+
+    def _init_weight_(self):
+        nn.init.normal_(self.user_mlp_emb.weight, std=0.01)
+        nn.init.normal_(self.item_mlp_emb.weight, std=0.01)
+
+        for m in self.mlp_layers:
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    m.bias.data.zero_()
+
+        nn.init.xavier_uniform_(self.predict_layer.weight)
+        if self.predict_layer.bias is not None:
+            self.predict_layer.bias.data.zero_()
+
+    def forward(self, user, item):
+        user_mlp = self.user_mlp_emb(user)
+        item_mlp = self.item_mlp_emb(item)
+        mlp_input = torch.cat([user_mlp, item_mlp], dim=-1)  # 연결
+        mlp_output = self.mlp_layers(mlp_input)
+        prediction = self.predict_layer(mlp_output)
+        return prediction.view(-1)
+
+
+# ----------- 3.3 NeuMF 모델 수정 (가중치 이전 기능 추가) ----------- #
 class NeuMF(nn.Module):
-    def __init__(self, user_num, item_num, factor_num, num_layers, dropout, pretrained_vectors=None):
+    def __init__(self, user_num, item_num, factor_num, num_layers, dropout, pretrained_vectors=None,
+                 gmf_model=None, mlp_model=None):
         super(NeuMF, self).__init__()
 
         # 사전 학습 벡터 저장
         self.pretrained_vectors = pretrained_vectors
         self.use_pretrained = pretrained_vectors is not None
-
-        """
-        이미지의 NeuMF 아키텍처와 일치하도록 구현:
-        1. GMF 부분: 사용자-아이템 임베딩의 요소별 곱
-        2. MLP 부분: 사용자-아이템 임베딩 연결 후 다층 신경망 통과
-        3. NeuMF 레이어: GMF와 MLP 출력 연결 후 최종 예측층
-        """
 
         # GMF 임베딩
         self.user_gmf_emb = nn.Embedding(user_num, factor_num)
@@ -180,7 +247,7 @@ class NeuMF(nn.Module):
         MLP_modules = []
         input_size = factor_num * 2  # 사용자+아이템 임베딩
 
-        # 논문 구조와 일치하도록 MLP 레이어 구성 (점차 감소하는 크기)
+        # 논문 구조와 일치하도록 MLP 레이어 구성
         for i in range(num_layers):
             output_size = input_size // 2
             MLP_modules.append(nn.Linear(input_size, output_size))
@@ -191,15 +258,19 @@ class NeuMF(nn.Module):
         self.mlp_layers = nn.Sequential(*MLP_modules)
 
         # 출력 레이어 차원 계산
-        if self.use_pretrained:
-            self.output_size = factor_num + input_size  # GMF + MLP
-            self.predict_layer = nn.Linear(self.output_size, 1)
-        else:
-            self.output_size = factor_num + input_size  # GMF + MLP
-            self.predict_layer = nn.Linear(self.output_size, 1)
+        self.output_size = factor_num + input_size  # GMF + MLP
+        self.predict_layer = nn.Linear(self.output_size, 1)
 
         # 초기화
         self._init_weight_()
+
+        # 사전 학습된 모델이 제공되면 가중치 로드
+        if gmf_model is not None and mlp_model is not None:
+            self._init_from_pretrained_models(gmf_model, mlp_model)
+
+        # gmf_output과 mlp_output 메서드 호출을 위해 필요한 내부 함수 추가
+        self.get_gmf_output = self._get_gmf_vector
+        self.get_mlp_output = self._get_mlp_vector
 
     def _init_weight_(self):
         # 초기화 로직
@@ -217,6 +288,109 @@ class NeuMF(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Linear) and m.bias is not None:
                 m.bias.data.zero_()
+
+    def _get_gmf_vector(self, user, item):
+        """GMF 부분만 계산하여 출력 벡터 반환"""
+        user_gmf = self.user_gmf_emb(user)
+        item_gmf = self.item_gmf_emb(item)
+        gmf_output = user_gmf * item_gmf
+        return gmf_output
+
+    def _get_mlp_vector(self, user, item):
+        """MLP 부분만 계산하여 출력 벡터 반환"""
+        user_mlp = self.user_mlp_emb(user)
+        item_mlp = self.item_mlp_emb(item)
+        mlp_input = torch.cat([user_mlp, item_mlp], dim=-1)
+        mlp_output = self.mlp_layers(mlp_input)
+        return mlp_output
+
+    def _init_from_pretrained_models(self, gmf_model, mlp_model):
+        """사전 학습된 GMF와 MLP 모델에서 가중치 로드"""
+        print("사전 학습된 GMF 및 MLP 모델의 가중치 로드 중...")
+
+        # 1. GMF 임베딩 가중치 복사
+        if hasattr(gmf_model, 'user_gmf_emb') and hasattr(self, 'user_gmf_emb'):
+            self.user_gmf_emb.weight.data = gmf_model.user_gmf_emb.weight.data
+            print("GMF 사용자 임베딩 가중치 로드됨")
+        else:
+            print("경고: GMF 사용자 임베딩 가중치를 찾을 수 없습니다")
+
+        if hasattr(gmf_model, 'item_gmf_emb') and hasattr(self, 'item_gmf_emb'):
+            self.item_gmf_emb.weight.data = gmf_model.item_gmf_emb.weight.data
+            print("GMF 아이템 임베딩 가중치 로드됨")
+        else:
+            print("경고: GMF 아이템 임베딩 가중치를 찾을 수 없습니다")
+
+        # 2. MLP 임베딩 가중치 복사
+        if hasattr(mlp_model, 'user_mlp_emb') and hasattr(self, 'user_mlp_emb'):
+            self.user_mlp_emb.weight.data = mlp_model.user_mlp_emb.weight.data
+            print("MLP 사용자 임베딩 가중치 로드됨")
+        else:
+            print("경고: MLP 사용자 임베딩 가중치를 찾을 수 없습니다")
+
+        if hasattr(mlp_model, 'item_mlp_emb') and hasattr(self, 'item_mlp_emb'):
+            self.item_mlp_emb.weight.data = mlp_model.item_mlp_emb.weight.data
+            print("MLP 아이템 임베딩 가중치 로드됨")
+        else:
+            print("경고: MLP 아이템 임베딩 가중치를 찾을 수 없습니다")
+
+        # 3. MLP 레이어 가중치 복사 - 올바른 속성명 사용
+        if hasattr(mlp_model, 'mlp_layers'):
+            mlp_layers = mlp_model.mlp_layers
+            print(f"MLP 레이어 구조 발견: {len(mlp_layers)} 요소")
+
+            # MLP 레이어 복사
+            mlp_layer_idx = 0
+            copied_layers = 0
+
+            for i, layer in enumerate(self.mlp_layers):
+                if isinstance(layer, nn.Linear):
+                    # MLP 모델의 레이어 검색
+                    for j in range(len(mlp_layers)):
+                        if isinstance(mlp_layers[j], nn.Linear):
+                            if mlp_layer_idx == 0:  # 첫 번째 Linear 레이어 매칭
+                                layer.weight.data = mlp_layers[j].weight.data
+                                layer.bias.data = mlp_layers[j].bias.data
+                                mlp_layer_idx += 1
+                                copied_layers += 1
+                                print(f"MLP 레이어 {j} 복사됨 (차원: {layer.weight.size()})")
+                                break
+
+            print(f"MLP 레이어 가중치 {copied_layers}개 복사됨")
+        else:
+            print("경고: MLP 모델에 'mlp_layers' 속성을 찾을 수 없습니다")
+            print("MLP 구조:", dir(mlp_model))
+
+        # 4. 예측 레이어 가중치 복사
+        if hasattr(gmf_model, 'predict_layer') and hasattr(mlp_model, 'predict_layer'):
+            gmf_predict = gmf_model.predict_layer.weight.data
+            mlp_predict = mlp_model.predict_layer.weight.data
+
+            # 차원 확인
+            gmf_dim = gmf_predict.size(1)
+            mlp_dim = mlp_predict.size(1)
+            pred_dim = self.predict_layer.weight.data.size(1)
+
+            print(f"예측 레이어 차원: GMF({gmf_dim}), MLP({mlp_dim}), NeuMF({pred_dim})")
+
+            if gmf_dim + mlp_dim == pred_dim:
+                self.predict_layer.weight.data[:, :gmf_dim] = gmf_predict * 0.5
+                self.predict_layer.weight.data[:, gmf_dim:] = mlp_predict * 0.5
+
+                # 바이어스도 복사
+                if hasattr(gmf_model.predict_layer, 'bias') and hasattr(mlp_model.predict_layer, 'bias'):
+                    self.predict_layer.bias.data = 0.5 * (
+                            gmf_model.predict_layer.bias.data +
+                            mlp_model.predict_layer.bias.data
+                    )
+
+                print("예측 레이어 가중치 성공적으로 초기화됨")
+            else:
+                print(f"경고: 예측 레이어 차원 불일치 - GMF({gmf_dim}) + MLP({mlp_dim}) != NeuMF({pred_dim})")
+        else:
+            print("경고: GMF 또는 MLP 모델에 'predict_layer' 속성을 찾을 수 없습니다")
+
+        print("가중치 초기화 완료")
 
     def forward(self, user, item):
         # GMF 경로
@@ -314,21 +488,28 @@ class NeuMF(nn.Module):
                 # 같은 카테고리인지 확인
                 same_category = torch.all(item_category == other_category).item()
 
-                # 같은 카테고리이고 유사도가 높은 아이템 선호
-                similarity_scores.append((other_item, sim_score.item(), same_category))
+                # 카테고리 일치 점수 (일치하면 1, 불일치하면 0)
+                category_match = 1.0 if same_category else 0.0
+
+                # 최종 점수 = 유사도 70% + 카테고리 일치 30%
+                final_score = sim_score.item() * 0.7 + category_match * 0.3
+
+                # 최종 점수와 원본 정보 저장
+                similarity_scores.append((other_item, final_score, sim_score.item(), same_category))
 
             # 아이템 추가
             result.append(item)
             already_added.add(item)
 
-            # 유사한 아이템들 추가 (유사도 및 카테고리 기준)
-            similar_items = [(i, s, c) for i, s, c in similarity_scores
-                             if s > similarity_threshold]
+            # 유사도 임계값 적용 (원래 유사도가 임계값보다 높은 것만 고려)
+            similarity_scores = [(i, score, sim, cat) for i, score, sim, cat in similarity_scores
+                                 if sim > similarity_threshold]
 
-            # 카테고리 우선, 유사도 내림차순으로 정렬
-            similar_items.sort(key=lambda x: (-x[2], -x[1]))
+            # 최종 점수로 정렬
+            similarity_scores.sort(key=lambda x: x[1], reverse=True)
 
-            for similar_item, _, _ in similar_items:
+            # 정렬된 아이템 추가
+            for similar_item, _, _, _ in similarity_scores:
                 if similar_item not in already_added:
                     result.append(similar_item)
                     already_added.add(similar_item)
@@ -336,8 +517,8 @@ class NeuMF(nn.Module):
         return result
 
 
-# ----------- 4. 학습 함수 ----------- #
-def train(model, dataloader, optimizer, device):
+# ----------- 4. 개별 모델 학습 함수 ----------- #
+def train_model(model, dataloader, optimizer, device, model_name=""):
     model.train()
     total_loss = 0
 
@@ -446,20 +627,41 @@ def generate_recommendations(model, user_id, explicit_data, n_items, device, vec
             if label == 1:  # 긍정적 평가 (label=1)
                 positive_items.append(i)
 
+    print(f"사용자 {user_id}의 긍정 평가 아이템: {len(positive_items)}개")
     if not positive_items:
-        return []  # 긍정적으로 평가한 아이템이 없는 경우
+        print("경고: 긍정적으로 평가한 아이템이 없습니다. 모델 점수만 사용합니다.")
 
     # 아이템 유사도 정보 로드 (있는 경우)
     item_vectors = {}
-    if vector_path and os.path.exists(vector_path):
-        with open(vector_path, 'r', encoding='utf-8') as f:
-            vectors_data = json.load(f)
+    vector_loaded = False
 
-        for item in vectors_data:
-            if isinstance(item, dict) and "index" in item and "vector_full" in item:
-                item_id = item["index"]
-                vector = item["vector_full"]
-                item_vectors[item_id] = vector
+    if vector_path and os.path.exists(vector_path):
+        try:
+            with open(vector_path, 'r', encoding='utf-8') as f:
+                vectors_data = json.load(f)
+
+            print(f"벡터 파일 로드 성공: {len(vectors_data)}개 항목")
+
+            # 첫 항목 구조 출력
+            if vectors_data and len(vectors_data) > 0:
+                first_item = vectors_data[0]
+                print(f"벡터 데이터 샘플 구조: {list(first_item.keys())}")
+                if "vector_full" in first_item:
+                    print(f"벡터 길이: {len(first_item['vector_full'])}")
+
+            for item in vectors_data:
+                if isinstance(item, dict) and "index" in item and "vector_full" in item:
+                    item_id = item["index"]
+                    vector = item["vector_full"]
+                    item_vectors[item_id] = vector
+
+            print(f"벡터 처리 완료: {len(item_vectors)}개 아이템 벡터 로드됨")
+            vector_loaded = len(item_vectors) > 0
+        except Exception as e:
+            print(f"벡터 파일 로드 실패: {e}")
+            vector_loaded = False
+    else:
+        print(f"벡터 파일이 존재하지 않음: {vector_path}")
 
     # 모델을 사용하여 최초 추천 생성
     candidates = []
@@ -471,35 +673,46 @@ def generate_recommendations(model, user_id, explicit_data, n_items, device, vec
         user_tensor = torch.tensor([user_id]).to(device)
         item_tensor = torch.tensor([item_id]).to(device)
         with torch.no_grad():
-            score = model(user_tensor, item_tensor, feedback_type=0).item()
+            score = model(user_tensor, item_tensor).item()
 
         candidates.append((item_id, score))
 
     # 점수 기반 초기 정렬
     candidates.sort(key=lambda x: x[1], reverse=True)
     initial_recommendations = [item for item, _ in candidates[:top_k * 2]]  # 2배수로 후보 추출
+    print(f"모델 기반 초기 추천: {len(initial_recommendations)}개 아이템")
 
     # 유사도 및 카테고리 기반 재정렬
     final_recommendations = []
 
-    if item_vectors:
+    if vector_loaded and positive_items:
         print("유사도 및 카테고리 기반 재정렬을 수행합니다.")
+        print(f"가중치 설정: 유사도(70%), 카테고리(30%)")
 
         # 긍정적 아이템 벡터 얻기
-        pos_item_vectors = [item_vectors.get(item_id, None) for item_id in positive_items if item_id in item_vectors]
+        pos_item_vectors = []
+        for item_id in positive_items:
+            if item_id in item_vectors:
+                pos_item_vectors.append(item_vectors[item_id])
+            else:
+                print(f"경고: 아이템 {item_id}의 벡터 정보가 없습니다")
+
+        print(f"긍정 아이템 벡터 수: {len(pos_item_vectors)}/{len(positive_items)}")
 
         if pos_item_vectors:
             # 카테고리 정보 추출 (마지막 8개 요소)
             def get_category(vector):
-                # 벡터의 마지막 8개 요소가 카테고리라고 가정
                 if vector and len(vector) >= 8:
                     return vector[-8:]
                 return None
 
             # 후보 아이템 평가
             candidate_scores = []
+            skipped_items = 0
+
             for item_id in initial_recommendations:
                 if item_id not in item_vectors:
+                    skipped_items += 1
                     continue
 
                 item_vector = item_vectors[item_id]
@@ -511,10 +724,18 @@ def generate_recommendations(model, user_id, explicit_data, n_items, device, vec
                         # 유사도 계산에는 카테고리를 제외한 벡터 사용 (처음 256개 요소)
                         sim_vec_len = min(len(pos_vector), len(item_vector)) - 8
                         if sim_vec_len > 0:
-                            a = np.array(pos_vector[:sim_vec_len])
-                            b = np.array(item_vector[:sim_vec_len])
-                            similarity = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-                            similarity_scores.append(similarity)
+                            try:
+                                a = np.array(pos_vector[:sim_vec_len])
+                                b = np.array(item_vector[:sim_vec_len])
+
+                                # 영벡터 체크
+                                if np.any(a) and np.any(b):
+                                    similarity = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+                                    similarity_scores.append(similarity)
+                                else:
+                                    print(f"경고: 아이템 {item_id}의 벡터가 영벡터입니다")
+                            except Exception as e:
+                                print(f"유사도 계산 오류 (아이템 {item_id}): {e}")
 
                 if not similarity_scores:
                     continue
@@ -533,16 +754,32 @@ def generate_recommendations(model, user_id, explicit_data, n_items, device, vec
                             category_match = 1
                             break
 
-                # 최종 점수 계산 (유사도 + 카테고리 가중치)
+                # 최종 점수 계산 - 유사도 70% + 카테고리 30% 비율 적용
                 final_score = avg_similarity * 0.7 + category_match * 0.3
+
+                # 주요 계산 결과 샘플링 (처음 5개만)
+                if len(candidate_scores) < 5:
+                    print(f"아이템 {item_id}: 유사도={avg_similarity:.4f}, 카테고리 일치={category_match}, 최종점수={final_score:.4f}")
+
                 candidate_scores.append((item_id, final_score))
 
-            # 최종 점수로 정렬
-            candidate_scores.sort(key=lambda x: x[1], reverse=True)
-            final_recommendations = [item for item, _ in candidate_scores[:top_k]]
+            print(f"유사도 계산 완료: {len(candidate_scores)}개 평가 (건너뛴 항목: {skipped_items}개)")
+
+            if candidate_scores:
+                # 최종 점수로 정렬
+                candidate_scores.sort(key=lambda x: x[1], reverse=True)
+                final_recommendations = [item for item, _ in candidate_scores[:top_k]]
+                print(f"유사도 기반 최종 추천: {len(final_recommendations)}개 아이템")
+            else:
+                print("경고: 유사도 기반 재정렬 결과가 없습니다")
+        else:
+            print("경고: 긍정 아이템 벡터를 찾을 수 없습니다")
+    else:
+        print("유사도 기반 재정렬을 수행하지 않습니다 - 벡터 없음 또는 긍정 아이템 없음")
 
     # 유사도 재정렬이 실패했거나 충분한 추천이 없는 경우, 초기 추천으로 대체
     if len(final_recommendations) < top_k:
+        print(f"재정렬 결과 부족: 초기 추천으로 {top_k - len(final_recommendations)}개 보충")
         remaining = top_k - len(final_recommendations)
         for item in initial_recommendations:
             if item not in final_recommendations:
@@ -554,7 +791,7 @@ def generate_recommendations(model, user_id, explicit_data, n_items, device, vec
     return final_recommendations[:top_k]
 
 
-# ----------- 7. 메인 함수 ----------- #
+# ----------- 7. 메인 함수 수정 ----------- #
 def main():
     # 장치 설정
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -580,7 +817,7 @@ def main():
     test_dataset = PairwiseImplicitDataset(implicit_test, n_items, mode='test', neg_sample_ratio=0)
 
     # 데이터로더 생성
-    batch_size = 1024
+    batch_size = 512
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
@@ -589,21 +826,99 @@ def main():
     factor_num = 64
     num_layers = 5
     dropout = 0.1
-    lr = 0.001
+    lr = 0.0001
     weight_decay = 0.00001
-    n_epochs = 30
+    n_epochs = 50
     patience = 5
 
-    # 모델 초기화
-    model = NeuMF(n_users, n_items, factor_num, num_layers, dropout, pretrained_vectors).to(device)
+    # 디렉토리 생성
+    os.makedirs('models', exist_ok=True)
+
+    # ----------- GMF 모델 학습 ----------- #
+    print("\n===== GMF 모델 학습 시작 =====")
+    gmf_model = GMF(n_users, n_items, factor_num).to(device)
+    gmf_optimizer = optim.Adam(gmf_model.parameters(), lr=lr, weight_decay=weight_decay)
+
+    best_hr10 = 0
+    counter = 0
+
+    print(f"{'Epoch':^6}|{'Loss':^10}|{'HR@10':^10}|{'NDCG@10':^10}")
+    print('-' * 45)
+
+    for epoch in range(1, n_epochs + 1):
+        # 학습
+        train_loss = train_model(gmf_model, train_loader, gmf_optimizer, device, "GMF")
+
+        # 검증
+        val_metrics = evaluate(gmf_model, val_loader, device)
+
+        print(f"{epoch:^6}|{train_loss:^10.4f}|{val_metrics['HR@10']:^10.4f}|{val_metrics['NDCG@10']:^10.4f}")
+
+        # 모델 저장 및 조기 종료
+        if val_metrics['HR@10'] > best_hr10:
+            best_hr10 = val_metrics['HR@10']
+            counter = 0
+            # 최적 모델 저장
+            torch.save(gmf_model.state_dict(), 'models/gmf_best.pth')
+        else:
+            counter += 1
+            if counter >= patience:
+                print(f"조기 종료 (Epoch {epoch})")
+                break
+
+    # 최적 GMF 모델 로드
+    gmf_model.load_state_dict(torch.load('models/gmf_best.pth'))
+
+    # ----------- MLP 모델 학습 ----------- #
+    print("\n===== MLP 모델 학습 시작 =====")
+    mlp_model = MLP(n_users, n_items, factor_num, num_layers, dropout).to(device)
+    mlp_optimizer = optim.Adam(mlp_model.parameters(), lr=lr, weight_decay=weight_decay)
+
+    best_hr10 = 0
+    counter = 0
+
+    print(f"{'Epoch':^6}|{'Loss':^10}|{'HR@10':^10}|{'NDCG@10':^10}")
+    print('-' * 45)
+
+    for epoch in range(1, n_epochs + 1):
+        # 학습
+        train_loss = train_model(mlp_model, train_loader, mlp_optimizer, device, "MLP")
+
+        # 검증
+        val_metrics = evaluate(mlp_model, val_loader, device)
+
+        print(f"{epoch:^6}|{train_loss:^10.4f}|{val_metrics['HR@10']:^10.4f}|{val_metrics['NDCG@10']:^10.4f}")
+
+        # 모델 저장 및 조기 종료
+        if val_metrics['HR@10'] > best_hr10:
+            best_hr10 = val_metrics['HR@10']
+            counter = 0
+            # 최적 모델 저장
+            torch.save(mlp_model.state_dict(), 'models/mlp_best.pth')
+        else:
+            counter += 1
+            if counter >= patience:
+                print(f"조기 종료 (Epoch {epoch})")
+                break
+
+    # 최적 MLP 모델 로드
+    mlp_model.load_state_dict(torch.load('models/mlp_best.pth'))
+
+    # ----------- NeuMF 모델 학습 (SGD 사용) ----------- #
+    print("\n===== NeuMF 모델 학습 시작 (사전 학습된 가중치 이전) =====")
+
+    # 사전 학습된 가중치로 NeuMF 모델 초기화
+    model = NeuMF(n_users, n_items, factor_num, num_layers, dropout,
+                  pretrained_vectors, gmf_model, mlp_model).to(device)
+
     print(f"모델 파라미터 수: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")
 
-    # 옵티마이저
-    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    # SGD 옵티마이저 (논문과 일치)
+    optimizer = optim.SGD(model.parameters(), lr=lr * 0.5, momentum=0.9, weight_decay=weight_decay)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=3, factor=0.5)
 
     # 학습 루프
-    print("\n===== NeuMF 학습 시작 =====")
+    print("\n===== NeuMF 미세조정 시작 (SGD) =====")
     print(f"{'Epoch':^6}|{'Loss':^10}|{'HR@5':^10}|{'HR@10':^10}|{'NDCG@5':^10}|{'NDCG@10':^10}")
     print('-' * 65)
 
@@ -612,7 +927,7 @@ def main():
 
     for epoch in range(1, n_epochs + 1):
         # 학습
-        train_loss = train(model, train_loader, optimizer, device)
+        train_loss = train_model(model, train_loader, optimizer, device, "NeuMF")
 
         # 검증
         val_metrics = evaluate(model, val_loader, device)
@@ -628,7 +943,6 @@ def main():
             best_hr10 = val_metrics['HR@10']
             counter = 0
             # 최적 모델 저장
-            os.makedirs('models', exist_ok=True)
             torch.save(model.state_dict(), 'models/neumf_best.pth')
         else:
             counter += 1
