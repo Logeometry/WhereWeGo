@@ -1,0 +1,659 @@
+import json
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+from torch.utils.data import Dataset, DataLoader
+import random
+import os
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+import math
+
+
+# ----------- 0. 시드 고정 ----------- #
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    os.environ['PYTHONHASHSEED'] = str(seed)
+
+
+# 시드 설정
+set_seed(42)
+
+
+# ----------- 1. 데이터 로딩 및 전처리 ----------- #
+def load_data(implicit_path, explicit_path, vector_path=None):
+    # 암시적 피드백 데이터 로드
+    with open(implicit_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    # 암시적 데이터가 "triplets" 키로 저장되어 있는지 확인
+    if isinstance(data, dict) and "triplets" in data:
+        implicit_data = data["triplets"]
+        print(f"triplets 키에서 {len(implicit_data)}개의 암시적 피드백 데이터를 로드했습니다.")
+    else:
+        implicit_data = data
+
+    # 명시적 피드백 데이터 로드
+    with open(explicit_path, 'r', encoding='utf-8') as f:
+        explicit_data = json.load(f)
+
+    # 사용자와 아이템 ID 집합 생성
+    user_ids = set()
+    item_ids = set()
+
+    # 암시적 데이터: 각 삼중항에서 첫번째는 사용자, 나머지는 아이템들
+    for triplet in implicit_data:
+        if len(triplet) >= 3:
+            user_id = triplet[0]
+            item_id1 = triplet[1]
+            item_id2 = triplet[2]
+
+            user_ids.add(user_id)
+            item_ids.add(item_id1)
+            item_ids.add(item_id2)
+
+    # 명시적 데이터 구조 확인 및 처리
+    explicit_items = []
+    for item in explicit_data:
+        if isinstance(item, list) or isinstance(item, tuple):
+            if len(item) >= 2:
+                u, i = item[0], item[1]
+                user_ids.add(u)
+                item_ids.add(i)
+
+                # 레이블이 있으면 그대로 사용, 없으면 기본값 1
+                label = item[2] if len(item) > 2 else 1
+                explicit_items.append((u, i, label))
+
+    # 명시적 데이터 업데이트
+    explicit_data = explicit_items
+
+    # 사전 학습된 아이템 벡터 로드 (있는 경우)
+    pretrained_vectors = None
+    if vector_path and os.path.exists(vector_path):
+        with open(vector_path, 'r', encoding='utf-8') as f:
+            vectors_data = json.load(f)
+
+        # 벡터 데이터 구조 확인 - index와 vector_full 사용
+        vectors = {}
+        for item in vectors_data:
+            if isinstance(item, dict) and "index" in item and "vector_full" in item:
+                item_id = item["index"]  # index를 아이템 ID로 사용
+                vector = item["vector_full"]
+                vectors[item_id] = vector
+
+        if vectors:
+            # 벡터 차원 확인
+            sample_vector = next(iter(vectors.values()))
+            vector_dim = len(sample_vector)
+            print(f"벡터 데이터: {len(vectors)}개 로드됨, 벡터 차원: {vector_dim}")
+
+            # 모든 아이템에 대한 벡터 배열 생성
+            n_items = len(item_ids)
+
+            # 아이템 ID를 정수 인덱스로 매핑
+            pretrained_vectors = torch.zeros((n_items, vector_dim))
+
+            # 아이템 인덱스 매핑 생성
+            item_id_to_idx = {item_id: idx for idx, item_id in enumerate(item_ids)}
+
+            # 벡터 할당
+            for item_id, vector in vectors.items():
+                if item_id in item_id_to_idx:
+                    idx = item_id_to_idx[item_id]
+                    pretrained_vectors[idx] = torch.tensor(vector, dtype=torch.float)
+        else:
+            print("경고: 벡터 데이터를 처리할 수 없습니다. 예상 형식: 'index'와 'vector_full' 필드가 있는 객체의 리스트")
+
+    return implicit_data, explicit_data, len(user_ids), len(item_ids), pretrained_vectors
+
+
+# ----------- 2. 데이터셋 클래스 ----------- #
+class PairwiseImplicitDataset(Dataset):
+    def __init__(self, implicit_data, n_items, mode='train', neg_sample_ratio=1):
+        self.implicit_data = implicit_data
+        self.n_items = n_items
+        self.mode = mode
+        self.neg_sample_ratio = neg_sample_ratio
+
+        # 사용자별 긍정 아이템 세트 구축 (첫번째 아이템을 긍정으로 간주)
+        self.user_positive_items = {}
+        self.user_positive_items_set = {}
+
+        for triplet in self.implicit_data:
+            if len(triplet) >= 3:
+                u, pos_item = triplet[0], triplet[1]
+                if u not in self.user_positive_items:
+                    self.user_positive_items[u] = []
+                    self.user_positive_items_set[u] = set()
+
+                self.user_positive_items[u].append(pos_item)
+                self.user_positive_items_set[u].add(pos_item)
+
+        # 페어와이즈 샘플 생성 - 삼중항을 페어로 변환
+        self.pairs = []
+        for triplet in self.implicit_data:
+            if len(triplet) >= 3:
+                u, pos_item, neg_item = triplet[0], triplet[1], triplet[2]
+                self.pairs.append((u, pos_item, neg_item))
+
+    def __len__(self):
+        return len(self.pairs)
+
+    def __getitem__(self, idx):
+        u, i, j = self.pairs[idx]
+        return torch.tensor(u), torch.tensor(i), torch.tensor(j), torch.tensor(0), torch.tensor(1.0)
+
+
+# ----------- 3. 모델 정의 (NeuMF 구조) ----------- #
+class NeuMF(nn.Module):
+    def __init__(self, user_num, item_num, factor_num, num_layers, dropout, pretrained_vectors=None):
+        super(NeuMF, self).__init__()
+
+        # 사전 학습 벡터 저장
+        self.pretrained_vectors = pretrained_vectors
+        self.use_pretrained = pretrained_vectors is not None
+
+        """
+        이미지의 NeuMF 아키텍처와 일치하도록 구현:
+        1. GMF 부분: 사용자-아이템 임베딩의 요소별 곱
+        2. MLP 부분: 사용자-아이템 임베딩 연결 후 다층 신경망 통과
+        3. NeuMF 레이어: GMF와 MLP 출력 연결 후 최종 예측층
+        """
+
+        # GMF 임베딩
+        self.user_gmf_emb = nn.Embedding(user_num, factor_num)
+        self.item_gmf_emb = nn.Embedding(item_num, factor_num)
+
+        # MLP 임베딩
+        self.user_mlp_emb = nn.Embedding(user_num, factor_num)
+        self.item_mlp_emb = nn.Embedding(item_num, factor_num)
+
+        # MLP 레이어 구성
+        MLP_modules = []
+        input_size = factor_num * 2  # 사용자+아이템 임베딩
+
+        # 논문 구조와 일치하도록 MLP 레이어 구성 (점차 감소하는 크기)
+        for i in range(num_layers):
+            output_size = input_size // 2
+            MLP_modules.append(nn.Linear(input_size, output_size))
+            MLP_modules.append(nn.ReLU())
+            MLP_modules.append(nn.Dropout(dropout))
+            input_size = output_size
+
+        self.mlp_layers = nn.Sequential(*MLP_modules)
+
+        # 출력 레이어 차원 계산
+        if self.use_pretrained:
+            self.output_size = factor_num + input_size  # GMF + MLP
+            self.predict_layer = nn.Linear(self.output_size, 1)
+        else:
+            self.output_size = factor_num + input_size  # GMF + MLP
+            self.predict_layer = nn.Linear(self.output_size, 1)
+
+        # 초기화
+        self._init_weight_()
+
+    def _init_weight_(self):
+        # 초기화 로직
+        nn.init.normal_(self.user_gmf_emb.weight, std=0.01)
+        nn.init.normal_(self.item_gmf_emb.weight, std=0.01)
+        nn.init.normal_(self.user_mlp_emb.weight, std=0.01)
+        nn.init.normal_(self.item_mlp_emb.weight, std=0.01)
+
+        for m in self.mlp_layers:
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+
+        nn.init.xavier_uniform_(self.predict_layer.weight)
+
+        for m in self.modules():
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                m.bias.data.zero_()
+
+    def forward(self, user, item):
+        # GMF 경로
+        user_gmf = self.user_gmf_emb(user)
+        item_gmf = self.item_gmf_emb(item)
+        gmf_output = user_gmf * item_gmf  # 요소별 곱셈
+
+        # MLP 경로
+        user_mlp = self.user_mlp_emb(user)
+        item_mlp = self.item_mlp_emb(item)
+        mlp_input = torch.cat([user_mlp, item_mlp], dim=-1)  # 연결
+        mlp_output = self.mlp_layers(mlp_input)
+
+        # NeuMF: GMF와 MLP 결과 연결
+        ncf_output = torch.cat([gmf_output, mlp_output], dim=-1)
+
+        # 최종 예측
+        output = self.predict_layer(ncf_output)
+        return output.view(-1)
+
+    def get_pretrained_vector(self, item_indices):
+        """사전 학습된 벡터 가져오기"""
+        if self.pretrained_vectors is None:
+            return None
+        return self.pretrained_vectors[item_indices]
+
+    def recommend(self, user, rated_items, top_k=10, device='cpu', similarity_threshold=0.5):
+        """
+        사용자에게 다중 추천 제공
+        - 유사도 및 카테고리 정보 활용
+        """
+        self.eval()
+        with torch.no_grad():
+            # 모든 아이템에 대한 예측 점수 계산
+            user_tensor = torch.tensor([user]).to(device).repeat(self.pretrained_vectors.size(0))
+            item_tensor = torch.arange(self.pretrained_vectors.size(0)).to(device)
+
+            # 이미 평가한 아이템 제외
+            mask = torch.ones(self.pretrained_vectors.size(0), dtype=torch.bool)
+            for item in rated_items:
+                mask[item] = False
+
+            # 후보 아이템만 필터링
+            candidate_items = item_tensor[mask]
+            if len(candidate_items) == 0:
+                return []
+
+            user_tensor = user_tensor[mask]
+
+            # 점수 예측
+            scores = self.forward(user_tensor, candidate_items)
+
+            # 상위 K개 아이템 (첫 단계 필터링)
+            initial_k = min(top_k * 3, len(scores))  # 더 많은 후보 먼저 선택
+            _, indices = torch.topk(scores, initial_k)
+            initial_items = candidate_items[indices].cpu().numpy()
+
+            # 유사도 및 카테고리 기반 재정렬
+            final_items = self._rerank_by_similarity_and_category(initial_items, similarity_threshold)
+
+            return final_items[:top_k]
+
+    def _rerank_by_similarity_and_category(self, items, similarity_threshold=0.5):
+        """유사도와 카테고리에 기반한 아이템 재정렬"""
+        if not self.use_pretrained:
+            return items
+
+        result = []
+        already_added = set()
+
+        for item in items:
+            if item in already_added:
+                continue
+
+            # 이 아이템과 나머지 아이템들 간의 유사도 계산
+            item_vector = self.pretrained_vectors[item]
+            similarity_scores = []
+
+            # 유사도 벡터(0-255)와 카테고리 벡터(256-263) 분리
+            item_sim_vector = item_vector[:256]
+            item_category = item_vector[256:]
+
+            for other_item in items:
+                if other_item == item or other_item in already_added:
+                    continue
+
+                other_vector = self.pretrained_vectors[other_item]
+                other_sim_vector = other_vector[:256]
+                other_category = other_vector[256:]
+
+                # 유사도 계산 (코사인 유사도)
+                sim_score = torch.cosine_similarity(item_sim_vector.unsqueeze(0),
+                                                    other_sim_vector.unsqueeze(0), dim=1)
+
+                # 같은 카테고리인지 확인
+                same_category = torch.all(item_category == other_category).item()
+
+                # 같은 카테고리이고 유사도가 높은 아이템 선호
+                similarity_scores.append((other_item, sim_score.item(), same_category))
+
+            # 아이템 추가
+            result.append(item)
+            already_added.add(item)
+
+            # 유사한 아이템들 추가 (유사도 및 카테고리 기준)
+            similar_items = [(i, s, c) for i, s, c in similarity_scores
+                             if s > similarity_threshold]
+
+            # 카테고리 우선, 유사도 내림차순으로 정렬
+            similar_items.sort(key=lambda x: (-x[2], -x[1]))
+
+            for similar_item, _, _ in similar_items:
+                if similar_item not in already_added:
+                    result.append(similar_item)
+                    already_added.add(similar_item)
+
+        return result
+
+
+# ----------- 4. 학습 함수 ----------- #
+def train(model, dataloader, optimizer, device):
+    model.train()
+    total_loss = 0
+
+    # BPR 손실 함수
+    criterion = nn.BCEWithLogitsLoss()
+
+    for batch in dataloader:
+        user, item_i, item_j, _, _ = batch
+
+        user = user.to(device)
+        item_i = item_i.to(device)
+        item_j = item_j.to(device)
+
+        optimizer.zero_grad()
+
+        # 긍정적/부정적 아이템에 대한 예측
+        prediction_i = model(user, item_i)
+        prediction_j = model(user, item_j)
+
+        # BPR 손실: log(σ(x_ui - x_uj))
+        diff = prediction_i - prediction_j
+        loss = criterion(diff, torch.ones_like(diff))
+
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item()
+
+    return total_loss / len(dataloader)
+
+
+# ----------- 5. 평가 함수 ----------- #
+def evaluate(model, dataloader, device, k_list=[5, 10]):
+    model.eval()
+
+    # 평가 지표
+    hits = {k: [] for k in k_list}
+    ndcgs = {k: [] for k in k_list}
+
+    with torch.no_grad():
+        for user, item_i, _, _, _ in dataloader:
+            user = user.to(device)
+            item_i = item_i.to(device)
+
+            # 각 사용자별 추천 평가
+            for i in range(len(user)):
+                u = user[i].item()
+                pos_item = item_i[i].item()
+
+                # 테스트 아이템 + 99개 랜덤 아이템으로 후보 구성
+                test_items = torch.LongTensor([pos_item])
+
+                # 99개의 랜덤 부정 아이템
+                neg_items = []
+                while len(neg_items) < 99:
+                    neg_item = random.randint(0, dataloader.dataset.n_items - 1)
+                    if neg_item not in dataloader.dataset.user_positive_items_set.get(u, set()):
+                        neg_items.append(neg_item)
+
+                test_items = torch.cat([test_items, torch.LongTensor(neg_items)])
+
+                # 모든 테스트 아이템 예측
+                test_users = torch.full((100,), u, dtype=torch.long).to(device)
+                test_items = test_items.to(device)
+
+                predictions = model(test_users, test_items)
+
+                # 예측 점수로 아이템 정렬
+                _, indices = torch.topk(predictions, 100)
+                ranked_items = test_items[indices].cpu().numpy()
+
+                # HR, NDCG 계산
+                for k in k_list:
+                    # HR@K
+                    if pos_item in ranked_items[:k]:
+                        hits[k].append(1)
+                    else:
+                        hits[k].append(0)
+
+                    # NDCG@K
+                    if pos_item in ranked_items[:k]:
+                        idx = np.where(ranked_items[:k] == pos_item)[0][0]
+                        ndcgs[k].append(math.log(2) / math.log(idx + 2))
+                    else:
+                        ndcgs[k].append(0)
+
+    # 평균 지표 계산
+    results = {}
+    for k in k_list:
+        results[f'HR@{k}'] = np.mean(hits[k])
+        results[f'NDCG@{k}'] = np.mean(ndcgs[k])
+
+    return results
+
+
+# ----------- 6. 추천 생성 함수 ----------- #
+def generate_recommendations(model, user_id, explicit_data, n_items, device, vector_path=None, top_k=10):
+    """명시적 피드백 데이터 중 label=1인 아이템 기반으로 유사 아이템 추천"""
+    # 사용자가 상호작용한 아이템 찾기
+    rated_items = []
+    positive_items = []
+
+    for u, i, label in explicit_data:
+        if u == user_id:
+            rated_items.append(i)
+            if label == 1:  # 긍정적 평가 (label=1)
+                positive_items.append(i)
+
+    if not positive_items:
+        return []  # 긍정적으로 평가한 아이템이 없는 경우
+
+    # 아이템 유사도 정보 로드 (있는 경우)
+    item_vectors = {}
+    if vector_path and os.path.exists(vector_path):
+        with open(vector_path, 'r', encoding='utf-8') as f:
+            vectors_data = json.load(f)
+
+        for item in vectors_data:
+            if isinstance(item, dict) and "index" in item and "vector_full" in item:
+                item_id = item["index"]
+                vector = item["vector_full"]
+                item_vectors[item_id] = vector
+
+    # 모델을 사용하여 최초 추천 생성
+    candidates = []
+    for item_id in range(n_items):
+        if item_id in rated_items:
+            continue  # 이미 상호작용한 아이템 제외
+
+        # 사용자-아이템 점수 계산
+        user_tensor = torch.tensor([user_id]).to(device)
+        item_tensor = torch.tensor([item_id]).to(device)
+        with torch.no_grad():
+            score = model(user_tensor, item_tensor, feedback_type=0).item()
+
+        candidates.append((item_id, score))
+
+    # 점수 기반 초기 정렬
+    candidates.sort(key=lambda x: x[1], reverse=True)
+    initial_recommendations = [item for item, _ in candidates[:top_k * 2]]  # 2배수로 후보 추출
+
+    # 유사도 및 카테고리 기반 재정렬
+    final_recommendations = []
+
+    if item_vectors:
+        print("유사도 및 카테고리 기반 재정렬을 수행합니다.")
+
+        # 긍정적 아이템 벡터 얻기
+        pos_item_vectors = [item_vectors.get(item_id, None) for item_id in positive_items if item_id in item_vectors]
+
+        if pos_item_vectors:
+            # 카테고리 정보 추출 (마지막 8개 요소)
+            def get_category(vector):
+                # 벡터의 마지막 8개 요소가 카테고리라고 가정
+                if vector and len(vector) >= 8:
+                    return vector[-8:]
+                return None
+
+            # 후보 아이템 평가
+            candidate_scores = []
+            for item_id in initial_recommendations:
+                if item_id not in item_vectors:
+                    continue
+
+                item_vector = item_vectors[item_id]
+
+                # 유사도 계산 (코사인 유사도)
+                similarity_scores = []
+                for pos_vector in pos_item_vectors:
+                    if pos_vector and item_vector:
+                        # 유사도 계산에는 카테고리를 제외한 벡터 사용 (처음 256개 요소)
+                        sim_vec_len = min(len(pos_vector), len(item_vector)) - 8
+                        if sim_vec_len > 0:
+                            a = np.array(pos_vector[:sim_vec_len])
+                            b = np.array(item_vector[:sim_vec_len])
+                            similarity = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+                            similarity_scores.append(similarity)
+
+                if not similarity_scores:
+                    continue
+
+                avg_similarity = np.mean(similarity_scores)
+
+                # 카테고리 일치 점수
+                category_match = 0
+                item_category = get_category(item_vector)
+
+                for pos_vector in pos_item_vectors:
+                    pos_category = get_category(pos_vector)
+                    if item_category and pos_category:
+                        # 카테고리 벡터 간 일치 여부 확인
+                        if np.array_equal(np.array(item_category) > 0.5, np.array(pos_category) > 0.5):
+                            category_match = 1
+                            break
+
+                # 최종 점수 계산 (유사도 + 카테고리 가중치)
+                final_score = avg_similarity * 0.7 + category_match * 0.3
+                candidate_scores.append((item_id, final_score))
+
+            # 최종 점수로 정렬
+            candidate_scores.sort(key=lambda x: x[1], reverse=True)
+            final_recommendations = [item for item, _ in candidate_scores[:top_k]]
+
+    # 유사도 재정렬이 실패했거나 충분한 추천이 없는 경우, 초기 추천으로 대체
+    if len(final_recommendations) < top_k:
+        remaining = top_k - len(final_recommendations)
+        for item in initial_recommendations:
+            if item not in final_recommendations:
+                final_recommendations.append(item)
+                remaining -= 1
+                if remaining <= 0:
+                    break
+
+    return final_recommendations[:top_k]
+
+
+# ----------- 7. 메인 함수 ----------- #
+def main():
+    # 장치 설정
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"사용 장치: {device}")
+
+    # 데이터 로드
+    implicit_data, explicit_data, n_users, n_items, pretrained_vectors = load_data(
+        'implicit.json', 'explicit.json', 'exported_vector_full.json')
+
+    # 사전 학습 벡터 장치 이동
+    if pretrained_vectors is not None:
+        pretrained_vectors = pretrained_vectors.to(device)
+
+    # 데이터 분할 (70:20:10)
+    implicit_train, implicit_temp = train_test_split(implicit_data, test_size=0.3, random_state=42)
+    implicit_test, implicit_val = train_test_split(implicit_temp, test_size=0.667, random_state=42)
+
+    print(f"암시적 데이터 분할: 훈련 {len(implicit_train)}, 검증 {len(implicit_val)}, 테스트 {len(implicit_test)}")
+
+    # 데이터셋 생성
+    train_dataset = PairwiseImplicitDataset(implicit_train, n_items, mode='train', neg_sample_ratio=1)
+    val_dataset = PairwiseImplicitDataset(implicit_val, n_items, mode='val', neg_sample_ratio=0)
+    test_dataset = PairwiseImplicitDataset(implicit_test, n_items, mode='test', neg_sample_ratio=0)
+
+    # 데이터로더 생성
+    batch_size = 1024
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+    # 모델 하이퍼파라미터
+    factor_num = 64
+    num_layers = 5
+    dropout = 0.1
+    lr = 0.001
+    weight_decay = 0.00001
+    n_epochs = 30
+    patience = 5
+
+    # 모델 초기화
+    model = NeuMF(n_users, n_items, factor_num, num_layers, dropout, pretrained_vectors).to(device)
+    print(f"모델 파라미터 수: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")
+
+    # 옵티마이저
+    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=3, factor=0.5)
+
+    # 학습 루프
+    print("\n===== NeuMF 학습 시작 =====")
+    print(f"{'Epoch':^6}|{'Loss':^10}|{'HR@5':^10}|{'HR@10':^10}|{'NDCG@5':^10}|{'NDCG@10':^10}")
+    print('-' * 65)
+
+    best_hr10 = 0
+    counter = 0
+
+    for epoch in range(1, n_epochs + 1):
+        # 학습
+        train_loss = train(model, train_loader, optimizer, device)
+
+        # 검증
+        val_metrics = evaluate(model, val_loader, device)
+
+        print(f"{epoch:^6}|{train_loss:^10.4f}|{val_metrics['HR@5']:^10.4f}|{val_metrics['HR@10']:^10.4f}|"
+              f"{val_metrics['NDCG@5']:^10.4f}|{val_metrics['NDCG@10']:^10.4f}")
+
+        # 스케줄러 업데이트
+        scheduler.step(train_loss)
+
+        # 모델 저장 및 조기 종료
+        if val_metrics['HR@10'] > best_hr10:
+            best_hr10 = val_metrics['HR@10']
+            counter = 0
+            # 최적 모델 저장
+            os.makedirs('models', exist_ok=True)
+            torch.save(model.state_dict(), 'models/neumf_best.pth')
+        else:
+            counter += 1
+            if counter >= patience:
+                print(f"조기 종료 (Epoch {epoch})")
+                break
+
+    # 최적 모델 로드
+    model.load_state_dict(torch.load('models/neumf_best.pth'))
+
+    # 테스트 평가
+    test_metrics = evaluate(model, test_loader, device)
+    print("\n===== 테스트 결과 =====")
+    print(f"HR@5: {test_metrics['HR@5']:.4f}, HR@10: {test_metrics['HR@10']:.4f}")
+    print(f"NDCG@5: {test_metrics['NDCG@5']:.4f}, NDCG@10: {test_metrics['NDCG@10']:.4f}")
+
+    # 추천 예시
+    print("\n===== 추천 예시 =====")
+    sample_user = 0  # 샘플 사용자 ID
+    recommendations = generate_recommendations(model, sample_user, explicit_data, n_items, device,
+                                               vector_path='exported_vector_full.json', top_k=10)
+    print(f"사용자 {sample_user}에 대한 추천: {recommendations}")
+
+    print("\nNeuMF 모델 학습 및 평가 완료!")
+
+
+if __name__ == "__main__":
+    main()
