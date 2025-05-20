@@ -1,0 +1,992 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+import numpy as np
+import scipy.sparse as sp
+import os
+import json
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+from sklearn.model_selection import train_test_split
+import datetime
+import time
+import copy
+
+
+class LightGCN(nn.Module):
+    def __init__(self, n_users, n_items, emb_dim, n_layers, decay, alpha=1.0, beta=1.0, gamma=0.5):
+        """
+        LightGCN 모델 초기화
+
+        Parameters:
+        -----------
+        n_users: 사용자 수
+        n_items: 아이템 수
+        emb_dim: 임베딩 차원 크기
+        n_layers: 그래프 합성곱 레이어 수
+        decay: L2 정규화 계수
+        alpha: LightGCN++ 하이퍼파라미터 α
+        beta: LightGCN++ 하이퍼파라미터 β
+        gamma: 초기 임베딩 가중치 파라미터
+        """
+        super(LightGCN, self).__init__()
+
+        # 모델 파라미터
+        self.n_users = n_users
+        self.n_items = n_items
+        self.emb_dim = emb_dim
+        self.n_layers = n_layers
+        self.decay = decay
+
+        # LightGCN++ 하이퍼파라미터
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+
+        # 사용자와 아이템의 초기 임베딩 (0번째 레이어)
+        self.user_embedding = nn.Embedding(n_users, emb_dim)
+        self.item_embedding = nn.Embedding(n_items, emb_dim)
+
+        # 가중치 초기화
+        nn.init.normal_(self.user_embedding.weight, std=0.1)
+        nn.init.normal_(self.item_embedding.weight, std=0.1)
+
+    def forward(self, norm_adj):
+        """
+        Forward 연산 수행
+
+        Parameters:
+        -----------
+        norm_adj: 정규화된 인접 행렬 (sparse tensor)
+
+        Returns:
+        --------
+        user_final, item_final: 최종 사용자와 아이템 임베딩
+        """
+        # 초기 임베딩
+        ego_embeddings = torch.cat([self.user_embedding.weight, self.item_embedding.weight], dim=0)
+        all_embeddings = [ego_embeddings]
+
+        # 다중 레이어 그래프 합성곱
+        for k in range(self.n_layers):
+            # LightGCN++ 수정된 집계 방식 적용
+            ego_embeddings = self.lightgcn_plus_plus_propagation(norm_adj, ego_embeddings)
+            all_embeddings.append(ego_embeddings)
+
+        # LightGCN++ 최종 임베딩 조합 방식 변경 (식 7 구현)
+        # e_i = γe_i^(0) + (1-γ)(1/K)∑_{k=1}^K e_i^(k)
+        initial_embeddings = all_embeddings[0]  # e_i^(0)
+
+        # 1~K 레이어 임베딩 평균 계산
+        if len(all_embeddings) > 1:
+            propagated_embeddings = torch.stack(all_embeddings[1:], dim=1)
+            propagated_embeddings = torch.mean(propagated_embeddings, dim=1)
+
+            # 가중치 조합
+            all_embeddings = self.gamma * initial_embeddings + (1 - self.gamma) * propagated_embeddings
+        else:
+            all_embeddings = initial_embeddings
+
+        # 사용자와 아이템 임베딩 분리
+        user_all_embeddings, item_all_embeddings = torch.split(all_embeddings, [self.n_users, self.n_items])
+
+        return user_all_embeddings, item_all_embeddings
+
+    def lightgcn_plus_plus_propagation(self, norm_adj, ego_embeddings):
+        # LightGCN++ 논문의 수식 (6)을 구현
+        # e_i^(k+1) = 1/|N_i|^α · ∑(j∈N_i) 1/|N_j|^β · e_j^(k)
+        return torch.sparse.mm(norm_adj, ego_embeddings)
+
+    def calculate_loss(self, users, pos_items, neg_items, norm_adj):
+        """
+        BPR Loss 계산
+
+        Parameters:
+        -----------
+        users: 사용자 인덱스
+        pos_items: 긍정적 아이템 인덱스
+        neg_items: 부정적 아이템 인덱스
+        norm_adj: 정규화된 인접 행렬
+
+        Returns:
+        --------
+        loss: BPR 손실
+        """
+        # 임베딩 획득
+        user_all_embeddings, item_all_embeddings = self.forward(norm_adj)
+
+        # 각 사용자, 아이템의 임베딩 추출
+        u_embeddings = user_all_embeddings[users]
+        pos_i_embeddings = item_all_embeddings[pos_items]
+        neg_i_embeddings = item_all_embeddings[neg_items]
+
+        # 예측값 계산
+        pos_scores = torch.sum(u_embeddings * pos_i_embeddings, dim=1)
+        neg_scores = torch.sum(u_embeddings * neg_i_embeddings, dim=1)
+
+        # BPR 손실 계산
+        loss = -torch.mean(torch.log(torch.sigmoid(pos_scores - neg_scores)))
+
+        # L2 정규화
+        regularizer = (torch.norm(u_embeddings) ** 2 +
+                       torch.norm(pos_i_embeddings) ** 2 +
+                       torch.norm(neg_i_embeddings) ** 2) / 2
+        emb_loss = self.decay * regularizer / len(users)
+
+        return loss + emb_loss
+
+    def predict(self, users, items, norm_adj):
+        """
+        특정 사용자-아이템 쌍에 대한 예측 점수 계산
+
+        Parameters:
+        -----------
+        users: 사용자 인덱스
+        items: 아이템 인덱스
+        norm_adj: 정규화된 인접 행렬
+
+        Returns:
+        --------
+        scores: 예측 점수
+        """
+        users_emb, items_emb = self.forward(norm_adj)
+
+        u_e = users_emb[users]
+        i_e = items_emb[items]
+
+        scores = torch.sum(u_e * i_e, dim=1)
+        return scores
+
+
+# JSON 파일에서 데이터 로드
+def load_data_from_json(file_path):
+    """
+    JSON 파일에서 데이터 로드
+
+    Parameters:
+    -----------
+    file_path: JSON 파일 경로
+
+    Returns:
+    --------
+    data: 처리된 데이터 (triplet 형식)
+    n_users: 사용자 수
+    n_items: 아이템 수
+    """
+    print(f"JSON 파일 로드 중: {file_path}")
+
+    with open(file_path, 'r') as f:
+        raw_data = json.load(f)
+
+    # JSON 구조 확인을 위해 처음 몇 개 항목 출력
+    print("JSON 데이터 구조 확인:")
+    if isinstance(raw_data, list):
+        print(f"데이터 타입: 리스트, 항목 수: {len(raw_data)}")
+        if len(raw_data) > 0:
+            print(f"첫 번째 항목 타입: {type(raw_data[0])}")
+            print(f"첫 번째 항목: {raw_data[0]}")
+    elif isinstance(raw_data, dict):
+        print(f"데이터 타입: 딕셔너리, 키: {list(raw_data.keys())}")
+        for key in list(raw_data.keys())[:3]:  # 처음 3개 키만 확인
+            print(f"키 '{key}'의 값 타입: {type(raw_data[key])}")
+            if isinstance(raw_data[key], list) and len(raw_data[key]) > 0:
+                print(f"키 '{key}'의 첫 번째 항목: {raw_data[key][0]}")
+
+    # 데이터 처리 로직
+    data = []
+    user_set = set()
+    item_set = set()
+
+    try:
+        # philly_bpr_triplets.json 파일 구조에 맞게 처리
+        if isinstance(raw_data, dict) and 'triplets' in raw_data:
+            triplets = raw_data['triplets']
+            print(f"triplets 크기: {len(triplets)}")
+
+            for triplet in triplets:
+                if isinstance(triplet, list) and len(triplet) >= 2:
+                    user_id = int(triplet[0])
+                    item_id = int(triplet[1])
+                    rating = 1.0
+                    if len(triplet) >= 3:
+                        rating = float(triplet[2])
+
+                    data.append([user_id, item_id, rating])
+                    user_set.add(user_id)
+                    item_set.add(item_id)
+
+        # 일반적인 딕셔너리 형식 처리
+        elif isinstance(raw_data, dict):
+            # 이전 코드와 동일하게 유지...
+            if 'data' in raw_data:
+                items = raw_data['data']
+            else:
+                # 첫 번째 키 사용
+                first_key = list(raw_data.keys())[0]
+                items = raw_data[first_key]
+
+            # items가 리스트의 리스트인 경우 (중첩 구조)
+            if isinstance(items, list) and len(items) > 0 and isinstance(items[0], list):
+                for item in items:
+                    if len(item) >= 2:
+                        user_id = int(item[0])
+                        item_id = int(item[1])
+                        rating = 1.0
+                        if len(item) >= 3:
+                            rating = float(item[2])
+
+                        data.append([user_id, item_id, rating])
+                        user_set.add(user_id)
+                        item_set.add(item_id)
+            # 일반적인 항목 리스트 처리
+            else:
+                for item in items:
+                    if isinstance(item, dict):
+                        # 딕셔너리 필드 추출
+                        if 'user_id' in item and 'item_id' in item:
+                            user_id = int(item['user_id'])
+                            item_id = int(item['item_id'])
+                            rating = 1.0
+                            if 'rating' in item:
+                                rating = float(item['rating'])
+
+                            data.append([user_id, item_id, rating])
+                            user_set.add(user_id)
+                            item_set.add(item_id)
+
+        # 리스트 형식 처리
+        elif isinstance(raw_data, list):
+            # 이전 코드와 동일...
+            for item in raw_data:
+                if isinstance(item, list) and len(item) >= 2:
+                    user_id = int(item[0])
+                    item_id = int(item[1])
+                    rating = 1.0
+                    if len(item) >= 3:
+                        rating = float(item[2])
+
+                    data.append([user_id, item_id, rating])
+                    user_set.add(user_id)
+                    item_set.add(item_id)
+                # 나머지 코드는 이전과 동일...
+
+        # 데이터가 처리되었는지 확인
+        if not data:
+            raise ValueError("JSON에서 유효한 데이터를 추출할 수 없습니다.")
+
+        # 사용자 및 아이템 ID 최대값 계산
+        n_users = max(user_set) + 1
+        n_items = max(item_set) + 1
+
+        print(f"데이터 처리 완료: {len(data)} 개의 상호작용, {n_users} 명의 사용자, {n_items} 개의 아이템")
+
+        return data, n_users, n_items
+
+    except Exception as e:
+        print(f"데이터 처리 중 오류 발생: {e}")
+        print("파일 내용의 처음 몇 줄을 확인해봅시다:")
+        with open(file_path, 'r') as f:
+            for i, line in enumerate(f):
+                if i >= 5:  # 처음 5줄만 출력
+                    break
+                print(f"줄 {i + 1}: {line.strip()}")
+
+        raise ValueError("JSON 파일 구조가 예상과 다릅니다. 파일을 확인하고 로딩 함수를 수정하세요.")
+
+
+# 데이터 분할
+def split_data(data, test_size=0.2, val_size=0.1, random_state=42):
+    """
+    데이터를 훈련, 검증, 테스트 세트로 분할
+
+    Parameters:
+    -----------
+    data: 원본 데이터 (triplets)
+    test_size: 테스트 세트 비율
+    val_size: 검증 세트 비율
+    random_state: 랜덤 시드
+
+    Returns:
+    --------
+    train_data, val_data, test_data: 분할된 데이터
+    """
+    # 먼저 학습 및 테스트 세트로 분할
+    train_data, test_data = train_test_split(data, test_size=test_size, random_state=random_state)
+
+    # 학습 세트를 다시 학습 및 검증 세트로 분할
+    if val_size > 0:
+        # 전체 데이터 중 검증 세트 비율 계산
+        actual_val_size = val_size / (1 - test_size)
+        train_data, val_data = train_test_split(train_data, test_size=actual_val_size, random_state=random_state)
+    else:
+        val_data = []
+
+    print(f"데이터 분할 완료 - 학습: {len(train_data)}, 검증: {len(val_data)}, 테스트: {len(test_data)}")
+
+    return train_data, val_data, test_data
+
+
+# 정규화된 인접 행렬 생성 함수 수정
+def create_adj_matrix(train_data, n_users, n_items, device, alpha=1.0, beta=1.0):
+    """
+    LightGCN++ 정규화된 인접 행렬 생성
+
+    Parameters:
+    -----------
+    train_data: 학습 데이터 (triplets)
+    n_users: 사용자 수
+    n_items: 아이템 수
+    device: 학습 디바이스
+    alpha: LightGCN++ 하이퍼파라미터 α
+    beta: LightGCN++ 하이퍼파라미터 β
+
+    Returns:
+    --------
+    norm_adj: LightGCN++ 정규화된 인접 행렬 (PyTorch sparse tensor)
+    """
+    # 사용자-아이템 상호작용 행렬 생성
+    user_item_matrix = sp.dok_matrix((n_users, n_items), dtype=np.float32)
+
+    # triplet 데이터에서 양성 상호작용만 추출하여 인접 행렬 구성
+    for user, pos_item, _ in train_data:
+        user = int(user)
+        pos_item = int(pos_item)
+        user_item_matrix[user, pos_item] = 1.0
+
+    print(f"인접 행렬 구성 완료: {user_item_matrix.nnz}개의 상호작용")
+
+    # 행렬 크기 정의
+    n = n_users + n_items
+
+    # 인접 행렬 생성 (대칭 행렬)
+    # [[0, R], [R^T, 0]] 형태
+    adj_mat = sp.dok_matrix((n, n), dtype=np.float32)
+    adj_mat[:n_users, n_users:] = user_item_matrix
+    adj_mat[n_users:, :n_users] = user_item_matrix.T
+
+    # 인접 행렬을 CSR 형식으로 변환
+    adj_mat = adj_mat.tocsr()
+
+    # 노드 차수 계산
+    rowsum = np.array(adj_mat.sum(axis=1))
+
+    # LightGCN++ 수정: 1/|N_i|^α 계산
+    d_inv_alpha = np.power(rowsum, -alpha).flatten()
+    d_inv_alpha[np.isinf(d_inv_alpha)] = 0.
+
+    # LightGCN++ 수정: 1/|N_j|^β 계산
+    d_inv_beta = np.power(rowsum, -beta).flatten()
+    d_inv_beta[np.isinf(d_inv_beta)] = 0.
+
+    # 대각 행렬 생성
+    d_mat_inv_alpha = sp.diags(d_inv_alpha)
+    d_mat_inv_beta = sp.diags(d_inv_beta)
+
+    # LightGCN++ 정규화된 인접 행렬 계산
+    # 원래 식: e_i^(k+1) = 1/|N_i|^α · ∑(j∈N_i) 1/|N_j|^β · e_j^(k)
+    # 행렬 형태: D_α^(-1) · A · D_β^(-1)
+    norm_adj = d_mat_inv_alpha.dot(adj_mat).dot(d_mat_inv_beta)
+
+    # CSR 행렬을 COO 형식으로 변환 (row, col 속성 사용 가능)
+    norm_adj = norm_adj.tocoo()
+
+    # PyTorch sparse tensor로 변환
+    values = norm_adj.data
+    indices = np.vstack((norm_adj.row, norm_adj.col))
+    shape = norm_adj.shape
+
+    i = torch.LongTensor(indices)
+    v = torch.FloatTensor(values)
+    s = torch.Size(shape)
+
+    return torch.sparse.FloatTensor(i, v, s).to(device)
+
+
+# 모델 저장 및 로드 함수 추가
+
+def get_next_model_version(output_dir):
+    """
+    다음 모델 버전 번호를 가져옵니다.
+
+    Parameters:
+    -----------
+    output_dir: 모델 저장 디렉토리
+
+    Returns:
+    --------
+    next_version: 다음 모델 버전 번호
+    """
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        return 1
+
+    # 기존 모델 파일 검색
+    model_files = [f for f in os.listdir(output_dir) if f.startswith('lightgcn_model_') and f.endswith('.pt')]
+
+    if not model_files:
+        return 1
+
+    # 버전 번호 추출 및 최대값 찾기
+    versions = []
+    for file in model_files:
+        try:
+            if file != "lightgcn_model_latest.pt":
+                version_str = file.replace('lightgcn_model_', '').replace('.pt', '')
+                version = int(version_str)
+                versions.append(version)
+        except ValueError:
+            continue
+
+    return max(versions) + 1 if versions else 1
+
+
+def save_lightgcn_model(model, dataset_info, output_dir, training_params=None, metrics=None):
+    """
+    LightGCN++ 모델을 저장합니다.
+
+    Parameters:
+    -----------
+    model: 저장할 LightGCN++ 모델
+    dataset_info: 데이터셋 메타데이터
+    output_dir: 저장 디렉토리
+    training_params: 학습 파라미터 (옵션)
+    metrics: 성능 지표 (옵션)
+
+    Returns:
+    --------
+    model_path: 저장된 모델 경로
+    model_version: 모델 버전
+    """
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # 다음 모델 버전 번호 가져오기
+    model_version = get_next_model_version(output_dir)
+    model_filename = f"lightgcn_model_{model_version}.pt"
+    model_path = os.path.join(output_dir, model_filename)
+
+    # 모델 정보 구성
+    model_info = {
+        'model_state': model.state_dict(),
+        'dataset_info': dataset_info,
+        'timestamp': datetime.datetime.now().isoformat(),
+        'version': model_version
+    }
+
+    # 추가 정보 포함
+    if training_params:
+        model_info['training_params'] = training_params
+
+    if metrics:
+        model_info['metrics'] = metrics
+
+    # 모델 저장
+    torch.save(model_info, model_path)
+    print(f"모델 저장 완료 (버전 {model_version}): {model_path}")
+
+    # 최신 모델 링크 생성
+    latest_model_path = os.path.join(output_dir, "lightgcn_model_latest.pt")
+    torch.save(model_info, latest_model_path)
+    print(f"최신 모델 링크 업데이트: {latest_model_path}")
+
+    return model_path, model_version
+
+
+def load_lightgcn_model(model_path_or_dir, version=None, device="cuda" if torch.cuda.is_available() else "cpu"):
+    """
+    저장된 LightGCN++ 모델을 로드합니다.
+
+    Parameters:
+    -----------
+    model_path_or_dir: 모델 파일 경로 또는 모델 디렉토리
+    version: 로드할 모델 버전 (None이면 최신 버전 또는 지정된 경로 사용)
+    device: 로드할 장치
+
+    Returns:
+    --------
+    model: 로드된 LightGCN++ 모델
+    model_info: 모델 메타데이터
+    """
+    if os.path.isdir(model_path_or_dir):
+        # 디렉토리가 제공된 경우
+        if version is None:
+            # 최신 버전 찾기
+            model_path = os.path.join(model_path_or_dir, "lightgcn_model_latest.pt")
+            if not os.path.exists(model_path):
+                # latest 링크가 없는 경우 가장 높은 버전 찾기
+                next_version = get_next_model_version(model_path_or_dir) - 1
+                if next_version < 1:
+                    raise FileNotFoundError(f"모델 디렉토리에 모델 파일이 없음: {model_path_or_dir}")
+                model_path = os.path.join(model_path_or_dir, f"lightgcn_model_{next_version}.pt")
+        else:
+            # 특정 버전 로드
+            model_path = os.path.join(model_path_or_dir, f"lightgcn_model_{version}.pt")
+    else:
+        # 파일 경로가 직접 제공된 경우
+        model_path = model_path_or_dir
+
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"모델 파일을 찾을 수 없음: {model_path}")
+
+    # 모델 정보 로드
+    model_info = torch.load(model_path, map_location=device)
+
+    # 모델 파라미터 추출
+    dataset_info = model_info['dataset_info']
+    n_users = dataset_info.get('n_users', 0)
+    n_items = dataset_info.get('n_items', 0)
+
+    # 훈련 파라미터 추출
+    if 'training_params' in model_info:
+        emb_dim = model_info['training_params'].get('emb_dim', 64)
+        n_layers = model_info['training_params'].get('n_layers', 3)
+        decay = model_info['training_params'].get('decay', 0.0001)
+        alpha = model_info['training_params'].get('alpha', 0.5)
+        beta = model_info['training_params'].get('beta', 0.5)
+        gamma = model_info['training_params'].get('gamma', 0.5)
+    else:
+        # 기본값 사용
+        emb_dim = 64
+        n_layers = 3
+        decay = 0.0001
+        alpha = 0.5
+        beta = 0.5
+        gamma = 0.5
+
+    # 모델 초기화 및 가중치 로드
+    model = LightGCN(n_users, n_items, emb_dim, n_layers, decay, alpha, beta, gamma)
+    model.load_state_dict(model_info['model_state'])
+    model = model.to(device)
+    model.eval()  # 평가 모드로 설정
+
+    # 모델 버전 정보
+    version_info = f"(버전 {model_info.get('version', '알 수 없음')})" if 'version' in model_info else ""
+
+    print(f"LightGCN++ 모델 로드 완료: {model_path} {version_info}")
+    print(f"- 사용자 수: {n_users}")
+    print(f"- 아이템 수: {n_items}")
+    print(f"- 임베딩 차원: {emb_dim}")
+    print(f"- GCN 레이어 수: {n_layers}")
+
+    # 추가 모델 정보 표시
+    if 'training_params' in model_info:
+        training_params = model_info['training_params']
+        if 'n_epochs' in training_params:
+            print(f"- 학습 에포크: {training_params['n_epochs']}")
+        if 'learning_rate' in training_params:
+            print(f"- 학습률: {training_params['learning_rate']}")
+
+    if 'metrics' in model_info and 'best_val_loss' in model_info['metrics']:
+        print(f"- 최고 검증 손실: {model_info['metrics']['best_val_loss']:.6f}")
+
+    if 'timestamp' in model_info:
+        print(f"- 저장 시간: {model_info['timestamp']}")
+
+    return model, model_info
+
+
+def train_lightgcn_model_with_save(train_data, val_data, n_users, n_items, emb_dim, n_layers,
+                                   device, batch_size=1024, n_epochs=50, lr=0.001, decay=0.0001,
+                                   alpha=1.0, beta=1.0, gamma=0.5, output_dir="./lightgcn_models"):
+    """
+    LightGCN++ 모델 학습 및 저장 (최종 모델만 저장)
+
+    Parameters:
+    -----------
+    train_data: 학습 데이터
+    val_data: 검증 데이터
+    n_users: 사용자 수
+    n_items: 아이템 수
+    emb_dim: 임베딩 차원
+    n_layers: 그래프 합성곱 레이어 수
+    device: 학습 장치
+    batch_size: 배치 크기
+    n_epochs: 학습 에포크 수
+    lr: 학습률
+    decay: L2 정규화 계수
+    alpha: LightGCN++ 하이퍼파라미터 α
+    beta: LightGCN++ 하이퍼파라미터 β
+    gamma: 초기 임베딩 가중치 γ
+    output_dir: 모델 저장 디렉토리
+
+    Returns:
+    --------
+    model: 학습된 모델
+    best_val_loss: 최적 검증 손실
+    model_version: 저장된 모델 버전
+    """
+    # 모델 초기화 (LightGCN++ 파라미터 추가)
+    model = LightGCN(n_users, n_items, emb_dim, n_layers, decay, alpha, beta, gamma).to(device)
+    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=decay)
+
+    # 인접 행렬 생성
+    norm_adj = create_adj_matrix(train_data, n_users, n_items, device, alpha, beta)
+
+    # 학습 추적을 위한 지표
+    train_losses = []
+    val_losses = []
+
+    # 성능 지표 추적용
+    precisions_at_20 = []
+    recalls_at_20 = []
+    ndcgs_at_20 = []
+
+    best_val_loss = float('inf')
+    best_epoch = 0
+    best_model = None
+    no_improve = 0
+    patience = 5
+
+    print(f"\n{'Epoch':^6} | {'Train Loss':^10} | {'Val Loss':^10} | {'P@20':^8} | {'R@20':^8} | {'NDCG@20':^8}")
+    print('-' * 60)
+
+    start_time = time.time()
+
+    # 사용자별 검증 아이템 그룹화 (성능 평가용)
+    user_val_items = {}
+    if val_data:
+        for user, pos_item, _ in val_data:
+            user = int(user)
+            pos_item = int(pos_item)
+            if user not in user_val_items:
+                user_val_items[user] = []
+            user_val_items[user].append(pos_item)
+
+    for epoch in range(1, n_epochs + 1):
+        model.train()
+
+        # 학습 데이터를 배치로 분할
+        np.random.shuffle(train_data)
+        batches = [train_data[i:i + batch_size] for i in range(0, len(train_data), batch_size)]
+
+        epoch_loss = 0
+        for batch in tqdm(batches, desc=f"Epoch {epoch}/{n_epochs}", leave=False):
+            users = torch.tensor([int(triplet[0]) for triplet in batch], dtype=torch.long).to(device)
+            pos_items = torch.tensor([int(triplet[1]) for triplet in batch], dtype=torch.long).to(device)
+            neg_items = torch.tensor([int(triplet[2]) for triplet in batch], dtype=torch.long).to(device)
+
+            optimizer.zero_grad()
+
+            # BPR 손실 계산
+            loss = model.calculate_loss(users, pos_items, neg_items, norm_adj)
+
+            # 역전파 및 최적화
+            loss.backward()
+            optimizer.step()
+
+            epoch_loss += loss.item() * len(batch)
+
+        # 에폭 평균 손실 계산
+        avg_train_loss = epoch_loss / len(train_data)
+        train_losses.append(avg_train_loss)
+
+        # 검증 손실 계산
+        if val_data:
+            model.eval()
+            with torch.no_grad():
+                val_batches = [val_data[i:i + batch_size] for i in range(0, len(val_data), batch_size)]
+                val_loss = 0
+
+                for batch in tqdm(val_batches, desc="Validation", leave=False):
+                    users = torch.tensor([int(triplet[0]) for triplet in batch], dtype=torch.long).to(device)
+                    pos_items = torch.tensor([int(triplet[1]) for triplet in batch], dtype=torch.long).to(device)
+                    neg_items = torch.tensor([int(triplet[2]) for triplet in batch], dtype=torch.long).to(device)
+
+                    # BPR 손실 계산
+                    loss = model.calculate_loss(users, pos_items, neg_items, norm_adj)
+                    val_loss += loss.item() * len(batch)
+
+                avg_val_loss = val_loss / len(val_data)
+                val_losses.append(avg_val_loss)
+
+                # 성능 평가 지표 계산 (Precision, Recall, NDCG)
+                precision_sum = 0
+                recall_sum = 0
+                ndcg_sum = 0
+                num_users = 0
+
+                # 모든 임베딩 가져오기
+                user_embs, item_embs = model.forward(norm_adj)
+
+                for user, pos_items in user_val_items.items():
+                    if len(pos_items) > 0:
+                        num_users += 1
+                        # 해당 사용자의 임베딩
+                        u_emb = user_embs[user].unsqueeze(0)
+
+                        # 모든 아이템에 대한 예측 점수
+                        scores = torch.mm(u_emb, item_embs.t()).squeeze()
+
+                        # Top-20 아이템 가져오기
+                        _, indices = torch.topk(scores, 20)
+                        recommended_items = indices.cpu().numpy()
+
+                        # Precision@20
+                        n_hit = len(set(pos_items) & set(recommended_items))
+                        precision = n_hit / 20
+                        precision_sum += precision
+
+                        # Recall@20
+                        recall = n_hit / len(pos_items)
+                        recall_sum += recall
+
+                        # NDCG@20
+                        dcg = 0
+                        idcg = sum(1.0 / np.log2(i + 2) for i in range(min(len(pos_items), 20)))
+
+                        for i, item in enumerate(recommended_items):
+                            if item in pos_items:
+                                dcg += 1.0 / np.log2(i + 2)
+
+                        ndcg = dcg / idcg if idcg > 0 else 0
+                        ndcg_sum += ndcg
+
+                # 평균 지표 계산
+                avg_precision = precision_sum / num_users if num_users > 0 else 0
+                avg_recall = recall_sum / num_users if num_users > 0 else 0
+                avg_ndcg = ndcg_sum / num_users if num_users > 0 else 0
+
+                precisions_at_20.append(avg_precision)
+                recalls_at_20.append(avg_recall)
+                ndcgs_at_20.append(avg_ndcg)
+        else:
+            avg_val_loss = avg_train_loss
+            val_losses.append(avg_val_loss)
+            # 검증 데이터가 없는 경우 더미 값 추가
+            precisions_at_20.append(0)
+            recalls_at_20.append(0)
+            ndcgs_at_20.append(0)
+
+        # 성능 지표가 있는 경우에만 출력
+        if val_data:
+            print(
+                f"{epoch:6d} | {avg_train_loss:10.6f} | {avg_val_loss:10.6f} | {precisions_at_20[-1]:8.4f} | {recalls_at_20[-1]:8.4f} | {ndcgs_at_20[-1]:8.4f}")
+        else:
+            print(f"{epoch:6d} | {avg_train_loss:10.6f} | {avg_val_loss:10.6f} | {'N/A':^8} | {'N/A':^8} | {'N/A':^8}")
+
+        # 최고 모델 저장
+        if avg_val_loss < best_val_loss:
+            best_val_loss = avg_val_loss
+            best_epoch = epoch
+            best_model = copy.deepcopy(model.state_dict())
+            no_improve = 0
+            print(f"  [개선] 새로운 최고 모델! (검증 손실: {best_val_loss:.6f})")
+        else:
+            no_improve += 1
+            if no_improve >= patience:
+                print(f"\n{patience}번의 에폭 동안 개선이 없어 조기 종료합니다.")
+                print(f"최고 에폭: {best_epoch}, 최고 검증 손실: {best_val_loss:.6f}")
+                break
+
+    total_time = time.time() - start_time
+    print(f"\n학습 완료 - 총 소요 시간: {total_time:.2f}초")
+
+    # 최고 모델 복원
+    if best_model is not None:
+        model.load_state_dict(best_model)
+        print(f"최고 모델 복원 (에폭 {best_epoch}, 검증 손실: {best_val_loss:.6f})")
+
+    # 그래프 그리기 (subplot 2개 사용)
+    plt.figure(figsize=(16, 6))
+
+    # 첫 번째 서브플롯: 학습 및 검증 손실
+    plt.subplot(1, 2, 1)
+    plt.plot(range(1, len(train_losses) + 1), train_losses, label='Train Loss')
+    plt.plot(range(1, len(val_losses) + 1), val_losses, label='Validation Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('LightGCN Training Loss')
+    plt.legend()
+    plt.grid(True)
+
+    # 두 번째 서브플롯: 성능 지표 (Precision, Recall, NDCG)
+    plt.subplot(1, 2, 2)
+    epochs = range(1, len(precisions_at_20) + 1)
+    plt.plot(epochs, precisions_at_20, 'r-', label='Precision@20')
+    plt.plot(epochs, recalls_at_20, 'g-', label='Recall@20')
+    plt.plot(epochs, ndcgs_at_20, 'b-', label='NDCG@20')
+    plt.xlabel('Epoch')
+    plt.ylabel('Metrics')
+    plt.title('LightGCN Validation Performance')
+    plt.legend()
+    plt.grid(True)
+
+    # 레이아웃 조정 및 그래프 저장
+    plt.tight_layout()
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    plt.savefig(os.path.join(output_dir, 'lightgcn_training_metrics.png'))
+    plt.close()
+
+    # 학습 환경 정보
+    training_params = {
+        'batch_size': batch_size,
+        'n_epochs': n_epochs,
+        'learning_rate': lr,
+        'decay': decay,
+        'alpha': alpha,
+        'beta': beta,
+        'gamma': gamma,
+        'emb_dim': emb_dim,
+        'n_layers': n_layers,
+        'epochs_trained': len(train_losses),
+        'best_epoch': best_epoch
+    }
+
+    dataset_info = {
+        'n_users': n_users,
+        'n_items': n_items,
+        'train_data_size': len(train_data),
+        'val_data_size': len(val_data) if val_data else 0
+    }
+
+    # 성과 지표 저장
+    metrics = {
+        'final_train_loss': train_losses[-1] if train_losses else None,
+        'best_val_loss': best_val_loss,
+        'train_losses': train_losses,
+        'val_losses': val_losses,
+        'precisions_at_20': precisions_at_20,
+        'recalls_at_20': recalls_at_20,
+        'ndcgs_at_20': ndcgs_at_20
+    }
+
+    # 최종 모델 저장
+    print("\n최종 모델 저장 중...")
+    final_model_path, model_version = save_lightgcn_model(
+        model, dataset_info, output_dir, training_params, metrics
+    )
+
+    return model, best_val_loss, model_version
+
+
+# 테스트 함수
+def test_lightgcn_model(model, test_data, norm_adj, device, k_values=[5, 10, 20]):
+    """
+    LightGCN 모델 평가
+
+    Parameters:
+    -----------
+    model: 학습된 모델
+    test_data: 테스트 데이터 (triplets)
+    norm_adj: 정규화된 인접 행렬
+    device: 평가 디바이스
+    k_values: 평가할 top-k 값들
+
+    Returns:
+    --------
+    metrics: 평가 지표
+    """
+    model.eval()
+
+    # 사용자별 테스트 아이템 그룹화
+    user_pos_items = {}
+    for user, pos_item, _ in test_data:
+        user = int(user)
+        pos_item = int(pos_item)
+        if user not in user_pos_items:
+            user_pos_items[user] = []
+        user_pos_items[user].append(pos_item)
+
+    # 평가 지표
+    metrics = {}
+    for k in k_values:
+        metrics[f'Precision@{k}'] = []
+        metrics[f'Recall@{k}'] = []
+        metrics[f'NDCG@{k}'] = []
+
+    with torch.no_grad():
+        # 모든 임베딩 가져오기
+        user_embs, item_embs = model.forward(norm_adj)
+
+        for user, pos_items in tqdm(user_pos_items.items(), desc="Testing"):
+            # 해당 사용자의 임베딩
+            u_emb = user_embs[user].unsqueeze(0)
+
+            # 모든 아이템에 대한 예측 점수
+            scores = torch.mm(u_emb, item_embs.t()).squeeze()
+
+            # 이미 알고 있는 학습 아이템은 마스킹
+            # 실제 구현에서는 학습 세트의 아이템을 마스킹해야 함
+
+            # Top-k 아이템 가져오기
+            _, indices = torch.topk(scores, max(k_values))
+            recommended_items = indices.cpu().numpy()
+
+            # 평가 지표 계산
+            for k in k_values:
+                top_k_items = recommended_items[:k]
+
+                # Precision@k
+                n_hit = len(set(pos_items) & set(top_k_items))
+                precision = n_hit / k
+                metrics[f'Precision@{k}'].append(precision)
+
+                # Recall@k
+                recall = n_hit / len(pos_items)
+                metrics[f'Recall@{k}'].append(recall)
+
+                # NDCG@k
+                dcg = 0
+                idcg = sum(1.0 / np.log2(i + 2) for i in range(min(len(pos_items), k)))
+
+                for i, item in enumerate(top_k_items):
+                    if item in pos_items:
+                        dcg += 1.0 / np.log2(i + 2)
+
+                ndcg = dcg / idcg if idcg > 0 else 0
+                metrics[f'NDCG@{k}'].append(ndcg)
+
+    # 평균 계산
+    avg_metrics = {metric: np.mean(values) for metric, values in metrics.items()}
+
+    print("\n===== 테스트 결과 =====")
+    for k in k_values:
+        print(f"Top-{k} 추천:")
+        print(f"  Precision@{k}: {avg_metrics[f'Precision@{k}']:.4f}")
+        print(f"  Recall@{k}: {avg_metrics[f'Recall@{k}']:.4f}")
+        print(f"  NDCG@{k}: {avg_metrics[f'NDCG@{k}']:.4f}")
+
+    return avg_metrics
+
+
+# 메인 함수
+if __name__ == "__main__":
+    # 장치 설정
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"사용 장치: {device}")
+
+    # 데이터 로드
+    data_path = 'triplets_1to50.json'  # JSON 파일 경로
+    data, n_users, n_items = load_data_from_json(data_path)
+
+    # 데이터 분할
+    train_data, val_data, test_data = split_data(data, test_size=0.2, val_size=0.1)
+
+    # 하이퍼파라미터 설정
+    emb_dim = 64  # 임베딩 차원
+    n_layers = 3  # GCN 레이어 수
+    batch_size = 4096  # 배치 크기
+    n_epochs = 20  # 에폭 수
+    lr = 0.0005  # 학습률 0.0005
+    decay = 0.0001  # L2 정규화 계수 0.0001
+
+    # LightGCN++ 추가 하이퍼파라미터
+    alpha = 0.26  # 이웃 가중치 제어 파라미터 α
+    beta = 0.26 # 이웃 가중치 제어 파라미터 β
+    gamma = 0.02  # 초기 임베딩 가중치 조절 파라미터 γ
+
+    # LightGCN++ 모델 학습
+    model, best_val_loss, model_version = train_lightgcn_model_with_save(
+        train_data, val_data, n_users, n_items, emb_dim, n_layers,
+        device, batch_size, n_epochs, lr, decay, alpha, beta, gamma
+    )
+
+    # 정규화된 인접 행렬 생성 (테스트용)
+    norm_adj = create_adj_matrix(train_data, n_users, n_items, device, alpha, beta)
+
+    # 모델 평가
+    test_metrics = test_lightgcn_model(model, test_data, norm_adj, device, k_values=[5, 10, 20])
+
+    print("\nLightGCN 모델 학습 및 평가 완료!")
