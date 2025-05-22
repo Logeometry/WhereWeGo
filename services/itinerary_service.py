@@ -38,6 +38,7 @@ class ItineraryService:
         prev_coord = origin['coords']
 
         # 슬롯별로 장소 선택
+
         for slot_start, slot_end in slots:
             best = None
             best_score = float('inf')
@@ -45,24 +46,40 @@ class ItineraryService:
                 if place['_used']:
                     continue
                 coord = place['coords']
-                dist = self.estimator.estimate(prev_coord, coord)
-                rec = place.get('rec_score', 0.0)
-                score = self.alpha * dist + (1 - self.alpha) * (1 - rec)
+                dist = self.estimator.estimate(origin['coords'], coord)  # 출발지 기준 거리로 고정
                 est_start = slot_start + timedelta(minutes=dist)
                 est_end   = est_start + timedelta(minutes=avg_stay)
                 if est_end > slot_end:
                     continue
-                if score < best_score:
-                    best_score = score
+                if dist < best_score:
+                    best_score = dist
                     best = place
-            if not best:
-                break
+
+        # for slot_start, slot_end in slots:
+        #     best = None
+        #     best_score = float('inf')
+        #     for place in candidates:
+        #         if place['_used']:
+        #             continue
+        #         coord = place['coords']
+        #         dist = self.estimator.estimate(prev_coord, coord)
+        #         rec = place.get('rec_score', 0.0)
+        #         score = self.alpha * dist + (1 - self.alpha) * (1 - rec)
+        #         est_start = slot_start + timedelta(minutes=dist)
+        #         est_end   = est_start + timedelta(minutes=avg_stay)
+        #         if est_end > slot_end:
+        #             continue
+        #         # if score < best_score:
+        #             best_score = score
+        #             best = place
+        #     if not best:
+        #         break
 
             travel = self.estimator.estimate(prev_coord, best['coords'])
             visit_start = slot_start + timedelta(minutes=travel)
             visit_end   = visit_start + timedelta(minutes=avg_stay)
             result.append({
-                'place_id':    best['place_id'],
+                 'place_id':    best['place_id'],
                 'start_time':  visit_start,
                 'end_time':    visit_end,
                 'travel_time': travel
@@ -85,7 +102,6 @@ class ItineraryService:
     ) -> List[Dict]:
         """
         다중 날짜 일정 생성
-        - start_dt부터 end_dt까지 각 날짜마다 generate_ranked_course 호출 이미 방문한 장소는 제외
         """
         itinerary = []
         used_places = set()
