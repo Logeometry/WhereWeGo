@@ -1,0 +1,71 @@
+from fastapi import APIRouter, Request, Form, Query
+from fastapi.responses import HTMLResponse, RedirectResponse
+from app.services.data_loader import load_data_from_json
+from app.services.wish_service import toggle_wish, get_user_wishlist
+
+router = APIRouter()
+
+FILE_PATH = "data/tourlist_spots_all.json"
+all_places = load_data_from_json(FILE_PATH)
+
+@router.get("/test/wishlist_page", response_class=HTMLResponse)
+async def test_wishlist_page(user_id: str = Query(...)):
+    wished_ids = get_user_wishlist(user_id)
+
+    html = f"""
+    <html>
+        <head>
+            <title>위시리스트 테스트</title>
+            <style>
+                body {{ font-family: sans-serif; padding: 2rem; }}
+                .place {{ border-bottom: 1px solid #ccc; padding: 1rem 0; }}
+                button {{ margin-left: 10px; }}
+            </style>
+        </head>
+        <body>
+            <h1>📌 전체 장소 목록 (user: <code>{user_id}</code>)</h1>
+            <ul>
+    """
+
+    for place in all_places:
+        is_wished = place["content_id"] in wished_ids
+        button_label = "💔 위시 취소" if is_wished else "❤️ 위시 추가"
+
+        html += f"""
+            <li class="place">
+                <strong>{place['name']}</strong><br>
+                주소: {place['address']}<br>
+                <form method="post" action="/test/wish/toggle">
+                    <input type="hidden" name="user_id" value="{user_id}"/>
+                    <input type="hidden" name="place_id" value="{place['content_id']}"/>
+                    <button type="submit">{button_label}</button>
+                </form>
+            </li>
+        """
+
+    html += f"""
+            </ul>
+            <hr>
+            <h2><a href="/test/wishlist?user_id={user_id}">👉 {user_id}의 위시리스트 보기</a></h2>
+        </body>
+    </html>
+    """
+    return HTMLResponse(content=html)
+
+
+@router.post("/test/wish/toggle")
+async def toggle_wish_form(user_id: str = Form(...), place_id: str = Form(...)):
+    toggle_wish(user_id, place_id)
+    return RedirectResponse(url=f"/test/wishlist_page?user_id={user_id}", status_code=303)
+
+
+@router.get("/test/wishlist", response_class=HTMLResponse)
+async def show_user_wishlist(user_id: str = Query(...)):
+    wished_ids = get_user_wishlist(user_id)
+    wished_places = [p for p in all_places if p["content_id"] in wished_ids]
+
+    html = f"<html><body><h1>❤️ {user_id}의 위시리스트</h1><ul>"
+    for place in wished_places:
+        html += f"<li><strong>{place['name']}</strong> - {place['address']}</li>"
+    html += f"</ul><a href='/test/wishlist_page?user_id={user_id}'>⬅ 돌아가기</a></body></html>"
+    return HTMLResponse(content=html)

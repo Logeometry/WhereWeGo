@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>나만의 맞춤형 여행지 추천</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      padding: 2rem;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      max-width: 800px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+    }
+    .question-block {
+      margin-top: 1.5rem;
+    }
+    .question-block h3 {
+      margin-bottom: 0.5rem;
+    }
+    label {
+      display: block;
+      margin: 0.3rem 0;
+    }
+    .slider-values {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      margin-top: 0.3rem;
+    }
+    .submit-btn {
+      margin-top: 2rem;
+      padding: 0.7rem 1.5rem;
+      font-size: 1rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .submit-btn:hover {
+      background-color: #0056b3;
+    }
+    input[type="text"],
+    input[type="range"] {
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>나만의 맞춤형 여행지 추천</h1>
+    <p>아래 설문에 답하시면 당신의 취향에 맞는 여행지를 추천해 드립니다!</p>
+
+    <form id="survey-form">
+      <div class="question-block">
+        <h3>이름을 입력해주세요 (임시)</h3>
+        <input type="text" name="username" required />
+      </div>
+
+      <div class="question-block">
+        <h3>1. 어떤 유형의 여행을 선호하시나요?</h3>
+        <label><input type="radio" name="travel_type" value="자연 및 아웃도어" required /> 자연 및 아웃도어</label>
+        <label><input type="radio" name="travel_type" value="문화 및 역사" /> 문화 및 역사</label>
+        <label><input type="radio" name="travel_type" value="도시 관광" /> 도시 관광</label>
+        <label><input type="radio" name="travel_type" value="휴양 및 힐링" /> 휴양 및 힐링</label>
+        <label><input type="radio" name="travel_type" value="모험 및 액티비티" /> 모험 및 액티비티</label>
+      </div>
+
+      <div class="question-block">
+        <h3>2. 선호하는 여행 기후는?</h3>
+        <label><input type="radio" name="climate" value="따뜻하고 습한 열대 기후" required /> 따뜻하고 습한 열대 기후</label>
+        <label><input type="radio" name="climate" value="따뜻하고 건조한 기후" /> 따뜻하고 건조한 기후</label>
+        <label><input type="radio" name="climate" value="온화한 사계절 기후" /> 온화한 사계절 기후</label>
+        <label><input type="radio" name="climate" value="서늘하거나 추운 기후" /> 서늘하거나 추운 기후</label>
+      </div>
+
+      <div class="question-block">
+        <h3>3. 예산 범위는 어떻게 되시나요? (1: 저예산, 5: 고예산)</h3>
+        <input type="range" name="budget" min="1" max="5" value="3" />
+        <div class="slider-values">
+          <span>저예산</span>
+          <span>중간</span>
+          <span>고예산</span>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <h3>4. 선호하는 여행 기간은?</h3>
+        <label><input type="radio" name="duration" value="1-3일" required /> 1-3일</label>
+        <label><input type="radio" name="duration" value="4-7일" /> 4-7일</label>
+        <label><input type="radio" name="duration" value="8-14일" /> 8-14일</label>
+        <label><input type="radio" name="duration" value="15일 이상" /> 15일 이상</label>
+      </div>
+
+      <div class="question-block">
+        <h3>5. 여행 동반자는?</h3>
+        <label><input type="radio" name="companion" value="혼자 여행" required /> 혼자 여행</label>
+        <label><input type="radio" name="companion" value="커플/부부" /> 커플/부부</label>
+        <label><input type="radio" name="companion" value="가족(아이 포함)" /> 가족(아이 포함)</label>
+        <label><input type="radio" name="companion" value="친구들과" /> 친구들과</label>
+        <label><input type="radio" name="companion" value="단체/투어" /> 단체/투어</label>
+      </div>
+
+      <button type="submit" class="submit-btn">맞춤 여행지 추천받기</button>
+    </form>
+  </div>
+  <script>
+    document.getElementById('survey-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = {};
+  
+      formData.forEach((value, key) => {
+        // 숫자 필드는 형변환 시도
+        if (key === "age" || key === "satisfaction") {
+          data[key] = parseInt(value, 10);
+        } else {
+          data[key] = value;
+        }
+      });
+  
+      try {
+        const response = await fetch('/api/v1/survey', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+  
+        if (response.ok) {
+          alert('설문이 성공적으로 제출되었습니다!');
+        } else {
+          const err = await response.json();
+          alert('제출 중 오류가 발생했습니다: ' + err.detail);
+        }
+      } catch (err) {
+        alert('서버 요청 중 문제가 발생했습니다.');
+        console.error(err);
+      }
+    });
+  </script>
+  </body>
+</html>

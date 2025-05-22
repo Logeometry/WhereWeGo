@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>추천 관광지 순위</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .place { display: flex; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+    .place img { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-right: 15px; }
+    .place-info .title { font-weight: bold; font-size: 18px; }
+    .place-info .address, .place-info .tel { color: gray; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>추천 관광지 순위</h1>
+  <div id="ranking"></div>
+
+  <script>
+    const RANKING_URL = "http://localhost:8000/api/v1/ranking?top=5";
+    const SIMPLE_DETAIL_URL = "http://localhost:8000/api/v1/simple_detail?query=";
+
+    async function fetchRanking() {
+      const rankingRes = await fetch(RANKING_URL);
+      const rankedPlaces = await rankingRes.json();
+      console.log("랭킹 데이터:", rankedPlaces);
+
+      const rankingDiv = document.getElementById("ranking");
+
+      for (const item of rankedPlaces) {
+        const placeId = item.place_id;
+        console.log("현재 place_id:", placeId);
+
+        const detailRes = await fetch(SIMPLE_DETAIL_URL + encodeURIComponent(placeId));
+        const detailData = await detailRes.json();
+        console.log("상세 데이터:", detailData);
+
+        const place = detailData[0];
+        if (!place) {
+          console.warn("상세 정보 없음!", placeId);
+          continue;
+        }
+
+        const div = document.createElement("div");
+        div.className = "place";
+        div.innerHTML = `
+          <img src="${place.image_url || 'https://via.placeholder.com/100'}" alt="${place.name}">
+          <div class="place-info">
+            <div class="title">${place.name}</div>
+            <div class="address">${place.address || ''}</div>
+            <div class="tel">${place.tel || ''}</div>
+          </div>
+        `;
+        rankingDiv.appendChild(div);
+      }
+    }
+
+    fetchRanking();
+  </script>
+</body>
+</html>

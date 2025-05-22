@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Query
 from typing import List, Optional
 from schemas import LocationData
-from services.data_loader import load_data_from_json
+from services.data_loader import load_location_data_from_json
 from services.search_log_service import save_search_log
 
 router = APIRouter()
 
-FILE_PATH = 'data/temporary_data.json'
-categories_data = load_data_from_json(FILE_PATH)
+FILE_PATH = 'data/tourlist_spots_all.json'
+categories_data = load_location_data_from_json(FILE_PATH)
 
 @router.get("/search", response_model=List[LocationData])
 async def search_spots(
@@ -22,7 +22,7 @@ async def search_spots(
         return [
             item for item in categories_data
             if query.lower() in item.name.lower() 
-            or any(query.lower() in cat.lower() for cat in item.category)
+            or any(query.lower() in (cat or "").lower() for cat in [item.cat1, item.cat2, item.cat3])
         ]
     return categories_data
 

@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Query
 from typing import List, Optional
 from schemas import LocationData
-from services.data_loader import load_data_from_json
-
+from services.data_loader import load_location_data_from_json
 router = APIRouter()
 
-FILE_PATH = "data/tourist_spots_all.json"
-location_data = load_data_from_json(FILE_PATH)
+FILE_PATH = "data/tourlist_spots_all.json"
+location_data = load_location_data_from_json(FILE_PATH)
 
 @router.get("/categories", response_model=List[LocationData])
 async def search_categories(keywords: Optional[List[str]] = Query(None)):

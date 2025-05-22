@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>관광지 검색</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f9f9f9;
+        }
+
+        .header {
+            background-color: #fff;
+            color: #333;
+            box-shadow: none;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header__left {
+            display: flex;
+            align-items: center;
+        }
+
+        .header__logo {
+            margin-left: 8px;
+            font-weight: bold;
+            font-size: 20px;
+            color: #ff1150;
+        }
+
+        .header__center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+
+        .header__search {
+            width: 400px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 16px;
+            border-radius: 20px;
+            border: 1px solid #f6f6f6;
+            background-color: #f6f6f6;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: #ff1150;
+        }
+
+        .search-button {
+            margin-left: 12px;
+            padding: 10px 20px;
+            border: none;
+            background-color: #ff1150;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .search-button:hover {
+            background-color: #e01048;
+        }
+
+        #results {
+            list-style: none;
+            padding: 16px 32px;
+        }
+
+        #results li {
+            margin-bottom: 8px;
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header__left">
+            <div class="header__logo">WhereWeGo</div>
+        </div>
+        <div class="header__center">
+            <div class="header__search">
+                <input type="text" id="searchInput" class="search-input" placeholder="관광지를 검색해보세요" />
+            </div>
+            <button class="search-button" onclick="search()">검색</button>
+        </div>
+        <div class="header__right">
+            <!-- Optional: 추가 버튼 아이콘 등 -->
+        </div>
+    </div>
+
+    <ul id="results"></ul>
+
+    <script>
+        async function search() {
+            const keyword = document.getElementById("searchInput").value;
+            if (!keyword.trim()) return;
+    
+            const res = await fetch(`/api/v1/search?query=${encodeURIComponent(keyword)}`);
+            const data = await res.json();
+    
+            const resultList = document.getElementById("results");
+            resultList.innerHTML = "";
+    
+            if (data.length === 0) {
+                resultList.innerHTML = "<li>검색 결과가 없습니다.</li>";
+                return;
+            }
+    
+            data.forEach(item => {
+                const li = document.createElement("li");
+                li.textContent = `${item.name} (${item.location} ${item.rating})`;
+                resultList.appendChild(li);
+            });
+        }
+    </script>
+     
+</body>
+</html>

@@ -1,6 +1,6 @@
 # DB 구조에 맞게 수정하고 통일 에정정 
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 class LocationData(BaseModel):
     content_id: str
@@ -17,13 +17,25 @@ class LocationData(BaseModel):
     cat3: Optional[str]
     content_type_id: Optional[int]
 
-class SurveyRequest(BaseModel):
-    username: str
-    travel_type: str
-    climate: str
-    budget: str
-    duration: str
-    companion: str
+# (구)설문조사 반환형태
+# class SurveyRequest(BaseModel):
+#     username: str
+#     travel_type: str
+#     climate: str
+#     budget: str
+#     duration: str
+#     companion: str
+
+# 설문조사 반환형태
+class SurveyResponse(BaseModel):
+    usernume: str
+    content_id: str
+    name: str
+    responses: Literal['like', 'neutral', 'dislike']
+
+class CategoryScore(BaseModel):
+    category: str
+    score: int
 
 class WishRequest(BaseModel):
     user_id : str

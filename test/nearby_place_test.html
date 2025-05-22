@@ -1,0 +1,43 @@
+from fastapi import APIRouter, Request
+from fastapi.responses import HTMLResponse
+from app.services.recommendation_service import recommend_nearby_places
+
+router = APIRouter()
+
+@router.get("/test/nearby/{place_id}", response_class=HTMLResponse)
+async def test_nearby_places(place_id: str, max_distance_km: float = 5.0):
+    recommended = await recommend_nearby_places(place_id, max_distance_km)
+
+    html_content = """
+    <html>
+        <head>
+            <title>근처 추천 테스트</title>
+            <style>
+                body { font-family: sans-serif; padding: 20px; }
+                h1 { color: #444; }
+                ul { list-style: none; padding: 0; }
+                li { margin-bottom: 15px; }
+                .place { border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+            </style>
+        </head>
+        <body>
+            <h1>근처 장소 추천 결과</h1>
+            <ul>
+    """
+
+    for place in recommended:
+        html_content += f"""
+            <li class="place">
+                <strong>{place.name}</strong><br>
+                위치: {place.address}<br>
+                위도: {place.map_y}, 경도: {place.map_x}
+            </li>
+        """
+
+    html_content += """
+            </ul>
+        </body>
+    </html>
+    """
+
+    return HTMLResponse(content=html_content)

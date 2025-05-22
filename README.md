@@ -59,7 +59,60 @@
     },
   ...
 ]
-``` 
+```
+
+### 🔹 `/festival`
+**Method:** `GET`  
+**Description:**  오늘부터 60일 이후까지 이어지는 축제 정보를 조회합니다.
+
+#### Query Parameters
+
+| Name      | Type    | Required | Default | Description                                          |
+|-----------|---------|----------|---------|------------------------------------------------------|
+| `pageNo`    | number  | No       | `1`       | 페이지 번호 (1부터)                                  |
+| `numOfRows` | number  | No       | `100`     | 한 페이지 결과 개수 (1~1000)                         |
+| `arrange`   | string  | No       | `"A"`     | 정렬 기준 (`"A"`: 가나다순, `"C"`: 생성일순, `"D"`: 날짜순, `"Q"`: 조회순, `"R"`: 무작위) |
+
+#### Response 모델
+
+```ts
+interface FestivalItem {
+  contentid: number;
+  title: string;
+  eventstartdate: string;    // YYYYMMDD
+  eventenddate?: string;     // YYYYMMDD or omitted
+  firstimage?: string;
+  firstimage2?: string;
+  addr1?: string;
+  addr2?: string;
+  mapx?: number;
+  mapy?: number;
+}
+
+interface FestivalResponse {
+  resultCode: string;
+  resultMsg: string;
+  numOfRows: number;
+  pageNo: number;
+  totalCount: number;
+  items: FestivalItem[];
+}
+```
+
+## 🔹 `/wish`
+
+### 1) `POST /wish`
+- **설명:** 특정 유저의 찜 상태를 토글합니다.  
+- **Request Body** (`application/json`)
+  ```json
+  {
+    "user_id": "test1",
+    "place_id": "12345"
+  }
+
+
+
+
 ## 📋 설문 응답 수신 API
 
 설문 데이터를 수신하고 서버에 저장하기 위한 라우터입니다.  
@@ -222,3 +275,6 @@ get할 때, 다음과 같이 쿠키가 자동으로 포함되게 해줄 것
 | `404` | 해당 이메일을 가진 유저를 찾을 수 없는 경우.
 | `500` | 구글 OAuth 토큰을 요청하는 과정에서 실패한 경우.|
 | `500` | 구글 사용자 정보 요청이 실패한 경우. |
+
+
+
