@@ -1,0 +1,5742 @@
+[
+  {
+    "_id": "681891fa77e67d6ebadae358",
+    "name": "도요등",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae359",
+    "name": "백합등",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae35a",
+    "name": "다대포해수욕장",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae35b",
+    "name": "아미산전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae35c",
+    "name": "고우니생태길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae35d",
+    "name": "다대포 생선회먹거리타운",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae35e",
+    "name": "갈맷길4코스3구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae35f",
+    "name": "갈맷길4코스2구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae360",
+    "name": "몰운대유원지",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae361",
+    "name": "팔봉도",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae362",
+    "name": "몰운대길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae364",
+    "name": "갈맷길4코스2구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae365",
+    "name": "부산갈맷길4코스2구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae366",
+    "name": "갈맷길 4코스2구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae367",
+    "name": "두송반도전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae368",
+    "name": "두송반도해안길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae369",
+    "name": "오리도",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae36a",
+    "name": "망사섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae36b",
+    "name": "아들섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae36c",
+    "name": "갈맷길4코스1구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae36d",
+    "name": "두도전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae36e",
+    "name": "두도",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae36f",
+    "name": "태종대 전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae370",
+    "name": "태종대유원지",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae371",
+    "name": "갈맷길 3코스3구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae372",
+    "name": "태종산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae373",
+    "name": "신자도",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae374",
+    "name": "장자도",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae375",
+    "name": "갈맷길4코스3구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae376",
+    "name": "아미산자생식물원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae378",
+    "name": "암남공원 해안산책로",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae379",
+    "name": "동백나무길전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae37a",
+    "name": "그린웨이서구일주로 1코스(송도해안볼레길)",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae37b",
+    "name": "해녀촌",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae37c",
+    "name": "동섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae37d",
+    "name": "남파랑길 3코스",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae37f",
+    "name": "태종대자갈마당",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae380",
+    "name": "감지해변",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae381",
+    "name": "태종대오션플라잉 테마파크",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae383",
+    "name": "중리산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae384",
+    "name": "대마등",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae385",
+    "name": "맹금머리등",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae386",
+    "name": "고니나루쉼터",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae387",
+    "name": "갈맷길 4코스3구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae388",
+    "name": "도자기빚는마을",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae389",
+    "name": "송도해수욕장",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae38a",
+    "name": "갈맷길 4코스1구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae38b",
+    "name": "송도카페거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae38c",
+    "name": "장군산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae38d",
+    "name": "송도해안볼레길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae38e",
+    "name": "진정산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae38f",
+    "name": "송도 거북섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae390",
+    "name": "송도구름산책로 송도365",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae391",
+    "name": "백년송도골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae392",
+    "name": "이송도전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae393",
+    "name": "영도하늘전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae394",
+    "name": "흰여울전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae395",
+    "name": "작은구름전망쉼터",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae396",
+    "name": "중리바닷가",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae397",
+    "name": "갈맷길3코스3구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae398",
+    "name": "중리노을전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae399",
+    "name": "남파랑길 2코스",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae39a",
+    "name": "갈맷길3코스3구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae39b",
+    "name": "동삼해수천로",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae39c",
+    "name": "영도동삼동패총 문화의거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae39d",
+    "name": "마린어드벤처파크",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae39e",
+    "name": "아치산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae39f",
+    "name": "조도",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3a0",
+    "name": "갈맷길 5코스1구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3a1",
+    "name": "갈맷길5코스1구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3a2",
+    "name": "명지철새탐조대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3a3",
+    "name": "부네치아선셋전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3a4",
+    "name": "맛술촌",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3a5",
+    "name": "봉화산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3a6",
+    "name": "갈맷길4코스2구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3a7",
+    "name": "갈맷길4코스1구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3a8",
+    "name": "천마산 복합전망대(2025년 12월 예정)",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3a9",
+    "name": "이태석 톤즈거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3aa",
+    "name": "천마산 전망대2",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3ab",
+    "name": "남부민방파제",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3ac",
+    "name": "절영해안산책로",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3ad",
+    "name": "갈맷길3코스3구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3ae",
+    "name": "갈맷길4코스1구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3af",
+    "name": "갈맷길3코스2구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3b0",
+    "name": "흰여울길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3b1",
+    "name": "놀이토도자공방",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3b2",
+    "name": "봉래산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3b4",
+    "name": "봉래산둘레길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3b5",
+    "name": "청학배수지 전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3b6",
+    "name": "토음도예체험방",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3b7",
+    "name": "라라쥬동물원",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3b8",
+    "name": "남파랑길 5코스",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3b9",
+    "name": "금샘해수온천",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3ba",
+    "name": "낙동강하구생태길 4코스(을숙도철새도래지길)",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3bb",
+    "name": "노을나루길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3bc",
+    "name": "동매산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3be",
+    "name": "천마산하늘전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3bf",
+    "name": "누리바라기전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3c0",
+    "name": "감천문화마을 하늘마루전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3c1",
+    "name": "부산항전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3c2",
+    "name": "그린웨이서구일주로 2코스(천마산10리길)",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3c3",
+    "name": "감내까페 2호점",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3c4",
+    "name": "서구종단트레킹숲길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3c5",
+    "name": "충무동여인숙골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3c6",
+    "name": "고갈비특화거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3c7",
+    "name": "영도대교 포장마차거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3c8",
+    "name": "깡깡이예술마을",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3c9",
+    "name": "BIFF광장",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3ca",
+    "name": "자갈치 곰장어 골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3cb",
+    "name": "BIFF거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3cc",
+    "name": "남포동 포장마차거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3cd",
+    "name": "생선구이골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3ce",
+    "name": "영도관광안내센터 전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3cf",
+    "name": "점바치골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3d0",
+    "name": "영도다리목 생약건재상거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3d1",
+    "name": "엔터테이너거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3d2",
+    "name": "구둣방골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3d3",
+    "name": "근대선창길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3d4",
+    "name": "롯데백화점 광복점 스카이파크전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3d5",
+    "name": "영도해돋이전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3d6",
+    "name": "농청산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3d7",
+    "name": "오륙도",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3d8",
+    "name": "등대섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3d9",
+    "name": "굴섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3da",
+    "name": "수리섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3db",
+    "name": "방패섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3dc",
+    "name": "송곳섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3dd",
+    "name": "솔섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3de",
+    "name": "나암",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3df",
+    "name": "명지선창회타운",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3e0",
+    "name": "을숙도",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3e1",
+    "name": "낙동강하굿둑 인증센터",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3e2",
+    "name": "갈맷길6코스1구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3e3",
+    "name": "갈맷길5코스1구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3e4",
+    "name": "갈맷길4코스3구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3e5",
+    "name": "완충녹지 맨발 황토길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3e6",
+    "name": "낙동강하굿둑전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3e7",
+    "name": "낙동강하굿둑 생태조류관찰대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3e8",
+    "name": "구름이쉬어가는전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3e9",
+    "name": "서리단길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3ea",
+    "name": "아미산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3eb",
+    "name": "대한민국임시수도기념거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3ec",
+    "name": "보수동책방골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3ed",
+    "name": "국제시장먹자골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3ee",
+    "name": "부평족발골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3ef",
+    "name": "남포동먹자골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3f0",
+    "name": "미술의거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3f1",
+    "name": "아리랑거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3f2",
+    "name": "광복동먹자골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3f3",
+    "name": "구제골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3f4",
+    "name": "남포동거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3f5",
+    "name": "팥빙수골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3f6",
+    "name": "부평동한복거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3f7",
+    "name": "실비거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3f8",
+    "name": "조명의거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3f9",
+    "name": "부평동죽집골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3fa",
+    "name": "낭만공방",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3fb",
+    "name": "만물의거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3fc",
+    "name": "젊음의거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3fd",
+    "name": "부산타워",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3fe",
+    "name": "광복로패션거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae3ff",
+    "name": "40계단문화관광테마거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae400",
+    "name": "갈맷길3코스2구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae401",
+    "name": "고갈비골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae402",
+    "name": "용두산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae403",
+    "name": "동광동인쇄골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae404",
+    "name": "용두산문화의거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae405",
+    "name": "주꾸미구이골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae406",
+    "name": "용두산공원 미술의거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae407",
+    "name": "광복로",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae408",
+    "name": "시티스폿",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae409",
+    "name": "복병산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae40a",
+    "name": "광복로쌈지골목길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae40b",
+    "name": "보수산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae40c",
+    "name": "천지인골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae40d",
+    "name": "오륙도스카이워크",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae40e",
+    "name": "갈맷길2코스2구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae40f",
+    "name": "갈맷길3코스1구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae410",
+    "name": "낙조정",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae411",
+    "name": "일웅도",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae412",
+    "name": "을숙도생태공원 버드나무숲",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae414",
+    "name": "제석골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae415",
+    "name": "시약산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae416",
+    "name": "닥밭골벽화마을",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae417",
+    "name": "초량차이나타운",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae418",
+    "name": "초량이바구길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae419",
+    "name": "영주하늘눈전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae41a",
+    "name": "갈맷길 3코스2구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae41b",
+    "name": "김민부전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae41c",
+    "name": "초량상해거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae41d",
+    "name": "상해문",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae41e",
+    "name": "텍사스거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae41f",
+    "name": "부산역풍물거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae420",
+    "name": "동구초량육거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae421",
+    "name": "이바구자전거",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae422",
+    "name": "홍곡산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae423",
+    "name": "봉오리산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae424",
+    "name": "이기대해안산책로",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae425",
+    "name": "녹산수문아울렛 패션거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae426",
+    "name": "전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae427",
+    "name": "구덕산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae428",
+    "name": "시약산 전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae429",
+    "name": "제2수원지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae42a",
+    "name": "그린웨이서구일주로 3코스(구덕산책로숲길)",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae42b",
+    "name": "제1수원지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae42c",
+    "name": "그린웨이서구일주로 4코스(대신공원숲길)",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae42d",
+    "name": "친환경 스카이웨이 전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae42e",
+    "name": "구봉산치유의숲길",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae42f",
+    "name": "초량돼지갈비골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae430",
+    "name": "초량불백거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae431",
+    "name": "항일거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae432",
+    "name": "은행나무골목",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae434",
+    "name": "동구씽씽테마로드",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae435",
+    "name": "갈맷길 3코스1구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae436",
+    "name": "샘물터산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae437",
+    "name": "부산시수목전시원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae438",
+    "name": "유엔평화기념관 전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae439",
+    "name": "유엔평화기념관 PEACE 로드",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae43a",
+    "name": "갈맷길3코스1구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae43c",
+    "name": "갈맷길2코스2구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae43d",
+    "name": "에코델타시티전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae43e",
+    "name": "낙동강하구생태길 3코스(맥도가시연꽃길)",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae43f",
+    "name": "담덕엄궁온천",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae440",
+    "name": "승학산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae441",
+    "name": "야시골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae442",
+    "name": "양묘장",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae443",
+    "name": "엄광산숲길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae444",
+    "name": "엄광산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae445",
+    "name": "구봉산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae446",
+    "name": "구봉산 전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae447",
+    "name": "엄광숲 피톤치드스파",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae448",
+    "name": "좌천동가구거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae449",
+    "name": "동구도서관 책마루전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae44a",
+    "name": "웹툰이바구길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae44b",
+    "name": "증산전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae44c",
+    "name": "갈맷길3코스1구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae44d",
+    "name": "갈맷길3코스2구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae44e",
+    "name": "재봉틀거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae44f",
+    "name": "남파랑길 1코스",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae450",
+    "name": "문현동곱창골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae451",
+    "name": "천제산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae452",
+    "name": "향파 문학거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae453",
+    "name": "갈맷길 2코스2구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae454",
+    "name": "동생말 전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae455",
+    "name": "동생말",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae456",
+    "name": "수정산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae457",
+    "name": "가야유원지",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae458",
+    "name": "호천산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae459",
+    "name": "팔금산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae45a",
+    "name": "이중섭거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae45b",
+    "name": "이중섭전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae45c",
+    "name": "골드테마거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae45d",
+    "name": "친구의거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae45e",
+    "name": "동산기억전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae45f",
+    "name": "만리산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae460",
+    "name": "누나의길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae461",
+    "name": "문현동골동품거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae462",
+    "name": "빵천동문화1번가",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae463",
+    "name": "남치이인문학거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae464",
+    "name": "남천동벚꽃거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae465",
+    "name": "둔치도",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae466",
+    "name": "맥도강",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae467",
+    "name": "갈맷길6코스1구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae468",
+    "name": "갈맷길 6코스1구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae469",
+    "name": "낙동강하구생태길 2코스(삼락물억새길)",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae46a",
+    "name": "백양낙조전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae46b",
+    "name": "런닝맨 부산점",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae46c",
+    "name": "서면1번가",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae46d",
+    "name": "서면포장마차거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae46e",
+    "name": "다이나믹메이즈 부산점",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae46f",
+    "name": "서면양곱창거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae470",
+    "name": "전포카페거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae471",
+    "name": "서면젊음의거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae472",
+    "name": "서면먹자골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae473",
+    "name": "전포사잇길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae474",
+    "name": "만취길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae475",
+    "name": "서면특화거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae476",
+    "name": "동천은행나무길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae477",
+    "name": "서면메디컬스트리트",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae478",
+    "name": "서면공구골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae479",
+    "name": "디다보길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae47a",
+    "name": "황령산 유원지 생태숲",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae47b",
+    "name": "황령산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae47c",
+    "name": "황령산전망쉼터",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae47d",
+    "name": "황령산편백나무숲",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae47e",
+    "name": "황령산 전망대(서면 방면)",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae47f",
+    "name": "금련산청소년수련원 전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae480",
+    "name": "금련산청소년수련원 천문대",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae481",
+    "name": "금련산웰빙산책로",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae482",
+    "name": "해파랑길 1코스",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae483",
+    "name": "광안리해수욕장",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae484",
+    "name": "광안리카페거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae485",
+    "name": "호텔아쿠아펠리스 워터파크",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae486",
+    "name": "광안리해변 명화의거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae487",
+    "name": "제이쥬",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae488",
+    "name": "세븐테마 카페(세븐테마파크)",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae489",
+    "name": "광안리해변테마거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae48a",
+    "name": "부산민락횟집거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae48b",
+    "name": "콩나물해장국골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae48c",
+    "name": "진조말산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae48d",
+    "name": "해운대 영화의거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae48e",
+    "name": "스파마린",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae48f",
+    "name": "동백섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae490",
+    "name": "동백섬 누리마루전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae491",
+    "name": "갈맷길2코스1구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae492",
+    "name": "동백공원 해안산책로",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae493",
+    "name": "운대산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae494",
+    "name": "루프101",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae495",
+    "name": "솔밭유원지",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae496",
+    "name": "해운대해수욕장",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae497",
+    "name": "해운대블루라인파크 미포정거장",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae498",
+    "name": "문탠로드",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae499",
+    "name": "해월전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae49b",
+    "name": "달맞이갤러리촌",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae49c",
+    "name": "고샅길행복마을",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae49d",
+    "name": "덕포지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae49e",
+    "name": "황금신발테마거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae49f",
+    "name": "서면문화로",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4a0",
+    "name": "부산 연탄불곰장어골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4a1",
+    "name": "전리단길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4a2",
+    "name": "행경산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4a3",
+    "name": "황령산숲길",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4a4",
+    "name": "황령산둘레길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4a5",
+    "name": "금련산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4a6",
+    "name": "갈맷길2코스2구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4a7",
+    "name": "백산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4a8",
+    "name": "갈맷길2코스1구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4a9",
+    "name": "갈맷길8코스2구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4aa",
+    "name": "주라지 신세계센텀시티점",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4ab",
+    "name": "해리단길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4ad",
+    "name": "해운대온천족욕탕",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4ae",
+    "name": "해운대모텔촌",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4af",
+    "name": "클럽디오아시스",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4b0",
+    "name": "부산엑스더스카이",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4b1",
+    "name": "해운대곰장어골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4b2",
+    "name": "갈맷길 2코스1구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4b3",
+    "name": "할매탕",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4b4",
+    "name": "해운온천",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4b5",
+    "name": "파라다이스호텔 부산 오션스파씨메르",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4b6",
+    "name": "베니키아호텔사우나",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4b7",
+    "name": "파라다이스호텔 옥외온천",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4b8",
+    "name": "해운대로데오거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4b9",
+    "name": "달맞이미술의거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4ba",
+    "name": "해운대달맞이길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4bb",
+    "name": "청사포몽돌해변",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4bc",
+    "name": "해운대삼포길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4bd",
+    "name": "해운대블루라인파크 청사포정거장",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4be",
+    "name": "청사포다릿돌전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4bf",
+    "name": "청사포조개구이촌",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4c0",
+    "name": "와우산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4c1",
+    "name": "청사포회거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4c2",
+    "name": "낙민바위섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4c3",
+    "name": "치등",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4c4",
+    "name": "오매거지못",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4c5",
+    "name": "신사상팔경대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4c6",
+    "name": "금정산둘레길 7코스",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4c7",
+    "name": "갈맷길 6코스3구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4c8",
+    "name": "부산시민공원 농협기부숲",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4c9",
+    "name": "청목수목원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4ca",
+    "name": "수닷길 골목상가",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4cb",
+    "name": "망미단길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4cc",
+    "name": "부산눈썰매장",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4cd",
+    "name": "정맹룡도예공방",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4ce",
+    "name": "송정옛길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4cf",
+    "name": "신곡산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4d0",
+    "name": "송정해수욕장",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4d1",
+    "name": "갈맷길 6코스2구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4d2",
+    "name": "백양산체험형웰빙숲길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4d3",
+    "name": "갈맷길6코스2구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4d4",
+    "name": "백양산웰빙숲",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4d5",
+    "name": "백양산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4d6",
+    "name": "부산어린이대공원",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4d7",
+    "name": "성지곡수원지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4d8",
+    "name": "갈맷길7코스1구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4d9",
+    "name": "갈맷길6코스2구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4da",
+    "name": "부산어린이식물원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4db",
+    "name": "부산광역시어린이창의교육관 어린이식물원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4dc",
+    "name": "백양산숲길",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4dd",
+    "name": "금용산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4de",
+    "name": "화지산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4df",
+    "name": "시청소소길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4e0",
+    "name": "연제오방맛길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4e1",
+    "name": "배산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4e2",
+    "name": "배산숲길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4e3",
+    "name": "갈맷길8코스2구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4e4",
+    "name": "갈맷길 8코스2구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4e5",
+    "name": "장산계곡",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4e6",
+    "name": "장산산림욕장",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4e7",
+    "name": "해운대블루라인파크 송정정거장",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4e8",
+    "name": "해운대블루라인파크 e스테이션",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4e9",
+    "name": "해파랑길 2코스",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4ea",
+    "name": "갈맷길2코스1구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4eb",
+    "name": "갈맷길1코스2구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4ec",
+    "name": "죽도산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4ed",
+    "name": "멍두산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4ee",
+    "name": "시랑산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4f0",
+    "name": "덕도산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4f1",
+    "name": "낙동강하구생태길 1코스(삼락맹꽁이길)",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4f2",
+    "name": "삼락동재첩거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4f3",
+    "name": "구포무장애숲길 하늘바람전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4f4",
+    "name": "구포무장애숲길 무장애탐방구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4f5",
+    "name": "부산낙동강제방길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4f6",
+    "name": "사색의숲길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4f7",
+    "name": "범방산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4f8",
+    "name": "북구순환웰빙산책로",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4f9",
+    "name": "금정산둘레길 6코스",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4fa",
+    "name": "백양전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4fb",
+    "name": "성지곡산림욕장",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4fc",
+    "name": "백양산 만남의숲",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4fd",
+    "name": "아시아드상징가로",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4fe",
+    "name": "십자산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae4ff",
+    "name": "흙앤아이",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae500",
+    "name": "온천천산책로",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae501",
+    "name": "온천천카페거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae502",
+    "name": "대영해수온천",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae503",
+    "name": "온천천벚꽃터널",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae504",
+    "name": "오봉산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae505",
+    "name": "장산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae506",
+    "name": "롯데월드 어드벤처 부산",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae507",
+    "name": "스카이라인 루지",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae508",
+    "name": "부산 칠드런스 뮤지엄",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae509",
+    "name": "브릭캠퍼스 부산",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae50a",
+    "name": "롯데프리미엄아울렛 동부산점 등대전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae50b",
+    "name": "오거스후룸",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae50c",
+    "name": "갈맷길1코스2구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae50d",
+    "name": "큰섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae50e",
+    "name": "제비섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae50f",
+    "name": "갈맷길6코스1구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae510",
+    "name": "갈맷길6코스2구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae511",
+    "name": "법무부 부산솔로몬로파크",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae512",
+    "name": "부산구포동당숲",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae513",
+    "name": "구포만세역사테마거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae514",
+    "name": "초록누리길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae515",
+    "name": "안다미로",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae516",
+    "name": "쇠미산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae517",
+    "name": "부산AG상징가로",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae519",
+    "name": "웹툰스마힐링101",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae51a",
+    "name": "수안동곰장어거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae51b",
+    "name": "명륜1번가",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae51c",
+    "name": "동래만세거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae51d",
+    "name": "망월산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae51e",
+    "name": "구곡산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae51f",
+    "name": "앵림산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae520",
+    "name": "곽걸산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae521",
+    "name": "중사도",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae523",
+    "name": "강서낙동강변30리벚꽃길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae524",
+    "name": "금수현음악의거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae525",
+    "name": "덕천동젊음의거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae526",
+    "name": "약초골목",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae527",
+    "name": "의성산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae528",
+    "name": "만덕1동 쌈지2길 산책로",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae529",
+    "name": "만덕 민속오리마을",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae52a",
+    "name": "비룡산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae52b",
+    "name": "갈맷길 7코스1구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae52c",
+    "name": "만덕고개누리길전망데크",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae52d",
+    "name": "산어귀전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae52e",
+    "name": "금정산둘레길 8코스",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae52f",
+    "name": "철학로",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae530",
+    "name": "반도온천",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae531",
+    "name": "못안골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae532",
+    "name": "마안산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae533",
+    "name": "시실산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae534",
+    "name": "옥봉산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae535",
+    "name": "갈맷길8코스1구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae536",
+    "name": "갈맷길8코스2구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae537",
+    "name": "만복농원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae538",
+    "name": "감딘산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae539",
+    "name": "감딤산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae53a",
+    "name": "대원관광농원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae53b",
+    "name": "석산못",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae53c",
+    "name": "기장해안산책로",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae53d",
+    "name": "섬디",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae53e",
+    "name": "죽도",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae540",
+    "name": "수안치등섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae541",
+    "name": "신안치등섬",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae542",
+    "name": "포시즌파크화명 사계절썰매장",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae543",
+    "name": "금정산둘레길 5코스",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae545",
+    "name": "벽초온천",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae546",
+    "name": "허심청 호텔농심",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae547",
+    "name": "녹천탕",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae548",
+    "name": "동래온천지구",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae549",
+    "name": "동래온천노천족욕탕",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae54a",
+    "name": "대성관온천",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae54b",
+    "name": "현대온천",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae54c",
+    "name": "지붕없는온천거리박물관",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae54d",
+    "name": "해운대수목원 도시생활숲 (2025년 예정)",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae54e",
+    "name": "추마산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae54f",
+    "name": "반송동석대천변 누리길 해운대구반송동",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae550",
+    "name": "안적사계곡",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae551",
+    "name": "내리저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae552",
+    "name": "내동저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae553",
+    "name": "양달산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae554",
+    "name": "은적골못",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae555",
+    "name": "갈맷길 1코스2구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae55a",
+    "name": "상학산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae55b",
+    "name": "갈맷길7코스1구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae55c",
+    "name": "주주타임",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae55d",
+    "name": "부산대 카페거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae55e",
+    "name": "부산대학교 젊음의거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae55f",
+    "name": "10.16 부마민주항쟁로",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae560",
+    "name": "윤산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae561",
+    "name": "금정회동호둘레길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae562",
+    "name": "해운대수목원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae563",
+    "name": "성주골저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae564",
+    "name": "사라저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae565",
+    "name": "봉대산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae566",
+    "name": "월전장어구이촌",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae56a",
+    "name": "화명생태공원 전망데크",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae56b",
+    "name": "갈맷길 6코스4구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae56c",
+    "name": "대천천 산책길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae56d",
+    "name": "애기소계곡",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae56e",
+    "name": "대천천계곡",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae56f",
+    "name": "금정산둘레길 4코스",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae570",
+    "name": "갈맷길6코스4구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae571",
+    "name": "갈맷길7코스2구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae572",
+    "name": "갈맷길7코스1구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae573",
+    "name": "갈맷길 8코스1구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae574",
+    "name": "땅뫼산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae575",
+    "name": "갈맷길8코스1구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae576",
+    "name": "회동저수지",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae577",
+    "name": "운봉산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae578",
+    "name": "무지산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae579",
+    "name": "어름골소유지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae57a",
+    "name": "안평저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae57b",
+    "name": "산성산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae57c",
+    "name": "용소웰빙공원 전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae57d",
+    "name": "용소 웰빙공원길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae57e",
+    "name": "용소골저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae57f",
+    "name": "갈맷길1코스2구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae580",
+    "name": "갈맷길1코스1구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae581",
+    "name": "갈맷길9코스2구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae582",
+    "name": "신천저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae58f",
+    "name": "기찻길숲속산책길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae590",
+    "name": "부산화명수목원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae591",
+    "name": "갈맷길6코스3구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae592",
+    "name": "부산화명수목원 전시온실",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae593",
+    "name": "화명수목원 수서생태원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae594",
+    "name": "갈맷길 6코스4구간 도보인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae595",
+    "name": "화명수목원 화목원1",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae596",
+    "name": "부산화명수목원 활엽수원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae597",
+    "name": "가인도자기",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae598",
+    "name": "수변산책로",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae599",
+    "name": "작은여우골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae59a",
+    "name": "운동골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae59b",
+    "name": "밭골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae59c",
+    "name": "부엉산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae59d",
+    "name": "오륜대전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae59e",
+    "name": "작은덤골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae59f",
+    "name": "개좌산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5a0",
+    "name": "최골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5a1",
+    "name": "아로마식물원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5a2",
+    "name": "다안골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5a3",
+    "name": "큰이내터저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5a4",
+    "name": "작은이내터저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5a5",
+    "name": "구불덩굴",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5a6",
+    "name": "셋드산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5a7",
+    "name": "일광산테마길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5a9",
+    "name": "두화못",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5aa",
+    "name": "모산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5b7",
+    "name": "금곡동 무장애나눔길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5b8",
+    "name": "가람낙조길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5b9",
+    "name": "금정산둘레길 9코스",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5ba",
+    "name": "동작골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5bb",
+    "name": "선동누리길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5bc",
+    "name": "하정소류지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5bd",
+    "name": "땅목골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5be",
+    "name": "고지마골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5bf",
+    "name": "분덕골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5c0",
+    "name": "큰버티골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5c1",
+    "name": "갈맷길8코스1구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5c2",
+    "name": "갈맷길9코스1구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5c3",
+    "name": "갈맷길7코스2구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5c4",
+    "name": "새터골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5c5",
+    "name": "창사골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5c6",
+    "name": "칠덕골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5c7",
+    "name": "업은골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5c8",
+    "name": "다갈산골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5c9",
+    "name": "연암수목원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5cb",
+    "name": "대곡저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5cc",
+    "name": "대곡포강",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5cd",
+    "name": "용고실저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5ce",
+    "name": "서경하늘수목원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5cf",
+    "name": "곽암지저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5d0",
+    "name": "갈맷길9코스2구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5d1",
+    "name": "갈맷길 9코스2구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5d2",
+    "name": "기장테마임도",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5d3",
+    "name": "예지골저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5d4",
+    "name": "참샘골못",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5d5",
+    "name": "일광해수욕장",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5d6",
+    "name": "갈맷길1코스1구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5d7",
+    "name": "해파랑길 3코스",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5d8",
+    "name": "일광문화감성특화거리",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5e1",
+    "name": "사기점못",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5e2",
+    "name": "사기점골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5e3",
+    "name": "금강식물원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5e4",
+    "name": "요산문학로",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5e5",
+    "name": "각골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5e6",
+    "name": "티골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5e7",
+    "name": "휴먼 에스까르고 팜",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5e8",
+    "name": "생리전골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5e9",
+    "name": "호두술산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5ea",
+    "name": "매진약골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5eb",
+    "name": "골마골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5ec",
+    "name": "마파람농원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5ed",
+    "name": "부산치유의숲",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5ee",
+    "name": "독지골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5ef",
+    "name": "장년산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5f0",
+    "name": "갈맷길9코스1구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5f1",
+    "name": "갈맷길 9코스1구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5f2",
+    "name": "도독고산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5f3",
+    "name": "철마얼음썰매장",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5f4",
+    "name": "철마한우불고기 먹거리촌",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5f5",
+    "name": "장안곡저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5f6",
+    "name": "갈맷길9코스2구간 시작인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5f7",
+    "name": "갈맷길9코스1구간 종점인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5f8",
+    "name": "만화곡저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5f9",
+    "name": "일광산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5fa",
+    "name": "횡계소류지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5fb",
+    "name": "갈맷길 1코스1구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae5fc",
+    "name": "선바위유원지",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae609",
+    "name": "갈맷길7코스2구간 중간인증대",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae60a",
+    "name": "범리단길",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae60b",
+    "name": "금샘로먹거리타운",
+    "category_group": "테마거리"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae60c",
+    "name": "갈맷길 7코스2구간",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae60d",
+    "name": "노포못",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae60e",
+    "name": "보굴소류지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae60f",
+    "name": "친환경식물원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae610",
+    "name": "작장소류지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae611",
+    "name": "목원식물원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae612",
+    "name": "동림농원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae613",
+    "name": "신천소류지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae614",
+    "name": "영새미골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae615",
+    "name": "가마실낙골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae616",
+    "name": "동장골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae617",
+    "name": "안골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae618",
+    "name": "나룸터골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae619",
+    "name": "소당골못",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae61a",
+    "name": "호여지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae61b",
+    "name": "석길저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae61c",
+    "name": "아홉산숲",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae61d",
+    "name": "마지저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae61e",
+    "name": "금낙골소류지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae61f",
+    "name": "장안골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae620",
+    "name": "큰골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae621",
+    "name": "아홉산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae622",
+    "name": "금난곡저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae623",
+    "name": "까마귀골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae624",
+    "name": "연애산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae625",
+    "name": "산수골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae626",
+    "name": "용천골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae627",
+    "name": "목장골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae628",
+    "name": "물방골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae629",
+    "name": "뿔당곡소류지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae63b",
+    "name": "계명산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae63c",
+    "name": "녹동소류지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae63d",
+    "name": "대룡소류지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae63e",
+    "name": "스포원 물놀이장(휴업중)",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae63f",
+    "name": "수영강상류누리길",
+    "category_group": "트레킹"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae640",
+    "name": "중리못",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae641",
+    "name": "세척소류지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae642",
+    "name": "수방골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae643",
+    "name": "황정골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae644",
+    "name": "생강골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae645",
+    "name": "공덕산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae646",
+    "name": "송정저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae647",
+    "name": "장골저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae648",
+    "name": "거문산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae649",
+    "name": "홍류동소류지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae64a",
+    "name": "도둑골소류지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae64b",
+    "name": "간지방골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae64c",
+    "name": "큰덕지못",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae64d",
+    "name": "정골못",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae64e",
+    "name": "청광앞못",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae64f",
+    "name": "청광못",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae650",
+    "name": "치암골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae651",
+    "name": "신평소류지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae652",
+    "name": "신평소공원 배조형물전망대",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae65b",
+    "name": "부전조경식물원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae65c",
+    "name": "부산꽃식물원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae65e",
+    "name": "넉시골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae65f",
+    "name": "연꽃소류지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae660",
+    "name": "국립달음산자연휴양림",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae661",
+    "name": "함박산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae662",
+    "name": "용천저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae663",
+    "name": "천마산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae664",
+    "name": "집골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae665",
+    "name": "쌍시방골",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae666",
+    "name": "달음산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae667",
+    "name": "월음산",
+    "category_group": "자연산림"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae668",
+    "name": "세정못",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae669",
+    "name": "정석농원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae66a",
+    "name": "청광식물원",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae66b",
+    "name": "제일소류지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae66c",
+    "name": "수걸도예",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "681891fa77e67d6ebadae66d",
+    "name": "문동저수지",
+    "category_group": "휴양"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbeb",
+    "name": "스페이스 위버멘쉬",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbec",
+    "name": "수산가공선진화단지 홍보관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbed",
+    "name": "홍티아트센터",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbee",
+    "name": "파티드갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbef",
+    "name": "영도해녀문화전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbf1",
+    "name": "미부아트센터",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbf2",
+    "name": "영도 문화예술회관 대공연장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbf4",
+    "name": "영도문화예술회관 소공연장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbf5",
+    "name": "동삼동패총전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbf6",
+    "name": "한국해양대학교 70주년기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbf7",
+    "name": "국립해양박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbf8",
+    "name": "국립해양박물관 상설전시실",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbf9",
+    "name": "국립해양박물관 어린이박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbfa",
+    "name": "하하아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbfb",
+    "name": "부산광역시 수산자원연구소 전시장",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbfc",
+    "name": "나무섬남형제섬 해양보호구역홍보관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbfe",
+    "name": "이태석신부기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bbff",
+    "name": "홍안의상상",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc00",
+    "name": "레트로덕천",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc01",
+    "name": "영도조내기고구마역사기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc02",
+    "name": "홍매실해피하우스",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc03",
+    "name": "아르떼뮤지엄 부산",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc06",
+    "name": "을숙도대교 전망대 교량역사관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc07",
+    "name": "미로",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc08",
+    "name": "부산교육역사관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc09",
+    "name": "감천문화마을 작은박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc0a",
+    "name": "그랜드부다페스트인형호텔",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc0b",
+    "name": "치우림",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc0e",
+    "name": "BNK부산은행 조은극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc0f",
+    "name": "깡깡이마을박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc10",
+    "name": "BNK부산은행 조은극장2관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc11",
+    "name": "조은아트플러스",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc12",
+    "name": "나도스타홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc14",
+    "name": "롯데문화홀 롯데백화점 광복점",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc15",
+    "name": "무대공감소극장at젬스톤",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc16",
+    "name": "젬마팔렛 마음미술관 롯데백화점광복점",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc17",
+    "name": "영도선박박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc18",
+    "name": "낙동아트센터 (2026년 1월 예정)",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc19",
+    "name": "갤러리생각하는정원",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc1a",
+    "name": "낙동강하구에코센터",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc1c",
+    "name": "원불교 부산역사기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc1d",
+    "name": "부산보건대학교 박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc1e",
+    "name": "임시수도기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc1f",
+    "name": "한형석자유아동극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc20",
+    "name": "임시수도대통령관저",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc21",
+    "name": "피란생활박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc23",
+    "name": "임시수도기념관 전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc24",
+    "name": "동아대학교 석당미술관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc25",
+    "name": "몽포배상호문학기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc26",
+    "name": "추억보물섬",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc27",
+    "name": "동아대학교 석당박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc29",
+    "name": "보수동 책방골목문화관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc2a",
+    "name": "갤러리H",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc2c",
+    "name": "BNK부산은행 갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc2d",
+    "name": "BOF아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc2e",
+    "name": "부산국제아트타운",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc2f",
+    "name": "부산영화체험박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc30",
+    "name": "부산근현대역사관 별관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc31",
+    "name": "부산근현대역사관 본관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc32",
+    "name": "백산기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc34",
+    "name": "부산세관박물관 (휴관중)",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc35",
+    "name": "오픈스페이스 배",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc36",
+    "name": "스페이스닻",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc37",
+    "name": "복병산작은미술관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc38",
+    "name": "안녕 예술가",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc39",
+    "name": "대청큰마루터 기상전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc3a",
+    "name": "자유바다소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc3b",
+    "name": "오륙도홍보관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc3c",
+    "name": "부산현대미술관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc3d",
+    "name": "을숙도문화회관 대공연장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc3e",
+    "name": "부산현대미술관 모카이브",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc3f",
+    "name": "을숙도문화회관 소공연장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc40",
+    "name": "에덴공원 솔바람음악당",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc41",
+    "name": "민주공원 민주항쟁기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc42",
+    "name": "부산광복기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc43",
+    "name": "민주공원 큰방",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc44",
+    "name": "민주공원 작은방",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc45",
+    "name": "민주주의기록관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc46",
+    "name": "망양로산복도로전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc47",
+    "name": "이바구공작소",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc48",
+    "name": "장기려기념 더나눔센터",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc49",
+    "name": "박기종기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc4a",
+    "name": "초량근대역사갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc4b",
+    "name": "한광미술관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc4c",
+    "name": "한중우호센터",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc4d",
+    "name": "담장갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc4e",
+    "name": "부산오페라하우스 (2027년 예정)",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc4f",
+    "name": "에덴파크",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc50",
+    "name": "부산항국제전시컨벤션센터",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc51",
+    "name": "부산항국제전시컨벤션센터 A홀",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc52",
+    "name": "감만동미술관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc53",
+    "name": "국립부경대학교 용당캠퍼스 야외공연장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc54",
+    "name": "구덕문화공원 목석원예관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc55",
+    "name": "구덕문화공원 교육역사관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc56",
+    "name": "구덕문화공원 민속생활관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc57",
+    "name": "닥종이인형전시장",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc58",
+    "name": "낭만시간연구소",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc59",
+    "name": "초량재",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc5a",
+    "name": "갤러리림해",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc5b",
+    "name": "19대국회의장 정의화기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc5c",
+    "name": "오초량",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc5e",
+    "name": "봉생지역사회관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc5f",
+    "name": "갤러리수정",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc61",
+    "name": "부산광역시의사회 역사자료관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc62",
+    "name": "국제커피박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc63",
+    "name": "국립일제강제동원역사관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc64",
+    "name": "부산문화회관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc65",
+    "name": "유엔평화기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc66",
+    "name": "부산문화회관 대극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc67",
+    "name": "부산문화회관 중극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc68",
+    "name": "가람아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc69",
+    "name": "부산문화회관 전시실",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc6a",
+    "name": "부산문화회관 챔버홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc6b",
+    "name": "부산문화회관 사랑채극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc6d",
+    "name": "부산문화회관 배움터",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc6e",
+    "name": "기억의터",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc6f",
+    "name": "부산문화회관 사무동",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc70",
+    "name": "부산문화회관 어린이전용극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc71",
+    "name": "부산문화회관 예매안내",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc72",
+    "name": "부산문화회관 대관안내",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc73",
+    "name": "재한유엔기념공원 기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc74",
+    "name": "523쿤스트독",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc76",
+    "name": "부산진일신여학교 기념전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc77",
+    "name": "안용복기념 부산포개항문화관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc78",
+    "name": "아이테르",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc79",
+    "name": "왕길지기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc7a",
+    "name": "갤러리 호작",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc7b",
+    "name": "조선통신사역사관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc7c",
+    "name": "눌원아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc7d",
+    "name": "부산장난감박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc7e",
+    "name": "아모스아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc7f",
+    "name": "부산박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc80",
+    "name": "공간소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc81",
+    "name": "부산박물관 부산관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc83",
+    "name": "부산박물관 동래관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc84",
+    "name": "아트팩토리 공감",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc86",
+    "name": "부산예술회관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc87",
+    "name": "초콜릿팩토리",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc88",
+    "name": "해바라기소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc89",
+    "name": "나다소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc8a",
+    "name": "더바이널 언더그라운드라이브클럽",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc8b",
+    "name": "용천지랄소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc8c",
+    "name": "경성대학교 콘서트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc8d",
+    "name": "하늘바람소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc8f",
+    "name": "부경대학교 박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc90",
+    "name": "예노소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc91",
+    "name": "바보소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc92",
+    "name": "에저또소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc93",
+    "name": "경성대학교 미술관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc94",
+    "name": "노드",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc95",
+    "name": "축제소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc96",
+    "name": "경성대학교 박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc97",
+    "name": "SM아트홀 3관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc98",
+    "name": "경성대학교 조류관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc99",
+    "name": "B갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc9a",
+    "name": "무지카아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc9c",
+    "name": "해성아트센터",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc9d",
+    "name": "아트홀 라 보엠",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc9e",
+    "name": "아트레볼루션전용관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bc9f",
+    "name": "다누림센터 다누림홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bca0",
+    "name": "동서대학교 소향아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bca1",
+    "name": "동서대학교 콘서트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bca2",
+    "name": "예림아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bca3",
+    "name": "동의대학교 효민야외음악당",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bca4",
+    "name": "동의대학교 석당기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bca5",
+    "name": "루미네수녀기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bca6",
+    "name": "부산춤공간shin",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bca7",
+    "name": "부산시민회관 대극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bca8",
+    "name": "가온아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bca9",
+    "name": "부산시민회관 소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcaa",
+    "name": "일터소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcab",
+    "name": "부산상공회의소 전시실",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcac",
+    "name": "한국은행 부산본부 화폐전시실",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcad",
+    "name": "부산은행 금융역사관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcae",
+    "name": "가온아트홀 1관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcaf",
+    "name": "자본시장역사박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcb0",
+    "name": "부산금융박물관로드",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcb1",
+    "name": "가온아트홀 2관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcb2",
+    "name": "어웨이크닝 미니스트리",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcb3",
+    "name": "BNK아트갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcb4",
+    "name": "드림씨어터",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcb5",
+    "name": "부산예술대학교 원곡예술관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcb6",
+    "name": "경성대학교 멀티미디어소강당",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcb7",
+    "name": "KBS 부산홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcb8",
+    "name": "레몬트리소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcb9",
+    "name": "액터스소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcbb",
+    "name": "어린이전용극장꽈꾸",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcbc",
+    "name": "소극장6번출구",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcbd",
+    "name": "갤러리K 부산센터",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcbe",
+    "name": "하우스 오브 베르",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcc0",
+    "name": "너른소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcc1",
+    "name": "재미있다극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcc2",
+    "name": "사상갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcc3",
+    "name": "공작기계전시장",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcc4",
+    "name": "갤러리GL",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcc5",
+    "name": "한국신발관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcc6",
+    "name": "무궁화예술단",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcca",
+    "name": "국제아트센터 갤러리라함",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bccb",
+    "name": "롯데호텔부산 크리스탈볼룸",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bccc",
+    "name": "덕스 부산",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bccd",
+    "name": "삼정갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcce",
+    "name": "부산진구청 동천문화홀",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bccf",
+    "name": "KT&G상상마당 부산 라이브홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcd0",
+    "name": "알공예박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcd1",
+    "name": "티켓팅",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcd4",
+    "name": "서면미술관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcd5",
+    "name": "증권박물관 부산관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcd7",
+    "name": "부산커피박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcd8",
+    "name": "부산포민속박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcd9",
+    "name": "프라이빗 플레이스 휘",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcda",
+    "name": "부산레일아트",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcdc",
+    "name": "대동골문화센터 공연장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcdd",
+    "name": "금련산갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcde",
+    "name": "어댑터씨어터 2관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcdf",
+    "name": "어댑터씨어터 1관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bce0",
+    "name": "부산메트로홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bce2",
+    "name": "광안갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bce3",
+    "name": "도시파빌리온",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bce4",
+    "name": "엘림아트홀 성악연구소",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bce5",
+    "name": "바다갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bce6",
+    "name": "더뉴기드닝",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bce8",
+    "name": "누리마루 APEC하우스",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bce9",
+    "name": "블랭크갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcea",
+    "name": "계림바스 부산전시장",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcec",
+    "name": "사상인디스테이션",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bced",
+    "name": "신라대학교 박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcef",
+    "name": "애플컴퓨터박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcf0",
+    "name": "부산시민공원 역사관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcf1",
+    "name": "오즈홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcf2",
+    "name": "부산시민공원 문화예술촌 갤러리2",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcf3",
+    "name": "부산시민공원 다솜관 동백꽃방",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcf4",
+    "name": "갤러리 한서",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcf5",
+    "name": "다솜갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcf6",
+    "name": "부산여자대학교 차박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcf7",
+    "name": "아트픽(ArtPick)",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcf8",
+    "name": "문화공간쌈",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcf9",
+    "name": "잼쇼비즈",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcfa",
+    "name": "이영애갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcfb",
+    "name": "갤러리하백",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcfc",
+    "name": "벡스코 제2전시장",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcfd",
+    "name": "부산시립미술관 (휴관중)",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcfe",
+    "name": "부산시립미술관 이우환공간",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bcff",
+    "name": "부산요트경기장 야외무대",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd00",
+    "name": "소울아트스페이스",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd01",
+    "name": "신세계문화홀 신세계백화점센텀시티점",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd02",
+    "name": "신세계갤러리 센텀시티점",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd03",
+    "name": "에이전시무아",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd04",
+    "name": "갤러리폼",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd05",
+    "name": "프린트베이커리 신세계백화점센텀시티점",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd06",
+    "name": "센텀아트스페이스",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd07",
+    "name": "고은사진미술관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd08",
+    "name": "부산프랑스문화원 아트스페이스",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd09",
+    "name": "국민생활관소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd0b",
+    "name": "멜트",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd0c",
+    "name": "무비인더박스",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd0d",
+    "name": "해운대교회 예원배선교사기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd0e",
+    "name": "프로젝트B6",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd0f",
+    "name": "해변문화관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd10",
+    "name": "씨라이프 부산아쿠아리움",
+    "category_group": "자연풍경"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd11",
+    "name": "랄프깁슨 사진미술관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd12",
+    "name": "H클래식홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd13",
+    "name": "수아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd14",
+    "name": "BMW포토스페이스",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd15",
+    "name": "비바아첼챔버홀아카데미",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd16",
+    "name": "파라다이스호텔부산 연회장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd17",
+    "name": "서정아트 부산",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd18",
+    "name": "레디움아트센터",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd19",
+    "name": "유진화랑",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd1a",
+    "name": "갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd1b",
+    "name": "갤러리 무아 엘시티",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd1c",
+    "name": "갤러리미고",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd1d",
+    "name": "공예시대",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd1e",
+    "name": "지그재그아트센터",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd1f",
+    "name": "정컨템포러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd20",
+    "name": "닉플레이스 엘시티",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd21",
+    "name": "장천글숲",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd22",
+    "name": "더코르소앤김냇과갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd23",
+    "name": "피카프로젝트 해운대점",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd24",
+    "name": "미르크",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd25",
+    "name": "지승공예박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd26",
+    "name": "레이어드",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd27",
+    "name": "미들맨갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd28",
+    "name": "모어댄살롱",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd29",
+    "name": "아리안갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd2a",
+    "name": "달맞이어울마당",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd2b",
+    "name": "오션갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd2c",
+    "name": "푸른모래전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd2d",
+    "name": "사상생활사박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd2e",
+    "name": "LG디스커버리랩 부산",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd2f",
+    "name": "LG연암기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd30",
+    "name": "국립부산국악원",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd31",
+    "name": "부산콘서트홀 (2025년 6월 예정)",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd32",
+    "name": "국립부산국악원 예지당",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd33",
+    "name": "국립부산국악원 연악당",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd34",
+    "name": "국립부산국악원 국악체험관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd35",
+    "name": "미로전시실",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd36",
+    "name": "부산시민공원 백산홀",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd37",
+    "name": "김종식미술관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd38",
+    "name": "국립부산국악원 대극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd39",
+    "name": "국립부산국악원 야외공연장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd3a",
+    "name": "김종식미술관 제2전시장",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd3b",
+    "name": "국립부산국악원 연수센터",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd3c",
+    "name": "화지 청소년문화회관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd3d",
+    "name": "양정청소년수련관 소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd3e",
+    "name": "연제구청 갤러리연",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd3f",
+    "name": "부산지방국세청 세미래홍보관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd40",
+    "name": "효로인디아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd41",
+    "name": "효로인디아트홀 소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd42",
+    "name": "기억의방전시실",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd43",
+    "name": "이젤갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd44",
+    "name": "전시공간 영영",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd45",
+    "name": "현대모터스튜디오 부산",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd46",
+    "name": "고려제강 기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd47",
+    "name": "수영성마을박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd48",
+    "name": "수영사적공원 수영민속예술관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd49",
+    "name": "공간 힘",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd4a",
+    "name": "수영사적공원 박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd4b",
+    "name": "금난새뮤직센터",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd4c",
+    "name": "영국국립자연사박물관 특별전 올해의야생동물 사진전",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd4d",
+    "name": "국제갤러리 부산지점",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd4e",
+    "name": "현대미술회관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd50",
+    "name": "솔트컴바인",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd54",
+    "name": "동서대학교 소향씨어터 신한카드홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd55",
+    "name": "뮤지엄원",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd56",
+    "name": "KNN시어터",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd57",
+    "name": "영화의전당 하늘연극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd58",
+    "name": "영화의전당 야외극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd5b",
+    "name": "아트소향 부산",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd5d",
+    "name": "비프힐",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd5e",
+    "name": "APEC나루공원 야외무대",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd5f",
+    "name": "임권택영화박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd62",
+    "name": "동서대학교 센텀산학캠퍼스 소향실험극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd63",
+    "name": "광안대로전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd64",
+    "name": "월석아트홀",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd65",
+    "name": "센텀아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd66",
+    "name": "일종의격려",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd68",
+    "name": "벡스코",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd69",
+    "name": "벡스코 제1전시장",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd6a",
+    "name": "벡스코 오디토리움",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd6b",
+    "name": "벡스코 컨벤션홀",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd6c",
+    "name": "지스타",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd6d",
+    "name": "벡스코 야외전시장",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd6e",
+    "name": "드론쇼코리아",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd6f",
+    "name": "벡스코 한복체험전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd70",
+    "name": "조각보박물관 주천문화원",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd71",
+    "name": "갤러리휘",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd72",
+    "name": "연오재 부산",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd75",
+    "name": "해운대문화회관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd76",
+    "name": "해운대문화회관 해운홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd77",
+    "name": "해운대문화회관 고운홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd79",
+    "name": "해운대문화회관 제1전시실",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd7b",
+    "name": "이브제갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd7c",
+    "name": "쿠무다 콘서트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd7d",
+    "name": "조문철 사진마루공간갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd7e",
+    "name": "동산김형기선생 기념전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd7f",
+    "name": "한국자유총연맹 부산광역시지부 부산통일관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd80",
+    "name": "학생교육문화회관 교문갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd81",
+    "name": "갤러리대현",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd82",
+    "name": "부산시청 야외무대",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd83",
+    "name": "거제솔갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd84",
+    "name": "타워아트갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd85",
+    "name": "부산홍보관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd86",
+    "name": "아이보리움",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd87",
+    "name": "부산경찰 역사전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd88",
+    "name": "국제교류홍보관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd89",
+    "name": "부산광역시청 국제교류전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd8a",
+    "name": "두드리는사람들천명",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd8c",
+    "name": "엠스테이지",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd8d",
+    "name": "KT&G상상유니브 부산아틀리에",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd8e",
+    "name": "연제구환경자원관리소 민속전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd8f",
+    "name": "극단해품",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd90",
+    "name": "갤러리플로",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd91",
+    "name": "PH갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd92",
+    "name": "시나몬라이브홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd93",
+    "name": "부산과학기술대학교 박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd94",
+    "name": "부산과학기술대학교 야외공연장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd95",
+    "name": "국제경기대회 기념전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd97",
+    "name": "롯데자이언츠 박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd98",
+    "name": "아트홀엘레간떼",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd99",
+    "name": "한새갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd9a",
+    "name": "부산교육대학교 미술관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd9b",
+    "name": "부산교육대학교 교육박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd9e",
+    "name": "기찻길옆 유쾌한동산마을 행복센터",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bd9f",
+    "name": "1934 기차 동래역",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bda1",
+    "name": "롯데월드 어드벤처 부산 포레스트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bda3",
+    "name": "국립수산과학관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bda5",
+    "name": "부산광역시교육청학생예술문화회관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bda6",
+    "name": "부산광역시 학생예술문화회관 대극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bda7",
+    "name": "소극장624",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bda8",
+    "name": "부산광역시 학생예술문화회관 소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bda9",
+    "name": "만세갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdaa",
+    "name": "글로빌아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdac",
+    "name": "한국한의원 사중금박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdad",
+    "name": "동래읍성임진왜란역사관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdae",
+    "name": "한국기독교선교박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdaf",
+    "name": "다브갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdb0",
+    "name": "동래구청 유적전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdb1",
+    "name": "복천박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdb2",
+    "name": "복천박물관 야외전시관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdb3",
+    "name": "국립부산과학관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdb4",
+    "name": "국립부산과학관 어린이과학관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdb5",
+    "name": "국립부산과학관 새싹누리관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdb6",
+    "name": "국립부산과학관 사이언스파크",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdb7",
+    "name": "국립부산과학관 천체투영관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdb8",
+    "name": "국립부산과학관 천체관측소",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdb9",
+    "name": "코발트바이캐비네드쁘아쏭",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdbc",
+    "name": "부산북구문화예술회관",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdbe",
+    "name": "부산북구역사문화홍보관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdc0",
+    "name": "우장춘기념관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdc1",
+    "name": "이주홍문학관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdc2",
+    "name": "열린아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdc3",
+    "name": "동래읍성역사관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdc4",
+    "name": "동래문화회관 대극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdc6",
+    "name": "동래문화회관 소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdc7",
+    "name": "부산해양자연사박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdc8",
+    "name": "부산민속예술관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdca",
+    "name": "아트스페이스리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdcc",
+    "name": "극단자갈치 신명천지소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdcd",
+    "name": "문화공간봄 소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdce",
+    "name": "예술지구P",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdcf",
+    "name": "성심오디토리움",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdd0",
+    "name": "기장수산물체험홍보센터",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdd1",
+    "name": "부산어촌민속관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdd3",
+    "name": "디오티미술관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdd4",
+    "name": "부산대학교 박물관별관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdd6",
+    "name": "인터플레이클럽",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdd7",
+    "name": "부산대학교 박물관A",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdd8",
+    "name": "스페이스포포",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdd9",
+    "name": "이츠히어",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdda",
+    "name": "셔우드아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bddb",
+    "name": "판라이브소극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bddc",
+    "name": "대동대학교 다트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bddd",
+    "name": "까르페디엠아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdde",
+    "name": "예술공간이일구",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bde0",
+    "name": "최준석갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bde1",
+    "name": "갤러리 아라",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bde8",
+    "name": "금정문화회관 대공연장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bde9",
+    "name": "금정문화회관 금샘미술관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdeb",
+    "name": "금정아트홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdec",
+    "name": "금정문화회관 은빛샘홀",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bded",
+    "name": "부산금정문화회관 야외무대",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdee",
+    "name": "오륜대 한국순교자박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdef",
+    "name": "경전철홍보관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdf0",
+    "name": "기장근대역사관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdf2",
+    "name": "기장군청 대강당",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdf3",
+    "name": "기장군청 아트갤러리",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdf5",
+    "name": "킴스아트필드",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdf6",
+    "name": "공간소두",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdf7",
+    "name": "요산김정한문학관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdf9",
+    "name": "범어사 성보박물관",
+    "category_group": "관람및체험"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdfb",
+    "name": "스포원파크 꿈나래극장",
+    "category_group": "공연관람"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdfc",
+    "name": "스포원파크 탄생의신비관",
+    "category_group": "예술 감상"
+  },
+  {
+    "_id": "68189de0866d8521b7b4bdfe",
+    "name": "이기주미술관",
+    "category_group": "예술 감상"
+  }
+]
