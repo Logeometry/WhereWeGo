@@ -1,7 +1,7 @@
 # WhereWeGo - 여행지 추천 시스템
 
 ## 프로젝트 개요
-WhereWeGo는 사용자의 선호도를 학습하여 개인화된 여행지를 추천하는 시스템입니다. 
+WhereWeGo는 사용자의 선호도를 학습하여 개인화된 여행지를 추천하는 시스템입니다.   
 BPR(Bayesian Personalized Ranking) 사전학습과 NCF(Neural Collaborative Filtering)를 결합한 하이브리드 접근법을 사용합니다.
 
 ## 시스템 아키텍처
