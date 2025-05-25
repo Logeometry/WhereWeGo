@@ -1,6 +1,6 @@
 # WhereWeGo 설치 가이드
 
-## 🚀 빠른 시작
+## 빠른 시작
 
 ### 1. 기본 환경 요구사항
 - **Python**: 3.8 이상 (3.9+ 권장)
@@ -44,7 +44,7 @@ pip install selenium webdriver-manager
 pip install plotly networkx
 ```
 
-## 🔧 환경 설정
+## 환경 설정
 
 ### 1. MongoDB 설정
 
@@ -87,11 +87,11 @@ python utils/dbconfig.py
 # 전체 환경 확인
 python -c "
 import torch, numpy, pandas, sklearn, matplotlib
-print('✅ 모든 라이브러리 정상 설치됨')
+print('모든 라이브러리 정상 설치됨')
 "
 ```
 
-## 📦 패키지별 용도
+## 패키지별 용도
 
 ### 핵심 머신러닝
 - **torch**: 딥러닝 프레임워크 (NCF 모델)
@@ -111,7 +111,7 @@ print('✅ 모든 라이브러리 정상 설치됨')
 - **requests**: HTTP 요청
 - **geopy**: 지리 정보 처리
 
-## 🐛 문제 해결
+## 문제 해결
 
 ### PyTorch 설치 오류
 ```bash
@@ -135,7 +135,7 @@ python utils/dbconfig.py
 # config.py에서 batch_size 값 감소
 ```
 
-## 📋 버전 호환성
+## 버전 호환성
 
 | 라이브러리 | 최소 버전 | 권장 버전 | 비고 |
 |-----------|----------|----------|------|
@@ -144,5 +144,5 @@ python utils/dbconfig.py
 | NumPy | 1.20 | 1.24+ | 성능 개선 |
 | MongoDB | 4.4 | 6.0+ | Atlas 호환성 |
 
-## 🚀 다음 단계
+## 다음 단계
 설치가 완료되면 [README.md](README.md)의 실행 방법을 참고하여 프로젝트를 시작하세요! 
