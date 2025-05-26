@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, Request, HTTPException, Response
 from fastapi.responses import RedirectResponse, JSONResponse
 from backend.main import FRONTEND_URL
-from services.user_store import find_user_by_email, add_user
+from services.user_store import find_user_by_oauth, find_user_by_id, add_user
 import urllib.parse
 import requests
 from datetime import datetime, timedelta
@@ -70,14 +70,14 @@ def google_callback(request: Request):
         raise HTTPException(status_code=500)
 
     user_info = user_info_resp.json()
-    email = user_info.get("email")
+    oauth, oauth_id = "google", user_info["sub"]
 
-    user = find_user_by_email(email)
+    user = find_user_by_oauth(oauth, oauth_id)
     if not user:
         user = {
             "user_id": str(uuid.uuid4()), 
             "oauth": "google", 
-            "email": email,
+            "email":     user_info.get("email"),
             "name": user_info.get("name"),
             "oauth_id": user_info.get("sub"),
             "picture": user_info.get("picture"),
@@ -113,21 +113,22 @@ def get_current_user(request: Request):
         raise HTTPException(status_code=401)
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        return payload.get("sub")  # emali(유저확인 용도)
+        return payload.get("sub")  # user_id (유저 확인 용도)
     except JWTError:
         raise HTTPException(status_code=401)
 
 @router.get("/me")
-def read_me(user_email=Depends(get_current_user)):
-    user = find_user_by_email(user_email)
+def read_me(user_id=Depends(get_current_user)):
+    user = find_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404)
     return {
-        "email": user["email"],
-        "name": user["name"],  # 닉네임
-        "picture": user["picture"]  # 프로필 이미지
+        "user_id": user["user_id"],   # 내부 식별자
+        "oauth":   user["oauth"],     # 로그인 방식 (google, kakao 등)
+        "email":   user["email"],
+        "name":    user["name"],
+        "picture": user["picture"],
     }
-
 
 # 로그아웃
 @router.post("/logout")
