@@ -73,21 +73,20 @@ def google_callback(request: Request):
     user = find_user_by_email(email)
     if not user:
         user = {
+            "user_id": str(uuid.uuid4()),       # ← 여기에 UUID 생성
+            "oauth": "google",                   # ← 로그인 방식 명시
             "email": email,
             "name": user_info.get("name"),
-            "google_id": user_info.get("sub"),
+            "oauth_id": user_info.get("sub"),    # 기존 google_id 대신 oauth_id 로 통일
             "picture": user_info.get("picture"),
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.utcnow()      # ← ISODate로 저장되려면 datetime 객체 그대로
         }
         add_user(user)
 
     token = jwt.encode(
-        {
-            "sub": email,
-            "exp": datetime.utcnow() + timedelta(minutes=120) # 유지 시간
-        },
-            SECRET_KEY,
-            algorithm="HS256"
+        {"sub": user["user_id"], "exp": datetime.utcnow() + timedelta(minutes=120)},
+        SECRET_KEY,
+        algorithm="HS256"
     )
      # 현재는 테스틑를 위해 /login 페이지, 홈페이지로 바꿀 예정
     homepage_url = "http://127.0.0.1:8000/login"
