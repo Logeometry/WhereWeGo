@@ -1,6 +1,8 @@
 ## 구글 로그인 라우터
+import uuid
 from fastapi import APIRouter, Depends, Request, HTTPException, Response
 from fastapi.responses import RedirectResponse, JSONResponse
+from backend.main import FRONTEND_URL
 from services.user_store import find_user_by_email, add_user
 import urllib.parse
 import requests
@@ -88,8 +90,8 @@ def google_callback(request: Request):
         SECRET_KEY,
         algorithm="HS256"
     )
-     # 현재는 테스틑를 위해 /login 페이지, 홈페이지로 바꿀 예정
-    homepage_url = "http://127.0.0.1:8000/login"
+     # 현재는 테스틑를 위해 /login 페이지, 홈페이지로 바꿀 예정 => 변경 완료
+    homepage_url = f"{FRONTEND_URL}/" 
 
     # 로그인 후 홈페이지로 리디렉션
     response = RedirectResponse(url=homepage_url)
@@ -99,8 +101,8 @@ def google_callback(request: Request):
         value=token,
         httponly=True,
         max_age=7200, 
-        samesite="Lax",
-        secure=False    # HTTPS 배포 시 True로 바꿔야함
+        samesite="None",
+        secure=True # HTTPS 배포 시 True로 바꿔야함
     )
     return response
 

@@ -17,19 +17,23 @@ from routeres.itinerary_router import router as itinerary_router
 ## from routeres.survey_router import router as survey_router
 ## from routeres.logging_router import router as logging_router
 from schemas import SurveyRequest
+from dotenv import load_dotenv
 import os
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 app = FastAPI()
 
+load_dotenv()
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+
 # CORS 설정 추가
-# app.add_middleware(
-#    CORSMiddleware,
-#    allow_origins=["http://localhost:3000"],  # 리액트 개발 서버 주소
-#    allow_credentials=True,
-#    allow_methods=["*"],  # 모든 HTTP 메서드 허용
-#    allow_headers=["*"],  # 모든 헤더 허용
-#)
+app.add_middleware(
+   CORSMiddleware,
+   allow_origins=[FRONTEND_URL],  # 리액트 개발 서버 주소
+   allow_credentials=True,
+   allow_methods=["*"],  # 모든 HTTP 메서드 허용
+   allow_headers=["*"],  # 모든 헤더 허용
+)
 
 app.include_router(search_router, prefix="/api/v1") 
 app.include_router(category_router, prefix="/api/v1")
@@ -51,14 +55,6 @@ origins = [
     "http://127.0.0.1",
     "http://127.0.0.1:8080",
 ]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
