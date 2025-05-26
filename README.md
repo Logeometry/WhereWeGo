@@ -13,13 +13,7 @@ BPR(Bayesian Personalized Ranking) 사전학습과 NCF(Neural Collaborative Filt
 
 ### 2. 모델 구현 (`models/`)
 - **`create_vector_use_bpr.py`**: BPR 사전학습 모델
-- **`ncf_modular/`**: 모듈화된 NCF 시스템
-  - `models.py`: SymmetricResidualCategoryNCF 모델
-  - `data_utils.py`: 데이터 로딩 및 전처리
-  - `evaluation.py`: 모델 평가 메트릭
-  - `config.py`: 하이퍼파라미터 설정
-- **`run_ncf_modular.py`**: NCF 모델 실행 스크립트
-
+  
 ### 3. 유틸리티 (`utils/`)
 - **`visualization.py`**: 임베딩 시각화
 - **`new_database_task/`**: 데이터베이스 구축 작업
@@ -66,7 +60,6 @@ python models/run_ncf_modular.py
 database/
 ├── data_pipeline/          # 데이터 생성 및 전처리
 ├── models/                 # 모델 구현 및 학습
-│   └── ncf_modular/       # 모듈화된 NCF 시스템
 ├── utils/                  # 유틸리티 및 도구
 └── docs/                   # 문서
 ```
