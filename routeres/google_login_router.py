@@ -73,13 +73,13 @@ def google_callback(request: Request):
     user = find_user_by_email(email)
     if not user:
         user = {
-            "user_id": str(uuid.uuid4()),       # ← 여기에 UUID 생성
-            "oauth": "google",                   # ← 로그인 방식 명시
+            "user_id": str(uuid.uuid4()), 
+            "oauth": "google", 
             "email": email,
             "name": user_info.get("name"),
-            "oauth_id": user_info.get("sub"),    # 기존 google_id 대신 oauth_id 로 통일
+            "oauth_id": user_info.get("sub"),
             "picture": user_info.get("picture"),
-            "created_at": datetime.utcnow()      # ← ISODate로 저장되려면 datetime 객체 그대로
+            "created_at": datetime.utcnow()
         }
         add_user(user)
 
