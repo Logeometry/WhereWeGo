@@ -8,52 +8,96 @@ class ItineraryService:
         self.estimator = estimator
         self.alpha = alpha
 
-    def generate_ranked_course(
-        self,
-        candidates: List[Dict], 
-        day: date,
-        origin: Dict,
-        dest: Dict,  
-        start_time: time,
-        end_time: time,
-        avg_stay: int = 60
-    ) -> List[Dict]:
-        """
-        하루 일정을 추천 점수(rec_score)와 이동 거리(distance)를 가중합해 장소 2곳을 선택하도록 생성
-        """
-        # 날짜+시간 결합
-        day_start = datetime.combine(day, start_time)
-        day_end   = datetime.combine(day, end_time)
-        # 오전/오후 슬롯 분할
-        mid_point = day_start + (day_end - day_start) / 2
-        slots = [(day_start, mid_point), (mid_point, day_end)]
+        def generate_ranked_course(
+            self,
+            candidates: List[Dict],
+            day: date,
+                origin: Dict,
+            dest: Dict,
+            start_time: time,
+            end_time: time,
+            avg_stay: int = 60
+        ) -> List[Dict]:
+       
+            day_start = datetime.combine(day, start_time)
+            day_end = datetime.combine(day, end_time)
 
-        # 사용 여부 초기화
-        for place in candidates:
-            place['_used'] = False
+            lunch_start = datetime.combine(day, time(12, 0))
+            lunch_end = lunch_start + timedelta(hours=1)
 
-        result = []
-        # 출발지 기록
-        result.append({'place_id': origin['place_id'], 'type': 'origin', 'time': day_start})
-        prev_coord = origin['coords']
+            dinner_start = datetime.combine(day, time(18, 0))
+            dinner_end = dinner_start + timedelta(hours=1)
 
-        # 슬롯별로 장소 선택
+            time_blocks = []
+            if day_start < lunch_start:
+                time_blocks.append((day_start, min(lunch_start, day_end)))
+            if lunch_end < dinner_start and lunch_end < day_end:
+                time_blocks.append((lunch_end, min(dinner_start, day_end)))
+            if dinner_end < day_end:
+                time_blocks.append((dinner_end, day_end))
 
-        for slot_start, slot_end in slots:
-            best = None
-            best_score = float('inf')
             for place in candidates:
-                if place['_used']:
-                    continue
-                coord = place['coords']
-                dist = self.estimator.estimate(origin['coords'], coord)  # 출발지 기준 거리로 고정
-                est_start = slot_start + timedelta(minutes=dist)
-                est_end   = est_start + timedelta(minutes=avg_stay)
-                if est_end > slot_end:
-                    continue
-                if dist < best_score:
-                    best_score = dist
-                    best = place
+                place['_used'] = False
+
+            result = []
+            prev_coord = origin['coords']
+            result.append({'place_id': origin['place_id'], 'type': 'origin', 'time': day_start})
+
+            for block_start, block_end in time_blocks:
+                est = None
+                best_score = float('inf')
+                for place in candidates:
+                    if place['_used']:
+                        continue
+                    coord = place['coords']
+                    dist = self.estimator.estimate(prev_coord, coord)
+                    est_start = block_start + timedelta(minutes=dist)
+                    est_end = est_start + timedelta(minutes=avg_stay)
+                    if est_end > block_end:
+                        continue
+                    score = self.alpha * dist + (1 - self.alpha) * (1 - place.get('rec_score', 0.0))
+                    if score < best_score:
+                        best_score = score
+                        best = place
+
+                if best:
+                    travel = self.estimator.estimate(prev_coord, best['coords'])
+                    visit_start = block_start + timedelta(minutes=travel)
+                    visit_end = visit_start + timedelta(minutes=avg_stay)
+                    result.append({
+                        'place_id': best['place_id'],
+                        'start_time': visit_start,
+                        'end_time': visit_end,
+                        'travel_time': travel
+                    })
+                    best['_used'] = True
+                    prev_coord = best['coords']
+
+            # 점심 추가
+            if day_start <= lunch_start <= day_end:
+                result.append({
+                    'place_id': '점심',
+                    'start_time': lunch_start,
+                    'end_time': lunch_end,
+                    'type': 'meal'
+                })
+
+            # 저녁 추가
+            if day_start <= dinner_start <= day_end:
+                result.append({
+                    'place_id': '저녁',
+                    'start_time': dinner_start,
+                    'end_time': dinner_end,
+                    'type': 'meal'
+                })
+
+            # 도착지 추가
+            result.append({'place_id': dest['place_id'], 'type': 'destination', 'time': day_end})
+
+            # 시간 순 정렬
+            result.sort(key=lambda x: x.get('start_time') or x.get('time'))
+
+            return result
 
         # for slot_start, slot_end in slots:
         #     best = None
@@ -74,22 +118,6 @@ class ItineraryService:
         #             best = place
         #     if not best:
         #         break
-
-            travel = self.estimator.estimate(prev_coord, best['coords'])
-            visit_start = slot_start + timedelta(minutes=travel)
-            visit_end   = visit_start + timedelta(minutes=avg_stay)
-            result.append({
-                 'place_id':    best['place_id'],
-                'start_time':  visit_start,
-                'end_time':    visit_end,
-                'travel_time': travel
-            })
-            best['_used'] = True
-            prev_coord = best['coords']
-
-        # 도착지 기록
-        result.append({'place_id': dest['place_id'], 'type': 'destination', 'time': day_end})
-        return result
 
     def generate_multi_day_course(
         self,

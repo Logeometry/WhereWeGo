@@ -2,7 +2,6 @@
 import uuid
 from fastapi import APIRouter, Depends, Request, HTTPException, Response
 from fastapi.responses import RedirectResponse, JSONResponse
-from backend.main import FRONTEND_URL
 from services.user_store import find_user_by_oauth, find_user_by_id, add_user
 import urllib.parse
 import requests
@@ -14,6 +13,7 @@ import os
 router = APIRouter()
 load_dotenv()
 
+FRONTEND_URL = os.getenv("FRONTEND_URL")
 SECRET_KEY = os.getenv("SECRET_KEY")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")

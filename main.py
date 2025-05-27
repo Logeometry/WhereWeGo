@@ -1,12 +1,13 @@
+from pathlib import Path
+import sys
 from fastapi import FastAPI, Request, Response
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from routeres.search_router import router as search_router
 from routeres.category_router import router as category_router
 from routeres.google_login_router import router as google_login_router
-from fastapi.security import OAuth2PasswordBearer
 from routeres.nearby_place_router import router as nearby_place_router
 from routeres.user_log_ranking_router import router as get_ranking
 from routeres.location_datail_router import router as simple_location_detail
@@ -16,15 +17,12 @@ from routeres.itinerary_router import router as itinerary_router
 
 ## from routeres.survey_router import router as survey_router
 ## from routeres.logging_router import router as logging_router
-from schemas import SurveyRequest
 from dotenv import load_dotenv
 import os
 
 SECRET_KEY = os.getenv("SECRET_KEY")
-app = FastAPI()
-
-load_dotenv()
 FRONTEND_URL = os.getenv("FRONTEND_URL")
+app = FastAPI()
 
 # CORS 설정 추가
 app.add_middleware(

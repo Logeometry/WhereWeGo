@@ -8,7 +8,6 @@ from services.itinerary_service import ItineraryService
 
 router = APIRouter(prefix="/itinerary")
 
-# Pydantic models for request/response
 class Place(BaseModel):
     place_id: str
     coords: Tuple[float, float]
