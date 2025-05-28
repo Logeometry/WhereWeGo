@@ -80,9 +80,9 @@ def google_callback(request: Request):
             "email":     user_info.get("email"),
             "name": user_info.get("name"),
             "oauth_id": user_info.get("sub"),
-            "picture": user_info.get("picture"),
-            "created_at": datetime.utcnow()
+            "picture": user_info.get("picture")
         }
+        user["created_at"] = datetime.utcnow().isoformat()
         add_user(user)
 
     token = jwt.encode(
@@ -102,7 +102,7 @@ def google_callback(request: Request):
         httponly=True,
         max_age=7200, 
         samesite="None",
-        secure=True # HTTPS 배포 시 True로 바꿔야함
+        secure=False # HTTPS 배포 시 True로 바꿔야함
     )
     return response
 
