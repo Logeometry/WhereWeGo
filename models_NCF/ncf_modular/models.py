@@ -35,12 +35,12 @@ class SymmetricResidualCategoryNCF(nn.Module):
             nn.Dropout(0.3)
         )
 
-        # 사용자 임베딩 (128차원으로 복원)
+        # 사용자 임베딩 (256차원으로 복원)
         self.user_embedding_gmf = nn.Embedding(n_users, 256)
         self.user_embedding_mlp = nn.Embedding(n_users, 256)
         self.user_category_preference = nn.Embedding(n_users, 8)
 
-        # GMF 브랜치 (Hadamard 내적 + FC) - 128차원 입력
+        # GMF 브랜치 (Hadamard 내적 + FC) - 256차원 입력
         self.gmf_projection = nn.Sequential(
             nn.Linear(256, 128),
             nn.ReLU(),
