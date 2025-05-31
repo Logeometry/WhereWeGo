@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 from typing import List, Optional
-from schemas import LocationData 
+from schemas import Tourism 
 from services.data_loader import load_location_data_from_json
 from services.click_log_service import save_click_log
 
@@ -11,15 +11,15 @@ FILE_PATH = "data/tourlist_spots_all.json"
 location_data = load_location_data_from_json(FILE_PATH)
 
 # 장소 data load(장소에 대한 페이지 생성시)
-@router.get("/detail0", response_model=List[LocationData])
+@router.get("/detail0", response_model=List[Tourism])
 async def location_detail(
     query: Optional[str] = None,
     user_id : Optional[str] = Query(None)
 ):
 # login한 user에 대한 로그 저장
     if query:
-        if user_id and user_id != "null" and user_id.strip() != "":
-             save_click_log(user_id=user_id, item=query)
+        if user_id and user_id != "null" and user_id.lower() != "":
+             save_click_log(user_id=user_id, target_id=query)
 
         return [
             item for item in location_data

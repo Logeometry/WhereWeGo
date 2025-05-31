@@ -101,21 +101,35 @@ def google_callback(request: Request):
         value=token,
         httponly=True,
         max_age=7200, 
-        samesite="None",
-        secure=False # HTTPS 배포 시 True로 바꿔야함
+        samesite="lax",
+        secure=False, # HTTPS 배포 시 True로 바꿔야함
+        path="/"
     )
     return response
 
 # 로그인 확인
-def get_current_user(request: Request):
-    token = request.cookies.get("access_token") 
+from fastapi import Request, HTTPException
+from jose import JWTError, jwt
+
+def get_current_user(request: Request) -> str:
+    token = request.cookies.get("access_token")
     if not token:
-        raise HTTPException(status_code=401)
+        # 1-1) HTTP 401: 쿠키가 없거나, fetch의 credentials: "include" 누락
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        return payload.get("sub")  # user_id (유저 확인 용도)
-    except JWTError:
-        raise HTTPException(status_code=401)
+    except JWTError as e:
+        # 2-1) HTTP 401: 잘못된 토큰(서명 실패, 만료, 알고리즘 불일치 등)
+        raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
+
+    user_id = payload.get("sub")
+    if not user_id:
+        # 3-1) HTTP 401: payload에 sub가 없어서 user_id를 꺼낼 수 없음
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+
+    return user_id
+
 
 @router.get("/me")
 def read_me(user_id=Depends(get_current_user)):
