@@ -1,21 +1,53 @@
 # DB 구조에 맞게 수정하고 통일 에정정 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional, Literal
+from datetime import datetime
 
-class LocationData(BaseModel):
-    content_id: str
+# GeoJSON Point class 정의
+class GeoPoint(BaseModel):
+    type: str = Literal["Point"]
+    coordinates: List[float]
+
+
+# 장소 스키마(DB 반영 완료)
+class Tourism(BaseModel):
+    id: str = Field(..., alias="_id")
     name: str
+    category: str
+    category_group: List[str]
+    category_onehot: List[int]
+    tags: List[int]
+    description: str
     address: str
-    tel: Optional[str]
-    image_url: Optional[str]
-    map_x: Optional[float]
-    map_y: Optional[float]
-    area_code: Optional[int]
-    sigungu_code: Optional[int]
-    cat1: Optional[str]
-    cat2: Optional[str]
-    cat3: Optional[str]
-    content_type_id: Optional[int]
+    region: str
+    location: GeoPoint
+    rating: float
+    review_count: int
+    visitor_count: int
+    pretrained_vector: List[float]
+    vector_full: List[float]
+    vector_version: int
+    created_at: datetime
+    updated_at: datetime
+
+# user_data 스키마 정의
+class User_data(BaseModel):
+    id: str = Field(..., alias="id")
+    user_id: str
+    oauth: str
+    eamil: str
+    created_at: datetime
+    preference_vector: List[float]
+    wishlist: List[str]
+
+# user_log
+class User_log(BaseModel):
+    id: str = Field(..., alias="id")
+    user_id: str
+    event: str
+    target_id: str
+    timestamp: datetime
+
 
 # (구)설문조사 반환형태
 # class SurveyRequest(BaseModel):
