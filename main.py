@@ -24,10 +24,18 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 app = FastAPI()
 
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "http://127.0.0.1",
+    "http://127.0.0.1:8080",
+    "http://127.0.0.1:8000",  # html test용
+]
+
 # CORS 설정 추가
 app.add_middleware(
    CORSMiddleware,
-   allow_origins=[FRONTEND_URL],  # 리액트 개발 서버 주소
+   allow_origins=origins,  # 리액트 개발 서버 주소
    allow_credentials=True,
    allow_methods=["*"],  # 모든 HTTP 메서드 허용
    allow_headers=["*"],  # 모든 헤더 허용
@@ -46,13 +54,7 @@ app.include_router(festival_router, prefix="/api/v1")
 app.include_router(itinerary_router)
 
 app.mount("/test", StaticFiles(directory="test"), name="test")
-
-origins = [
-    "http://localhost",
-    "http://localhost:8080",
-    "http://127.0.0.1",
-    "http://127.0.0.1:8080",
-]
+app.mount("/static", StaticFiles(directory="."), name="static")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
