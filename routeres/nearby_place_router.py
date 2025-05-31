@@ -1,7 +1,7 @@
 # 가까운 장소 반환 라우터
 from fastapi import APIRouter, Query
 from typing import List, Optional
-from schemas import LocationData
+from schemas import Tourism
 from services.data_loader import load_location_data_from_json
 from services.recommend_nearby_places import recommend_nearby_places
 

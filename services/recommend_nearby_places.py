@@ -1,7 +1,7 @@
 import json
 from geopy.distance import geodesic
 from typing import List
-from schemas import LocationData
+from schemas import Tourism
 from services.data_loader import load_location_data_from_json
 
 FILE_PATH = "data/tourlist_spots_all.json"

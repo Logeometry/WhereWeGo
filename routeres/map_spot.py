@@ -1,7 +1,7 @@
 # 지도 범위별로 정보 반환해주는 라우터
 from fastapi import APIRouter, Query
 from typing import List
-from schemas import LocationData
+from schemas import Tourism
 from services.data_loader import load_location_data_from_json
 
 router = APIRouter()
@@ -9,7 +9,7 @@ router = APIRouter()
 FILE_PATH = "data/tourist_spots_all.json"
 location_data = load_location_data_from_json(FILE_PATH)
 
-@router.get("/map_spots", response_model=List[LocationData])
+@router.get("/map_spots", response_model=List[Tourism])
 async def get_spots_by_bounds(
     min_lat: float = Query(..., description="최소 위도"),
     max_lat: float = Query(..., description="최대 위도"),

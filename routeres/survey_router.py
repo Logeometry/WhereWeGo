@@ -18,7 +18,8 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
 from pathlib import Path
-from schemas import LocationData, CategoryScore, SurveyResponse
+from backend.services.user_store import DATA_PATH
+from schemas import Tourism, CategoryScore, SurveyResponse
 from services.data_loader import load_location_data_from_json
 from services.survey_compute_service import compute_category_scores
 
