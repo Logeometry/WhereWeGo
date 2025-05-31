@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -22,6 +22,32 @@
     #status {
       margin-top: 20px;
       font-weight: bold;
+    }
+    /* 추가: 상세 정보 박스 스타일 */
+    #place-details {
+      margin-top: 20px;
+      text-align: left;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+      color: #333;
+    }
+    .detail-item {
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed #ccc;
+    }
+    .detail-item:last-child {
+      border-bottom: none;
+    }
+    .detail-item h3 {
+      margin: 0 0 5px 0;
+      font-size: 18px;
+      color: #444;
+    }
+    .detail-item p {
+      margin: 2px 0;
+      font-size: 14px;
+      line-height: 1.4;
     }
   </style>
 </head>
@@ -47,6 +73,8 @@
     </div>
 
     <div id="status"></div>
+    <!-- 3) 클릭된 장소의 상세 정보를 보여줄 영역 -->
+    <div id="place-details"></div>
   </div>
 
   <script>
@@ -59,11 +87,12 @@
     // =========================
     // DOM 요소 가져오기
     // =========================
-    const loginBtn   = document.getElementById("login-btn");
-    const logoutBtn  = document.getElementById("logout-btn");
-    const userInfoEl = document.getElementById("user-info");
-    const placesSec  = document.getElementById("places-section");
-    const statusEl   = document.getElementById("status");
+    const loginBtn       = document.getElementById("login-btn");
+    const logoutBtn      = document.getElementById("logout-btn");
+    const userInfoEl     = document.getElementById("user-info");
+    const placesSec      = document.getElementById("places-section");
+    const statusEl       = document.getElementById("status");
+    const placeDetailsEl = document.getElementById("place-details");
 
     let currentUserId = null;  // 로그인된 user_id
 
@@ -117,6 +146,8 @@
         // 로그아웃이 성공하면 상태 갱신
         checkLoginStatus();
         statusEl.textContent = "로그아웃되었습니다.";
+        // 상세 정보 초기화
+        placeDetailsEl.innerHTML = "";
       } catch (err) {
         console.error(err);
         statusEl.textContent = "로그아웃 중 오류 발생";
@@ -124,16 +155,18 @@
     });
 
     // =========================
-    // 4) 장소 클릭 시 로그 보내기
+    // 4) 장소 클릭 시 로그 보내기 & 상세 정보 표시
     // =========================
     document.querySelectorAll(".place-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!currentUserId) {
           statusEl.textContent = "먼저 로그인 해주세요.";
+          placeDetailsEl.innerHTML = "";
           return;
         }
         const placeName = btn.getAttribute("data-place");
         statusEl.textContent = `${placeName} 클릭 중...`;
+        placeDetailsEl.innerHTML = "";  // 클릭할 때마다 이전 정보 초기화
 
         // save_click_log를 호출하기 위해 /detail0 을 이용합니다.
         // FastAPI: /detail0?query=<place>&user_id=<user_id>
@@ -150,14 +183,120 @@
             throw new Error(`HTTP ${resp.status}`);
           }
           const data = await resp.json();
-          // data에는 검색 결과 (Tourism 리스트)가 담겨 옵니다.
+          // data에는 검색 결과(장소에 대한 상세 정보 배열)가 담겨 온다고 가정
+
+          console.log("detail0 응답:", data);
           statusEl.textContent = `${placeName} 클릭 로그 저장 완료! (응답: ${data.length}개 항목)`;
+
+          // 4-1) 상세 정보 렌더링 함수 호출
+          renderPlaceDetails(data);
         } catch (err) {
           console.error(err);
           statusEl.textContent = `로그 저장 중 오류 발생: ${err.message}`;
         }
       });
     });
+
+    // =========================
+    // 5) 상세 정보 렌더링 함수
+    //    - data: 배열([...]) 또는 객체 형태의 상세 정보
+    // =========================
+    function renderPlaceDetails(data) {
+      // 1) data가 배열 형태일 때
+      if (Array.isArray(data) && data.length > 0) {
+        data.forEach((item) => {
+          // item 객체 안에 예: { name, description, address, img_url, rating, ... }
+          // 실제 백엔드에서 내려주는 필드에 맞춰서 수정한다.
+          const div = document.createElement("div");
+          div.classList.add("detail-item");
+
+          // 예시: 장소 이름
+          if (item.name) {
+            const h3 = document.createElement("h3");
+            h3.textContent = item.name;
+            div.appendChild(h3);
+          }
+
+          // 예시: 설명(description)
+          if (item.description) {
+            const pDesc = document.createElement("p");
+            pDesc.textContent = `설명: ${item.description}`;
+            div.appendChild(pDesc);
+          }
+
+          // 예시: 주소(address)
+          if (item.address) {
+            const pAddr = document.createElement("p");
+            pAddr.textContent = `주소: ${item.address}`;
+            div.appendChild(pAddr);
+          }
+
+          // 예시: 평점(rating)
+          if (item.rating) {
+            const pRating = document.createElement("p");
+            pRating.textContent = `평점: ${item.rating}`;
+            div.appendChild(pRating);
+          }
+
+          // 예시: 이미지 URL(img_url)이 있을 경우
+          if (item.img_url) {
+            const img = document.createElement("img");
+            img.src = item.img_url;
+            img.alt = item.name || "place image";
+            img.style.maxWidth = "100%";
+            img.style.marginTop = "8px";
+            div.appendChild(img);
+          }
+
+          placeDetailsEl.appendChild(div);
+        });
+        return;
+      }
+
+      // 2) data가 단일 객체 형태일 때 (배열이 아닐 경우)
+      if (typeof data === "object" && data !== null) {
+        const item = data;
+        const div = document.createElement("div");
+        div.classList.add("detail-item");
+
+        if (item.name) {
+          const h3 = document.createElement("h3");
+          h3.textContent = item.name;
+          div.appendChild(h3);
+        }
+        if (item.description) {
+          const pDesc = document.createElement("p");
+          pDesc.textContent = `설명: ${item.description}`;
+          div.appendChild(pDesc);
+        }
+        if (item.address) {
+          const pAddr = document.createElement("p");
+          pAddr.textContent = `주소: ${item.address}`;
+          div.appendChild(pAddr);
+        }
+        if (item.rating) {
+          const pRating = document.createElement("p");
+          pRating.textContent = `평점: ${item.rating}`;
+          div.appendChild(pRating);
+        }
+        if (item.img_url) {
+          const img = document.createElement("img");
+          img.src = item.img_url;
+          img.alt = item.name || "place image";
+          img.style.maxWidth = "100%";
+          img.style.marginTop = "8px";
+          div.appendChild(img);
+        }
+
+        placeDetailsEl.appendChild(div);
+        return;
+      }
+
+      // 3) data가 비어 있거나 처리할 수 없는 형태일 때
+      const msg = document.createElement("p");
+      msg.textContent = "해당 장소에 대한 상세 정보가 없습니다.";
+      placeDetailsEl.appendChild(msg);
+    }
 
     // =========================
     // 페이지 로드 시 실행
