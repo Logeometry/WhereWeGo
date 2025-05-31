@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Google 로그인 & 장소 클릭 테스트</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+    #container {
+      max-width: 600px;
+      margin: auto;
+      text-align: center;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h1>Google 로그인 & 장소 클릭 테스트</h1>
+
+    <!-- 1) 로그인 / 로그아웃 버튼 -->
+    <div id="auth-section">
+      <button id="login-btn">Google로 로그인</button>
+      <button id="logout-btn" style="display: none;">로그아웃</button>
+      <div id="user-info" style="margin-top: 10px; color: #555;"></div>
+    </div>
+
+    <hr />
+
+    <!-- 2) 장소 버튼 (예시로 가덕도의 3개 장소) -->
+    <div id="places-section" style="display: none; margin-top: 20px;">
+      <h2>장소 클릭 (로그 남기기)</h2>
+      <button class="place-btn" data-place="가덕도">가덕도</button>
+      <button class="place-btn" data-place="가덕도 등대">가덕도 등대</button>
+      <button class="place-btn" data-place="가덕도 연대봉">가덕도 연대봉</button>
+    </div>
+
+    <div id="status"></div>
+  </div>
+
+  <script>
+    // =========================
+    // 설정: API 엔드포인트 주소
+    // =========================
+    // 백엔드가 http://localhost:8000 에서 동작 중이라면 이대로 두세요.
+    const API_BASE = "http://127.0.0.1:8000/api/v1";
+
+    // =========================
+    // DOM 요소 가져오기
+    // =========================
+    const loginBtn   = document.getElementById("login-btn");
+    const logoutBtn  = document.getElementById("logout-btn");
+    const userInfoEl = document.getElementById("user-info");
+    const placesSec  = document.getElementById("places-section");
+    const statusEl   = document.getElementById("status");
+
+    let currentUserId = null;  // 로그인된 user_id
+
+    // =========================
+    // 1) 로그인 상태 확인 함수
+    // =========================
+    async function checkLoginStatus() {
+      try {
+        const resp = await fetch(`${API_BASE}/me`, {
+          method: "GET",
+          credentials: "include",   // 쿠키 전송을 위해 반드시 include
+        });
+        if (!resp.ok) {
+          throw new Error("로그인되지 않음");
+        }
+        const data = await resp.json();
+        // 예시 응답: { user_id: "...", oauth: "google", email: "...", name: "...", picture: "..." }
+        currentUserId = data.user_id;
+        userInfoEl.textContent = `로그인 사용자: ${data.name} (${data.email})`;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        placesSec.style.display = "block";   // 장소 버튼 보이기
+      } catch (err) {
+        // 로그인되지 않은 상태
+        currentUserId = null;
+        userInfoEl.textContent = "로그인되지 않음";
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        placesSec.style.display = "none";    // 장소 버튼 숨기기
+      }
+    }
+
+    // =========================
+    // 2) Google 로그인 버튼 이벤트
+    // =========================
+    loginBtn.addEventListener("click", () => {
+      // 이 URL은 FastAPI의 google_login_router가 정의한 엔드포인트입니다.
+      // 리디렉션을 따라가면서 Google 로그인 화면으로 넘어갑니다.
+      window.location.href = `${API_BASE}/auth/google/login`;
+    });
+
+    // =========================
+    // 3) 로그아웃 버튼 이벤트
+    // =========================
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await fetch(`${API_BASE}/auth/logout`, {
+          method: "POST",
+          credentials: "include",
+        });
+        // 로그아웃이 성공하면 상태 갱신
+        checkLoginStatus();
+        statusEl.textContent = "로그아웃되었습니다.";
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = "로그아웃 중 오류 발생";
+      }
+    });
+
+    // =========================
+    // 4) 장소 클릭 시 로그 보내기
+    // =========================
+    document.querySelectorAll(".place-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!currentUserId) {
+          statusEl.textContent = "먼저 로그인 해주세요.";
+          return;
+        }
+        const placeName = btn.getAttribute("data-place");
+        statusEl.textContent = `${placeName} 클릭 중...`;
+
+        // save_click_log를 호출하기 위해 /detail0 을 이용합니다.
+        // FastAPI: /detail0?query=<place>&user_id=<user_id>
+        const url = new URL(`${API_BASE}/detail0`, window.location.origin);
+        url.searchParams.append("query", placeName);
+        url.searchParams.append("user_id", currentUserId);
+
+        try {
+          const resp = await fetch(url.toString(), {
+            method: "GET",
+            credentials: "include",  // 혹시 필요하다면
+          });
+          if (!resp.ok) {
+            throw new Error(`HTTP ${resp.status}`);
+          }
+          const data = await resp.json();
+          // data에는 검색 결과 (Tourism 리스트)가 담겨 옵니다.
+          statusEl.textContent = `${placeName} 클릭 로그 저장 완료! (응답: ${data.length}개 항목)`;
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = `로그 저장 중 오류 발생: ${err.message}`;
+        }
+      });
+    });
+
+    // =========================
+    // 페이지 로드 시 실행
+    // =========================
+    window.addEventListener("DOMContentLoaded", () => {
+      checkLoginStatus();
+    });
+  </script>
+</body>
+</html>
