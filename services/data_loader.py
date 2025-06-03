@@ -1,12 +1,25 @@
-import json
 from typing import List
 from schemas import Tourism, LogData
+from db import places_col, user_data_col, user_log_col 
 
-def load_location_data_from_json(file_path: str) -> List[Tourism]:
-    with open(file_path, "r", encoding="utf-8") as file:
-        data = json.load(file)
-    return [Tourism(**item) for item in data]
+async def load_location_data_from_db() -> List[Tourism]:
+    results: List[Tourism] = []
+    cursor = places_col.find({})
+    async for doc in cursor:
+        results.append(Tourism(**doc))
+    return results
 
-def load_logs_data_from_json(file_path: str) -> List[LogData]:
-    with open(file_path, "r", encoding="utf-8") as file:
-        return json.load(file)
+async def load_logs_data_from_db() -> List[LogData]:
+    results: List[LogData] = []
+    cursor = user_log_col.find({})
+    async for doc in cursor:
+        results.append(LogData(**doc))
+    return results
+
+async def load_logs_data_from_db() -> List[LogData]:
+    results: List[LogData] = []
+    cursor = user_log_col.find({}) 
+    async for doc in cursor:
+        results.append(LogData(**doc))
+    return results
+

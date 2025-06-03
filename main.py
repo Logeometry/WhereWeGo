@@ -9,7 +9,7 @@ from routeres.search_router import router as search_router
 from routeres.category_router import router as category_router
 from routeres.google_login_router import router as google_login_router
 from routeres.nearby_place_router import router as nearby_place_router
-from routeres.user_log_ranking_router import router as get_ranking
+## from routeres.user_log_ranking_router import router as get_ranking
 from routeres.location_datail_router import router as simple_location_detail
 from routeres.weather_router import router as weather_router
 from routeres.festival_router import router as festival_router
@@ -47,7 +47,7 @@ app.include_router(category_router, prefix="/api/v1")
 ## app.include_router(logging_router, prefix="/api/v1")
 app.include_router(google_login_router, prefix="/api/v1")
 app.include_router(nearby_place_router, prefix="/api/v1")
-app.include_router(get_ranking, prefix="/api/v1")
+## app.include_router(get_ranking, prefix="/api/v1")
 app.include_router(simple_location_detail, prefix="/api/v1")
 app.include_router(weather_router, prefix="/api/v1")
 app.include_router(festival_router, prefix="/api/v1")

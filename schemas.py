@@ -29,6 +29,8 @@ class Tourism(BaseModel):
     vector_version: int
     created_at: datetime
     updated_at: datetime
+    class Config:
+        extra = "ignore"
 
 # user_data 스키마 정의
 class User_data(BaseModel):

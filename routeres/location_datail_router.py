@@ -1,42 +1,55 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 from typing import List, Optional
 from schemas import Tourism 
-from services.data_loader import load_location_data_from_json
+from services.data_loader import load_location_data_from_db
 from services.click_log_service import save_click_log
 
 router = APIRouter()
 
-# 현재 임시 json 파일로 불러옴. 추후 DB로 변경
-FILE_PATH = "data/tourlist_spots_all.json"
-location_data = load_location_data_from_json(FILE_PATH)
-
 # 장소 data load(장소에 대한 페이지 생성시)
-@router.get("/detail0", response_model=List[Tourism])
+@router.get("/detail0", response_model=List[Tourism])           # 수정 완료
 async def location_detail(
     query: Optional[str] = None,
     user_id : Optional[str] = Query(None)
 ):
-# login한 user에 대한 로그 저장
-    if query:
-        if user_id and user_id != "null" and user_id.lower() != "":
-             save_click_log(user_id=user_id, target_id=query)
+    try:
+        all_places: List[Tourism] = await load_location_data_from_db()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="장소 데이터를 불러오는 중 오류가 발생했습니다.")
+    if not query:
+        return all_places
+    lower_q = query.lower().strip()
+    filtered: List[Tourism] = [
+        place for place in all_places
+        if lower_q in place.name.lower()
+           or any(lower_q in cat.lower() for cat in getattr(place, "category", []))
+    ]
+    if user_id and user_id.lower() != "null" and user_id.strip() != "":
+        try:
+            save_click_log(user_id=user_id, target_id=query)
+        except Exception:
+            pass
 
-        return [
-            item for item in location_data
-            if query.lower() in item.name.lower() 
-            or any(query.lower() in cat.lower() for cat in item.category)
-        ]
-    return location_data
+    return filtered
 
-# 간단 정보만 반환함 (로그 X)
-@router.get("/simple_detail")
+# 간단 정보만 반환함 (로그 X)               # 수정완료
+@router.get("/simple_detail", response_model=List[Tourism])
 async def simple_location_detail(
     query: Optional[str] = None,
 ):
-    if query:
-        return [
-            item for item in location_data
-            if query.lower() in item.name.lower() 
-            or (item.address and query.lower() in item.address.lower())   
-        ]
-    return location_data
+    try:
+        all_places: List[Tourism] = await load_location_data_from_db()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="장소 데이터를 불러오는 중 오류가 발생했습니다.")
+
+    if not query:
+        return all_places
+
+    lower_q = query.lower().strip()
+
+    filtered: List[Tourism] = [
+        place for place in all_places
+        if lower_q in place.name.lower()
+           or (place.address and lower_q in place.address.lower())
+    ]
+    return filtered
