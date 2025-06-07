@@ -54,7 +54,7 @@ class ItineraryService:
                 coord = place['coords']
                 # walk 모드로 거리 기반 시간 추정 
                 # 추후 이동 수단 추가 구현 시, drive 모드로 자건거 혹은 자동차를 추가가능
-                travel_min = self.estimator.estimate_time(prev_coord, coord, mode="walk")
+                travel_min = self.estimator.estimate_time(prev_coord, coord, mode="")
                 est_start = block_start + timedelta(minutes=travel_min)
                 est_end   = est_start + timedelta(minutes=avg_stay)
                 if est_end > block_end:
