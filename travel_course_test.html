@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>여행 일정 생성 테스트</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #map, #result-map { height: 400px; width: 100%; margin-bottom: 20px; }
+    label { display: block; margin-top: 10px; }
+    input, select, button { padding: 8px; margin-top: 5px; width: 250px; }
+    button { width: auto; }
+    pre { background: #f0f0f0; padding: 10px; white-space: pre-wrap; }
+    .marker-label { background: white; border: 1px solid #333; border-radius: 4px; padding: 2px 4px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>여행 일정 생성 테스트</h1>
+
+  <div id="map"></div>
+  <label>모드 선택:
+    <select id="mode-select">
+      <option value="origin">출발지</option>
+      <option value="lodging">숙소</option>
+      <option value="dest">도착지</option>
+    </select>
+  </label>
+
+  <form id="itinerary-form">
+    <label>출발지 좌표:
+      <input id="origin-coords" readonly placeholder="지도에서 클릭하세요" />
+    </label>
+    <label>숙소 좌표:
+      <input id="lodging-coords" readonly placeholder="지도에서 클릭하세요" />
+    </label>
+    <label>최종 도착지 좌표:
+      <input id="dest-coords" readonly placeholder="지도에서 클릭하세요" />
+    </label>
+    <label>출발 날짜:
+      <input type="date" id="start-date" />
+    </label>
+    <label>출발 시간:
+      <input type="time" id="start-time" />
+    </label>
+    <label>도착 날짜:
+      <input type="date" id="end-date" />
+    </label>
+    <label>도착 시간:
+      <input type="time" id="end-time" />
+    </label>
+    <button type="submit">일정 생성</button>
+  </form>
+
+  <pre id="output">결과가 여기에 표시됩니다...</pre>
+  <div id="result-map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    let resultMap;
+    document.addEventListener('DOMContentLoaded', () => {
+      // 지도 초기화
+      const map = L.map('map').setView([35.1796, 129.0756], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+      const markers = { origin: null, lodging: null, dest: null };
+      const modeSelect = document.getElementById('mode-select');
+
+      map.on('click', (e) => {
+        const mode = modeSelect.value;
+        const latlng = e.latlng;
+        if (markers[mode]) map.removeLayer(markers[mode]);
+        markers[mode] = L.marker(latlng).addTo(map).bindPopup(mode).openPopup();
+        document.getElementById(mode + '-coords').value = `${latlng.lat.toFixed(6)},${latlng.lng.toFixed(6)}`;
+      });
+
+      // 기본 날짜/시간 세팅
+      const today = new Date().toISOString().slice(0,10);
+      const tomorrow = new Date(Date.now()+86400000).toISOString().slice(0,10);
+      document.getElementById('start-date').value = today;
+      document.getElementById('end-date').value = tomorrow;
+      document.getElementById('start-time').value = '09:00';
+      document.getElementById('end-time').value = '18:00';
+
+      // 추천 장소 로드
+      let recommendations = [];
+      fetch('/static/data/user/recommendations.json')
+        .then(res => res.json())
+        .then(data => recommendations = data.recommendations)
+        .catch(err => console.error('추천 데이터 로드 실패:', err));
+
+      // 폼 제출 핸들러
+      document.getElementById('itinerary-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const originVal = document.getElementById('origin-coords').value;
+        const lodgingVal = document.getElementById('lodging-coords').value;
+        const destVal    = document.getElementById('dest-coords').value;
+        if (!originVal || !lodgingVal || !destVal) {
+          alert('출발지, 숙소, 도착지를 모두 선택해주세요.');
+          return;
+        }
+        // payload 구성
+        const start_dt = `${document.getElementById('start-date').value}T${document.getElementById('start-time').value}:00`;
+        const end_dt   = `${document.getElementById('end-date').value}T${document.getElementById('end-time').value}:00`;
+        const makePlace = (id, val) => ({ place_id: id, coords: val.split(',').map(Number), rec_score: 1.0 });
+        const payload = {
+          origin:  makePlace('Origin', originVal),
+          lodging: makePlace('Lodging', lodgingVal),
+          dest:    makePlace('Destination', destVal),
+          start_dt, end_dt,
+          candidates: recommendations,
+          avg_stay: 60,
+          alpha: 0.5
+        };
+        console.log('Request payload:', JSON.stringify(payload, null, 2));
+
+        // API 호출
+        const res    = await fetch('/itinerary/multi', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (!res.ok) {
+          document.getElementById('output').textContent =
+            `❌ ${res.status} ${res.statusText}\n` +
+            JSON.stringify(result.detail || result, null, 2);
+          console.error('Validation Error:', result);
+          return;
+        }
+        document.getElementById('output').textContent = `✅ OK\n` + JSON.stringify(result, null, 2);
+
+        // 기존 지도 제거
+        if (resultMap) {
+          resultMap.remove();
+        }
+        document.getElementById('result-map').innerHTML = '';
+
+        // 결과 지도 렌더링
+        resultMap = L.map('result-map').setView([35.1796, 129.0756], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(resultMap);
+        const group = L.featureGroup();
+        let count = 1;
+        result.forEach(day => day.plan.forEach(item => {
+          let loc;
+          if (item.type === 'origin') loc = originVal.split(',').map(Number);
+          else if (item.type === 'destination') loc = destVal.split(',').map(Number);
+          else {
+            const r = recommendations.find(r => r.place_id === item.place_id);
+            loc = r ? r.coords : null;
+          }
+          if (!loc) return;
+          const mk = L.marker(loc).addTo(resultMap);
+          mk.bindTooltip(String(count), { permanent: true, direction: 'center', className: 'marker-label' });
+          group.addLayer(mk);
+          count++;
+        }));
+        resultMap.fitBounds(group.getBounds(), { padding: [20, 20] });
+      });
+    });
+  </script>
+</body>
+</html>

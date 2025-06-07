@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime, date, time
 from typing import List, Dict, Tuple, Optional
 
-from services.travel_time_estimator import DistanceBasedEstimator, TravelTimeEstimator
+from services.travel_time_estimator import TravelTimeService
 from services.itinerary_service import ItineraryService
 
 router = APIRouter(prefix="/itinerary")
@@ -34,8 +34,8 @@ class MultiDayCourseRequest(BaseModel):
 
 @router.post("/day", summary="Generate single-day ranked course")
 async def create_ranked_course(req: RankedCourseRequest):
-    # instantiate service
-    estimator: TravelTimeEstimator = DistanceBasedEstimator()
+    # TravelTimeService를 estimator로 사용
+    estimator = TravelTimeService()
     service = ItineraryService(estimator, alpha=req.alpha)
     try:
         plan = service.generate_ranked_course(
@@ -53,7 +53,7 @@ async def create_ranked_course(req: RankedCourseRequest):
 
 @router.post("/multi", summary="Generate multi-day ranked course")
 async def create_multi_day_course(req: MultiDayCourseRequest):
-    estimator: TravelTimeEstimator = DistanceBasedEstimator()
+    estimator = TravelTimeService()
     service = ItineraryService(estimator, alpha=req.alpha)
     try:
         itinerary = service.generate_multi_day_course(
