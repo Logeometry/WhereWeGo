@@ -21,8 +21,9 @@ class TravelTimeService:
             return self._get_walk_time(origin, dest)
         return self._get_drive_time(origin, dest)
 
+    # z코스 구현 확인의 위한 임시 계산용
     def _get_drive_time(self, origin, dest) -> float:
-        lon1, lat1 = origin  
+        lon1, lat1= origin  
         lon2, lat2 = dest 
         R = 6371.0
         dlat = radians(lat2 - lat1)
@@ -30,15 +31,18 @@ class TravelTimeService:
         a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
         c = 2 * atan2(sqrt(a), sqrt(1 - a))
         dist_km = R * c
-        return (dist_km / 40.0) * 60 
+        return (dist_km / 6000.0) * 60 
 
     def _get_walk_time(self, origin, dest) -> float:
         qs = {"version": "1"}
+        start = origin
+        end = dest
+
         data = {
-            "startX":       f"{origin[0]}",
-            "startY":       f"{origin[1]}",
-            "endX":         f"{dest[0]}",
-            "endY":         f"{dest[1]}",
+            "startX": f"{start[1]}",  # 경도
+            "startY": f"{start[0]}",  # 위도
+            "endX":   f"{end[1]}",    # 경도
+            "endY":   f"{end[0]}",    # 위도
             "startName":    "start",
             "endName":      "end",
             "reqCoordType": "WGS84GEO",
