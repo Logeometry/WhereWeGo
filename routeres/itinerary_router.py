@@ -1,12 +1,17 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
-from datetime import datetime, date, time
-from typing import List, Dict, Tuple, Optional
+# itinerary_router.py
 
+from urllib import request
+from fastapi import APIRouter, HTTPException
+from typing import List, Optional, Tuple
+from datetime import date, datetime, time
+
+from pydantic import BaseModel, Field
+from schemas import AutoMultiCourseInput, MultiDayItineraryResponse
 from services.travel_time_estimator import TravelTimeService
 from services.itinerary_service import ItineraryService
+from routeres.survey_router import recommend_similar_places
 
-router = APIRouter(prefix="/itinerary")
+router = APIRouter()
 
 class Place(BaseModel):
     place_id: str
@@ -30,40 +35,43 @@ class MultiDayCourseRequest(BaseModel):
     start_dt: datetime
     end_dt: datetime
     avg_stay: int = Field(60, gt=0)
-    alpha: float = Field(0.5, ge=0.0, le=1.0)
 
-@router.post("/day", summary="Generate single-day ranked course")
-async def create_ranked_course(req: RankedCourseRequest):
-    # TravelTimeService를 estimator로 사용
-    estimator = TravelTimeService()
-    service = ItineraryService(estimator, alpha=req.alpha)
+@router.post("/auto-multi-from-survey", response_model=MultiDayItineraryResponse)
+async def auto_multi_day_course_from_survey_with_input(data: AutoMultiCourseInput):
     try:
-        plan = service.generate_ranked_course(
-            candidates=[p.dict() for p in req.candidates],
-            day=req.day,
-            origin=req.origin.dict(),
-            dest=req.dest.dict(),
-            start_time=req.start_time,
-            end_time=req.end_time,
-            avg_stay=req.avg_stay
-        )
-        return {"date": req.day, "plan": plan}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        similar_places = await recommend_similar_places(data.survey)
 
-@router.post("/multi", summary="Generate multi-day ranked course")
-async def create_multi_day_course(req: MultiDayCourseRequest):
-    estimator = TravelTimeService()
-    service = ItineraryService(estimator, alpha=req.alpha)
-    try:
-        itinerary = service.generate_multi_day_course(
-            candidates=[p.dict() for p in req.candidates],
-            origin=req.origin.dict(),
-            dest=req.dest.dict(),
-            start_dt=req.start_dt,
-            end_dt=req.end_dt,
-            avg_stay=req.avg_stay
+        if len(similar_places) < 3:
+            raise HTTPException(status_code=400, detail="추천 장소가 부족합니다.")
+        
+        candidates = [
+            Place(
+                place_id=str(doc["_id"]),
+                coords=tuple(doc["location"]["coordinates"]),
+                rec_score=0.9
+            ) for doc in similar_places
+        ]
+
+        origin = Place(place_id="origin", coords=data.origin_coords, rec_score=1.0)
+        dest = Place(place_id="dest", coords=data.dest_coords, rec_score=1.0)
+
+        estimator = TravelTimeService()
+        service = ItineraryService(estimator)
+        accommodation = Place(place_id="accommodation", coords=data.accommodation_coords, rec_score=0.8)
+
+        request = MultiDayCourseRequest(
+            candidates=candidates,
+            origin=origin,
+            dest=dest,
+            start_dt=data.start_time,
+            end_dt=data.end_time,
+            avg_stay=data.avg_stay
         )
-        return itinerary
+
+        itinerary = await service.generate_multi_day_course(**request.dict())
+        return MultiDayItineraryResponse(itinerary=itinerary)
+
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"자동 코스 생성 실패: {str(e)}")

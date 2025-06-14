@@ -14,8 +14,7 @@ from routeres.location_datail_router import router as simple_location_detail
 from routeres.weather_router import router as weather_router
 from routeres.festival_router import router as festival_router
 from routeres.itinerary_router import router as itinerary_router
-
-## from routeres.survey_router import router as survey_router
+from routeres.survey_router import router as survey_router
 ## from routeres.logging_router import router as logging_router
 from dotenv import load_dotenv
 import os
@@ -43,7 +42,7 @@ app.add_middleware(
 
 app.include_router(search_router, prefix="/api/v1") 
 app.include_router(category_router, prefix="/api/v1")
-## app.include_router(survey_router, prefix="/api/v1")
+app.include_router(survey_router, prefix="/api/v1")
 ## app.include_router(logging_router, prefix="/api/v1")
 app.include_router(google_login_router, prefix="/api/v1")
 app.include_router(nearby_place_router, prefix="/api/v1")

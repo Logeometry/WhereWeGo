@@ -1,36 +1,75 @@
-# DB 구조에 맞게 수정하고 통일 에정정 
 from pydantic import BaseModel, Field
-from typing import List, Optional, Literal
-from datetime import datetime
+from typing import List, Optional, Literal, Tuple, Union
+from datetime import datetime, date
 
-# GeoJSON Point class 정의
-class GeoPoint(BaseModel):
-    type: str = Literal["Point"]
-    coordinates: List[float]
+class PlaceVisit(BaseModel):
+    place_id: str
+    start_time: Optional[datetime]
+    end_time: Optional[datetime]
+    type: Optional[str]
+    travel_time: Optional[int]
 
+class DayItinerary(BaseModel):
+    date: date
+    plan: List[PlaceVisit]
+
+class MultiDayItineraryResponse(BaseModel):
+    itinerary: List[DayItinerary]
+
+
+class ItinerarySpot(BaseModel):
+    place_id: str
+    arrival_time: str
+    leave_time: str
+    coords: Tuple[float, float]
+
+class DayCourse(BaseModel):
+    date: str
+    spots: List[ItinerarySpot]
 
 # 장소 스키마(DB 반영 완료)
+class GeoPoint(BaseModel):
+    type: str
+    coordinates: List[float]
+
 class Tourism(BaseModel):
     id: str = Field(..., alias="_id")
     name: str
     category: str
-    category_group: List[str]
-    category_onehot: List[int]
-    tags: List[int]
+    category_group: Union[str, List[str], None]
+    category_onehot: Optional[List[int]]
+    tags: Optional[List[int]]
     description: str
     address: str
     region: str
     location: GeoPoint
     rating: float
     review_count: int
-    visitor_count: int
-    pretrained_vector: List[float]
-    vector_full: List[float]
+    visitors_count: int
+    pretrained_vector: Optional[List[float]]
+    vector_full: Optional[List[float]]
     vector_version: int
-    created_at: datetime
-    updated_at: datetime
+    created_at: Union[str, datetime]
+    updated_at: Union[str, datetime]
+
     class Config:
         extra = "ignore"
+
+ # 설문조사 반환형태
+class SurveyResponse(BaseModel):
+    username: str
+    content_id: str
+    name: str
+    responses: Literal['like', 'neutral', 'dislike']
+
+class AutoMultiCourseInput(BaseModel):
+    survey: List[SurveyResponse]  # ✅ 리스트로 변경
+    origin_coords: Tuple[float, float]
+    dest_coords: Tuple[float, float]
+    accommodation_coords: Tuple[float, float]
+    start_time: datetime
+    end_time: datetime
+    avg_stay: int
 
 # user_data 스키마 정의
 class User_data(BaseModel):
@@ -59,13 +98,6 @@ class User_log(BaseModel):
 #     budget: str
 #     duration: str
 #     companion: str
-
-# 설문조사 반환형태
-class SurveyResponse(BaseModel):
-    usernume: str
-    content_id: str
-    name: str
-    responses: Literal['like', 'neutral', 'dislike']
 
 class CategoryScore(BaseModel):
     category: str

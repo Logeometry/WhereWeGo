@@ -9,7 +9,7 @@ MONGO_ATLAS_URI: str = os.getenv("MONGO_ATLAS_URI", "")
 _client: AsyncIOMotorClient = AsyncIOMotorClient(MONGO_ATLAS_URI)
 
 _place_db = _client.get_database("place_db")
-places_col = _place_db.get_collection("places")
+places_col = _place_db.get_collection("tourism")
 
 _user_db = _client.get_database("user_db")
 user_data_col     = _user_db.get_collection("user_data")

@@ -21,7 +21,7 @@ class ItineraryService:
         day_start = datetime.combine(day, start_time)
         day_end   = datetime.combine(day, end_time)
 
-        # 식사 시간 블록
+        # 식사 시간
         lunch_start = datetime.combine(day, time(12, 0))
         lunch_end   = lunch_start + timedelta(hours=1)
         dinner_start = datetime.combine(day, time(18, 0))
@@ -41,9 +41,14 @@ class ItineraryService:
 
         result = []
         prev_coord = origin['coords']
-        result.append({'place_id': origin['place_id'], 'type': 'origin', 'time': day_start})
+        result.append({
+            'place_id': origin['place_id'],
+            'type': 'origin',
+            'start_time': day_start,
+            'end_time': day_start,
+            'travel_time': 0
+        })
 
-        # 각 시간 블록마다 가장 점수 낮은(place) 선택
         for block_start, block_end in time_blocks:
             best = None
             best_score = float('inf')
@@ -53,10 +58,11 @@ class ItineraryService:
                     continue
                 coord = place['coords']
                 # walk 모드로 거리 기반 시간 추정 
-                # 추후 이동 수단 추가 구현 시, drive 모드로 자건거 혹은 자동차를 추가가능
                 travel_min = self.estimator.estimate_time(prev_coord, coord, mode="")
                 est_start = block_start + timedelta(minutes=travel_min)
                 est_end   = est_start + timedelta(minutes=avg_stay)
+                print(f"[DEBUG] trying place: {place['place_id']} - travel_min: {travel_min}, est_start: {est_start}, est_end: {est_end}, block: {block_start} ~ {block_end}")
+
                 if est_end > block_end:
                     continue
 
@@ -87,24 +93,32 @@ class ItineraryService:
                 'place_id':   '점심',
                 'start_time': lunch_start,
                 'end_time':   lunch_end,
-                'type':       'meal'
+                'type':       'meal',
+                'travel_time': 60                
             })
         if day_start <= dinner_start <= day_end:
             result.append({
                 'place_id':   '저녁',
                 'start_time': dinner_start,
                 'end_time':   dinner_end,
-                'type':       'meal'
+                'type':       'meal',
+                'travel_time': 60
             })
 
         # 도착지
-        result.append({'place_id': dest['place_id'], 'type': 'destination', 'time': day_end})
+        result.append({
+            'place_id': dest['place_id'],
+            'type': 'destination',
+            'start_time': day_end,
+            'end_time': day_end,
+            'travel_time': 0
+        })
 
         # 시간순 정렬
         result.sort(key=lambda x: x.get('start_time') or x.get('time'))
         return result
 
-    def generate_multi_day_course(
+    async def generate_multi_day_course(
         self,
         candidates: List[Dict],
         origin: Dict,

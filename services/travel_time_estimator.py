@@ -22,23 +22,23 @@ class TravelTimeService:
         return self._get_drive_time(origin, dest)
 
     def _get_drive_time(self, origin, dest) -> float:
-        lat1, lon1 = origin
-        lat2, lon2 = dest
+        lon1, lat1 = origin  
+        lon2, lat2 = dest 
         R = 6371.0
         dlat = radians(lat2 - lat1)
         dlon = radians(lon2 - lon1)
         a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
         c = 2 * atan2(sqrt(a), sqrt(1 - a))
         dist_km = R * c
-        return (dist_km / 40.0) * 60  # 시속 40km 기준, 분 단위 반환
+        return (dist_km / 40.0) * 60 
 
     def _get_walk_time(self, origin, dest) -> float:
         qs = {"version": "1"}
         data = {
-            "startX":       f"{origin[1]}",
-            "startY":       f"{origin[0]}",
-            "endX":         f"{dest[1]}",
-            "endY":         f"{dest[0]}",
+            "startX":       f"{origin[0]}",
+            "startY":       f"{origin[1]}",
+            "endX":         f"{dest[0]}",
+            "endY":         f"{dest[1]}",
             "startName":    "start",
             "endName":      "end",
             "reqCoordType": "WGS84GEO",
@@ -90,7 +90,6 @@ class TravelTimeService:
 
         features = result.get("features", [])
 
-        # SP 노드에 totalTime(초)이 있으면 우선 사용
         total_sec = None
         for f in features:
             props = f.get("properties", {})
@@ -98,7 +97,6 @@ class TravelTimeService:
                 total_sec = props["totalTime"]
                 break
 
-        # 없으면 모든 LineString 세그먼트의 time 합산
         if total_sec is None:
             total_sec = sum(
                 seg.get("properties", {}).get("time", 0)
@@ -106,16 +104,16 @@ class TravelTimeService:
                 if seg.get("geometry", {}).get("type") == "LineString"
             )
 
-        return total_sec / 60.0  # 분 단위 반환
+        return total_sec / 60.0 
 
     def _fallback_walk_time(self, origin, dest) -> float:
-        lat1, lon1 = origin
-        lat2, lon2 = dest
+        lon1, lat1 = origin
+        lon2, lat2 = dest
         R = 6371.0
         dlat = radians(lat2 - lat1)
         dlon = radians(lon2 - lon1)
         a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
         c = 2 * atan2(sqrt(a), sqrt(1 - a))
         dist_km = R * c
-        return (dist_km / 5.0) * 60  # 시속 5km 기준, 분 단위 반환
+        return (dist_km / 5.0) * 60  # 시속 5km
 
