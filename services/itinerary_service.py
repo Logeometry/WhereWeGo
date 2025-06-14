@@ -35,10 +35,7 @@ class ItineraryService:
         if dinner_end < day_end:
             time_blocks.append((dinner_end, day_end))
 
-        # 방문 여부 플래그 초기화
-        for place in candidates:
-            place['_used'] = False
-
+        used_places = set()
         result = []
         prev_coord = origin['coords']
         result.append({
@@ -54,10 +51,14 @@ class ItineraryService:
             best_score = float('inf')
 
             for place in candidates:
-                if place['_used']:
+                if place["place_id"] in used_places:
                     continue
                 coord = place['coords']
-                # walk 모드로 거리 기반 시간 추정 
+                # walk 모드로 거리 기반 시간 추정
+                start = origin['coords']
+                end = dest['coords']
+                print(f"[DEBUG] walk API input: start=({start[1]}, {start[0]}), end=({end[1]}, {end[0]})")
+
                 travel_min = self.estimator.estimate_time(prev_coord, coord, mode="")
                 est_start = block_start + timedelta(minutes=travel_min)
                 est_end   = est_start + timedelta(minutes=avg_stay)
@@ -79,13 +80,14 @@ class ItineraryService:
                 visit_end   = visit_start + timedelta(minutes=avg_stay)
 
                 result.append({
+                    "type": "place",
                     'place_id':    place['place_id'],
                     'start_time':  visit_start,
                     'end_time':    visit_end,
-                    'travel_time': travel_min
+                    'travel_time': round(travel_min)
                 })
-                place['_used'] = True
                 prev_coord = place['coords']
+                used_places.add(place["place_id"])
 
         # 식사 삽입
         if day_start <= lunch_start <= day_end:
@@ -149,7 +151,7 @@ class ItineraryService:
 
             # 이번 날 방문지 기록
             for item in day_plan:
-                if 'start_time' in item:
+                if item['type'] == 'place':
                     used_places.add(item['place_id'])
 
             itinerary.append({'date': current_day, 'plan': day_plan})
