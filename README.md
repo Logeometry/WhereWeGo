@@ -60,12 +60,11 @@ python models/run_ncf_modular.py
 database/
 ├── data_pipeline/          # 데이터 생성 및 전처리
 ├── models/                 # 모델 구현 및 학습
-├── utils/                  # 유틸리티 및 도구
-└── docs/                   # 문서
+└── utils/                  # 유틸리티 및 도구
 ```
 
 ## 개발팀
-- 추천 시스템 연구팀
+- 저희어디가조
 
 ## 라이선스
 MIT License
