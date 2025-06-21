@@ -45,8 +45,10 @@ python models/run_ncf_modular.py
 ```
 
 ## 모델 성능
-- **평가 메트릭**: HR@K, Recall@K, NDCG@K, MAP, AUC
-- **데이터셋**: 실제 여행지 데이터 기반
+- **메인 평가 메트릭**: HR@K, Recall@K, AUC
+- **서브 평가 메트릭**: NDCG@K, MAP
+- **관광지 정보**: KAKAO API를 통해 제공받음
+- **상호작용 데이터**: 관광지 카테고리 기반 임의 생성
 - **사전학습 효과**: BPR 임베딩을 통한 성능 향상
 
 ## 기술 스택
