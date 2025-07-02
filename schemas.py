@@ -2,6 +2,48 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Literal, Tuple, Union
 from datetime import datetime, date
 
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict
+
+# --- 입력 모델 (프론트 -> 백엔드) ---
+class ItineraryRequest(BaseModel):
+    """프론트엔드에서 여행 코스 생성을 위해 보내는 데이터 모델"""
+    departureCity: str
+    otherCity: Optional[str] = None
+    travelDuration: int = Field(..., description="여행 기간 (일)")
+    travelStartDate: str = Field(..., description="여행 시작일 (YYYY-MM-DD)")
+    startingPoint: str = Field(..., description="여행 시작 장소 ID")
+    # 아래 필드들은 프롬프트에 활용될 수 있으므로 포함합니다.
+    preferences: Optional[Dict[str, bool]] = None
+    surveyAttractions: Optional[List[str]] = None
+
+# --- 출력 모델 (백엔드 -> 프론트) ---
+class PlaceLocation(BaseModel):
+    """장소의 위치 정보 모델"""
+    type: str = "Point"
+    coordinates: List[float]
+
+class Place(BaseModel):
+    """일정 내 개별 장소 정보 모델"""
+    id: str = Field(..., alias="_id")
+    name: str
+    description: Optional[str] = None
+    address: str
+    location: PlaceLocation
+    estimated_duration: int = Field(..., description="Gemini가 추천하는 예상 체류 시간 (시간 단위)")
+    travel_time_from_previous: int = Field(..., description="이전 장소로부터의 예상 이동 시간 (분 단위)")
+
+class DailySchedule(BaseModel):
+    """일별 스케줄 모델"""
+    day: int
+    date: str
+    places: List[Place]
+
+class ItineraryResponse(BaseModel):
+    """프론트엔드로 최종 반환될 여행 코스 전체 데이터 모델"""
+    dailySchedule: List[DailySchedule]
+    travelTips: str = Field(..., description="Gemini가 생성한 종합 여행 팁")
+
 class PlaceVisit(BaseModel):
     place_id: str
     start_time: Optional[datetime]
