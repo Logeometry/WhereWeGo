@@ -1,12 +1,18 @@
-from fastapi import APIRouter, HTTPException, Query
+import logging
+from fastapi import APIRouter, HTTPException, Query, logger
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 from services.data_loader import load_location_data_from_db
 from schemas import Tourism
 from db import places_col, _place_db
 import re
 
 router = APIRouter()
+
+# 로거 설정
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 # 반환 모델 정의
 # 프론트엔드에서 사용할 응답 모델 정의, 필요에 따라 필드 추가 가능
@@ -17,30 +23,30 @@ class Respose_model(BaseModel):
     tags: List[str]
 
     class Config:
-        allow_population_by_field_name = True
+        varidate_by_name = True
+        extra = Extra.ignore
 
 # 카테고리 라우터터
 @router.get("/category", response_model=Respose_model)
 async def get_places_by_category(
     category: Optional[str] = Query(None, description="검색할 카테고리")
 ):
+    query = {}
+    if category:
+        regex = re.compile(re.escape(category), re.IGNORECASE)
+        query = {
+            "$or": [
+                {"category": {"$regex": regex}},
+                {"category_group": {"$regex": regex}}
+            ]
+        }
     try:
-        if not category:
-            cusor = places_col.find({})
-        else:
-            # 정규식 이용, 대소문자 구분 없이 검색
-            regex = re.compile(re.excape(category), re.IGNORECASE)
-            cursor = places_col.find({
-                "$or": [
-                    {"category": {"$regex": regex}},
-                    {"category_group": {"$regex": regex}}
-                ]
-           })
-        
+        cusor = places_col.find({})
         docs = await cursor.to_list(length=None)
         return docs
     
     except Exception as e:
+        logger.error(f"DB 조회 중 오류: {e}")
         raise HTTPException(status_code=500, detail=f"카테고리 조회 중 오류 발생: {str(e)}")
 
 

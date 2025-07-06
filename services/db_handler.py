@@ -9,7 +9,7 @@ from typing import List
 load_dotenv()
 
 # --- MongoDB 설정 ---
-MONGO_DB_URL = os.getenv("MONGO_DB_URL")
+MONGO_DB_URL = os.getenv("MONGO_ATLAS_URI")
 if not MONGO_DB_URL:
     raise ValueError("MONGO_DB_URL 환경변수를 설정해주세요.")
 
