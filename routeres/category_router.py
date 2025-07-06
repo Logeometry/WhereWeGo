@@ -1,22 +1,70 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
-from schemas import Tourism
+from pydantic import BaseModel
 from services.data_loader import load_location_data_from_db
+from schemas import Tourism
+from db import places_col, _place_db
+import re
 
 router = APIRouter()
 
+# 반환 모델 정의
+# 프론트엔드에서 사용할 응답 모델 정의, 필요에 따라 필드 추가 가능
+# 예시로 id, name, tags 필드를 포함
+class Respose_model(BaseModel):
+    id: str
+    name: str
+    tags: List[str]
 
-@router.get("/categories", response_model=List[Tourism])
-async def search_categories(keywords: Optional[List[str]] = Query(None)):
-    # 1) MongoDB에서 전체 장소 데이터 가져오기
+    class Config:
+        allow_population_by_field_name = True
+
+# 카테고리 라우터터
+@router.get("/category", response_model=Respose_model)
+async def get_places_by_category(
+    category: Optional[str] = Query(None, description="검색할 카테고리")
+):
     try:
+        if not category:
+            cusor = places_col.find({})
+        else:
+            # 정규식 이용, 대소문자 구분 없이 검색
+            regex = re.compile(re.excape(category), re.IGNORECASE)
+            cursor = places_col.find({
+                "$or": [
+                    {"category": {"$regex": regex}},
+                    {"category_group": {"$regex": regex}}
+                ]
+           })
+        
+        docs = await cursor.to_list(length=None)
+        return docs
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"카테고리 조회 중 오류 발생: {str(e)}")
+
+
+
+## 전 카테고리 구현 라우터, 키워드 여러개 사용 가능함
+
+"""
+async def search_categoyries(keywords:Optional[List[str]] = Query(None)):
+    try: 
         all_places: List[Tourism] = await load_location_data_from_db()
     except Exception:
-        raise HTTPException(status_code=500, detail="장소 데이터를 불러오는 중 오류가 발생했습니다.")
+        raise HTTPException(status_code=500, detail="여행지 데이터를 불러오는 중 오류가 발생했습니다.")
+    
+    if not keywords:
+        return
+    for place in all_places:
+        # categoty 와 일치하는지만 검사
+        category_value = 
+
+
 
     # 2) 키워드가 없으면 전체 반환
     if not keywords:
-        return all_places
+        return 
 
     # 3) 키워드가 있으면 필터링
     lower_keywords = [kw.lower().strip() for kw in keywords]
@@ -38,3 +86,4 @@ async def search_categories(keywords: Optional[List[str]] = Query(None)):
                 break
 
     return filtered
+"""
