@@ -18,10 +18,7 @@ from services.db_handler import get_random_places, tourism_collection
 load_dotenv()
 
 # 라우터 객체 생성
-router = APIRouter(
-    prefix="/api/v1/itinerary",
-    tags=["itinerary"],
-)
+router = APIRouter()
 
 # --- Gemini API 설정 ---
 # (이전과 동일)
