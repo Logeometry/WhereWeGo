@@ -20,16 +20,14 @@ from routeres.recommeded_cors_router import router as geanerate_itinerary
 from dotenv import load_dotenv
 import os
 
+load_dotenv()
+
 SECRET_KEY = os.getenv("SECRET_KEY")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 app = FastAPI()
 
 origins = [
-    "http://localhost",
-    "http://localhost:8080",
-    "http://127.0.0.1",
-    "http://127.0.0.1:8080",
-    "http://127.0.0.1:8000",  # html test용
+    "http://localhost:8000",
 ]
 
 # CORS 설정 추가
@@ -59,8 +57,8 @@ app.mount("/static", StaticFiles(directory="."), name="static")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
-templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "test"))
+##app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
+##templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "test"))
 
 test_dir = os.path.join(os.path.dirname(__file__), "test")
 app.mount(
@@ -88,9 +86,9 @@ async def show_attractions():
     return {"error": "File not found"}
 
 # test용 코드 
-@app.get("/search_test", response_class=HTMLResponse)
-async def test_page(request: Request):
-    return templates.TemplateResponse("search_test.html", {"request": request})
+## @app.get("/search_test", response_class=HTMLResponse)
+## async def test_page(request: Request):
+##    return templates.TemplateResponse("search_test.html", {"request": request})
 
 @app.get("/category_test", response_class=HTMLResponse)
 async def category_test_page(request: Request):

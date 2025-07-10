@@ -1,4 +1,8 @@
 ## 구글 로그인 라우터
+## 로그인 확인 오류 코드 정리
+## 401 : 로그인이 안되어있는 상태
+## 404 : 로그인이 되었으나 인증 실패 - 쿠키 저장X, 잘못된 토큰 등
+
 import uuid
 from fastapi import APIRouter, Depends, Request, HTTPException, Response
 from fastapi.responses import RedirectResponse, JSONResponse
@@ -17,7 +21,7 @@ FRONTEND_URL = os.getenv("FRONTEND_URL")
 SECRET_KEY = os.getenv("SECRET_KEY")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-REDIRECT_URI = "http://127.0.0.1:8000/api/v1/auth/google/callback"
+REDIRECT_URI = "http://localhost:8000/api/v1/auth/google/callback"
 SCOPE = "openid email profile"  # 기본 ID, email, profile 정보 요청
 GOOGLE_AUTH_BASE = "https://accounts.google.com/o/oauth2/v2/auth"
 
@@ -91,7 +95,7 @@ def google_callback(request: Request):
         algorithm="HS256"
     )
      # 현재는 테스틑를 위해 /login 페이지, 홈페이지로 바꿀 예정 => 변경 완료
-    homepage_url = f"{FRONTEND_URL}/" 
+    homepage_url = f"{FRONTEND_URL.rstrip('/')}/"
 
     # 로그인 후 홈페이지로 리디렉션
     response = RedirectResponse(url=homepage_url)
