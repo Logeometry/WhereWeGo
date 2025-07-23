@@ -21,6 +21,8 @@ try:
     db = client.place_db
     # 'tourism' 컬렉션 사용
     tourism_collection = db.tourism
+    # 'start_point' 컬렉션 사용
+    starting_point_collection = db.starting_point
     # 'user_log' 컬렉션 사용
     user_log_collection = client.user_db.user_log
     # 서버 정보 확인으로 연결 테스트

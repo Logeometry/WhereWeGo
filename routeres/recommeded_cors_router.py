@@ -12,7 +12,7 @@ from pymongo import MongoClient
 from schemas import ItineraryRequest, ItineraryResponse
 
 # MongoDB 핸들러 함수 import (새로 추가)
-from services.db_handler import get_random_places, tourism_collection
+from services.db_handler import get_random_places, tourism_collection, starting_point_collection
 
 # .env 파일에서 환경 변수 로드
 load_dotenv()
@@ -108,29 +108,31 @@ async def generate_itinerary(request: ItineraryRequest = Body(...)):
         place_ids = get_random_places(count=10)
         
         if not place_ids or len(place_ids) < 10:
-            raise HTTPException(status_code=503, detail="추천 장소를 충분히 가져오지 못했습니다. DB를 확인해주세요.")
-
-        # 2. MongoDB에서 추천된 장소 10곳과 시작 장소의 상세 정보를 조회합니다.
-        start_place_id = ObjectId(request.startingPoint)
-        all_required_ids = place_ids + [start_place_id]
+            raise HTTPException(status_code=503, detail="추천 장소를 충분히 가져오지 못했습니다. DB를 확인해주세요.")        
+        # all_required_ids = place_ids + [start_place_id]
         
         # ... 이하 로직은 이전과 동일 ...
-        places_cursor = tourism_collection.find({"_id": {"$in": all_required_ids}})
-        places_details = {str(p['_id']): p for p in places_cursor}
+        places_cursor = tourism_collection.find({"_id": {"$in": place_ids}})
+        places_details = {str(p['_id']): p async for p in places_cursor}
 
-        if len(places_details) < len(all_required_ids):
+         # 2. MongoDB에서 추천된 장소 10곳과 시작 장소의 상세 정보를 조회합니다.
+        start_place_id = ObjectId(request.startingPoint)
+        start_place_info = await starting_point_collection.find_one({"_id": start_place_id})
+
+        if not start_place_info:
+            start_place_info = await tourism_collection.find_one({"_id": start_place_id})
+        if not start_place_info:
+            raise HTTPException(status_code=404, detail="시작 장소 정보를 찾을 수 없습니다.")
+
+        if len(places_details) < len(place_ids):
             # 일부 ID가 DB에 없는 경우를 대비
             found_ids = set(places_details.keys())
-            missing_ids = [str(oid) for oid in all_required_ids if str(oid) not in found_ids]
+            missing_ids = [str(oid) for oid in place_ids if str(oid) not in found_ids]
             print(f"DB에서 찾지 못한 ID: {missing_ids}")
             raise HTTPException(status_code=404, detail=f"일부 장소 정보를 DB에서 찾을 수 없습니다: {missing_ids}")
 
-        start_place_info = places_details.get(request.startingPoint)
         # 추천 장소 목록에서는 시작 장소를 제외합니다.
         recommended_places_info = [details for pid, details in places_details.items() if pid != request.startingPoint]
-        
-        if not start_place_info:
-            raise HTTPException(status_code=404, detail="시작 장소 정보를 찾을 수 없습니다.")
 
         # 3. Gemini API에 보낼 프롬프트를 생성합니다.
         prompt = build_gemini_prompt(request, recommended_places_info, start_place_info['name'])
