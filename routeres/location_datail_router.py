@@ -49,7 +49,8 @@ async def simple_location_detail(
 
     filtered: List[Tourism] = [
         place for place in all_places
-        if lower_q in place.name.lower()
-           or (place.address and lower_q in place.address.lower())
+        if lower_q == place.id.lower()
+            or lower_q in place.name.lower()
+            or (place.address and lower_q in place.address.lower())
     ]
     return filtered
