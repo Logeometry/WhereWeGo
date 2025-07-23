@@ -125,7 +125,7 @@ class User_data(BaseModel):
 
 # user_log
 class User_log(BaseModel):
-    id: str = Field(..., alias="id")
+    id: Optional[str] = Field(default=None, alias="_id")  #
     user_id: str
     event: str
     target_id: str

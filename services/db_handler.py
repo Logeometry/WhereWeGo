@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
-from pymongo.errors import PyMongoError
+from motor.motor_asyncio import AsyncIOMotorClient
+# from pymongo.errors import PyMongoError
 from bson import ObjectId
 from typing import List
 
@@ -15,15 +16,17 @@ if not MONGO_DB_URL:
 
 try:
     # 애플리케이션 실행 시 MongoDB 클라이언트 연결
-    client = MongoClient(MONGO_DB_URL)
+    client = AsyncIOMotorClient(MONGO_DB_URL)
     # 'place_db' 데이터베이스 사용
     db = client.place_db
     # 'tourism' 컬렉션 사용
     tourism_collection = db.tourism
+    # 'user_log' 컬렉션 사용
+    user_log_collection = client.user_db.user_log
     # 서버 정보 확인으로 연결 테스트
     client.server_info()
     print("✅ MongoDB에 성공적으로 연결되었습니다.")
-except PyMongoError as e:
+except AsyncIOMotorClient.errors.PyMongoError as e:
     print(f"❌ MongoDB 연결에 실패했습니다: {e}")
     client = None
     tourism_collection = None
@@ -64,7 +67,7 @@ def get_random_places(count: int = 10) -> List[ObjectId]:
         
         return place_ids
 
-    except PyMongoError as e:
+    except AsyncIOMotorClient.errors.PyMongoError as e:
         print(f"DB에서 랜덤 장소를 가져오는 중 오류 발생: {e}")
         return []
 

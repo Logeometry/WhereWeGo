@@ -21,12 +21,11 @@ async def location_detail(
     lower_q = query.lower().strip()
     filtered: List[Tourism] = [
         place for place in all_places
-        if lower_q in place.name.lower()
-           or any(lower_q in cat.lower() for cat in getattr(place, "category", []))
+        if lower_q == place.id.lower()
     ]
     if user_id and user_id.lower() != "null" and user_id.strip() != "":
         try:
-            save_click_log(user_id=user_id, target_id=query)
+            await save_click_log(user_id=user_id, target_id=query)
         except Exception:
             pass
 
