@@ -97,6 +97,50 @@ class Tourism(BaseModel):
     class Config:
         extra = "ignore"
 
+# 카페 스키마
+class Cafe(BaseModel):
+    id: str = Field(..., alias="_id")
+    name: str
+    category: str
+    address: str
+    description: str
+    region: str
+    location: GeoPoint
+    rating: int
+    review_count: int
+    place_url: str
+    image_url: Optional[str] = None
+    tags: Optional[List] = None
+    vector: Optional[List[float]] = None
+    created_at: str
+    updated_at: str
+    distance: Optional[float] = None  # 기준 장소로부터의 거리 (km)
+    
+    class Config:
+        extra = "ignore"
+
+# 식당 스키마
+class Restaurant(BaseModel):
+    id: str = Field(..., alias="_id")
+    name: str
+    category: str
+    address: str
+    description: str
+    region: str
+    location: GeoPoint
+    rating: int
+    review_count: int
+    place_url: str
+    image_url: Optional[str] = None
+    tags: Optional[List] = None
+    vector: Optional[List[float]] = None
+    created_at: str
+    updated_at: str
+    distance: Optional[float] = None  # 기준 장소로부터의 거리 (km)
+    
+    class Config:
+        extra = "ignore"
+
  # 설문조사 반환형태
 class SurveyResponse(BaseModel):
     username: str
