@@ -2,12 +2,9 @@
 from fastapi import APIRouter, Query
 from typing import List
 from schemas import Tourism
-from services.data_loader import load_location_data_from_json
+from services.data_loader import load_location_data_from_db
 
 router = APIRouter()
-
-FILE_PATH = "data/tourist_spots_all.json"
-location_data = load_location_data_from_json(FILE_PATH)
 
 @router.get("/map_spots", response_model=List[Tourism])
 async def get_spots_by_bounds(
@@ -16,9 +13,14 @@ async def get_spots_by_bounds(
     min_lng: float = Query(..., description="최소 경도"),
     max_lng: float = Query(..., description="최대 경도")
 ):
-    result = [
-        loc for loc in location_data
-        if min_lat <= loc.lat <= max_lat and min_lng <= loc.lng <= max_lng
-    ]
+    # MongoDB에서 모든 장소 데이터를 가져옴
+    location_data = await load_location_data_from_db()
+    
+    result = []
+    for loc in location_data:
+        if hasattr(loc, 'location') and loc.location and len(loc.location.coordinates) >= 2:
+            lng, lat = loc.location.coordinates[0], loc.location.coordinates[1]  # MongoDB는 [경도, 위도] 순서
+            if min_lat <= lat <= max_lat and min_lng <= lng <= max_lng:
+                result.append(loc)
     return result
 
