@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주변 장소 API 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, button {
+            padding: 8px;
+            margin: 5px 0;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .place-item {
+            border: 1px solid #ccc;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: white;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .category-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+        }
+        .category-title {
+            color: #007bff;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>주변 장소 API 테스트</h1>
+    
+    <div class="form-group">
+        <label for="placeId">장소 ID:</label>
+        <input type="text" id="placeId" placeholder="예: 123456" value="123456">
+    </div>
+    
+    <div class="form-group">
+        <label for="maxDistance">최대 거리 (km):</label>
+        <input type="number" id="maxDistance" value="5.0" step="0.1" min="0.1" max="50">
+    </div>
+    
+    <div>
+        <button onclick="getNearbyPlaces()">주변 관광지 조회</button>
+        <button onclick="getNearbyCafes()">주변 카페 조회</button>
+        <button onclick="getNearbyRestaurants()">주변 식당 조회</button>
+        <button onclick="getNearbyAll()">모든 주변 장소 조회</button>
+    </div>
+    
+    <div id="result" class="result" style="display: none;">
+        <h3>결과:</h3>
+        <div id="resultContent"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/v1';
+        
+        async function getNearbyPlaces() {
+            const placeId = document.getElementById('placeId').value;
+            const maxDistance = document.getElementById('maxDistance').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/nearby/${placeId}?max_distance=${maxDistance}`);
+                const data = await response.json();
+                
+                displayResult('주변 관광지', data);
+            } catch (error) {
+                displayError('주변 관광지 조회 중 오류 발생: ' + error.message);
+            }
+        }
+        
+        async function getNearbyCafes() {
+            const placeId = document.getElementById('placeId').value;
+            const maxDistance = document.getElementById('maxDistance').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/nearby/cafes/${placeId}?max_distance=${maxDistance}`);
+                const data = await response.json();
+                
+                displayResult('주변 카페', data);
+            } catch (error) {
+                displayError('주변 카페 조회 중 오류 발생: ' + error.message);
+            }
+        }
+        
+        async function getNearbyRestaurants() {
+            const placeId = document.getElementById('placeId').value;
+            const maxDistance = document.getElementById('maxDistance').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/nearby/restaurants/${placeId}?max_distance=${maxDistance}`);
+                const data = await response.json();
+                
+                displayResult('주변 식당', data);
+            } catch (error) {
+                displayError('주변 식당 조회 중 오류 발생: ' + error.message);
+            }
+        }
+        
+        async function getNearbyAll() {
+            const placeId = document.getElementById('placeId').value;
+            const maxDistance = document.getElementById('maxDistance').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/nearby/all/${placeId}?max_distance=${maxDistance}`);
+                const data = await response.json();
+                
+                displayAllResults(data);
+            } catch (error) {
+                displayError('모든 주변 장소 조회 중 오류 발생: ' + error.message);
+            }
+        }
+        
+        function displayResult(title, data) {
+            const resultDiv = document.getElementById('result');
+            const contentDiv = document.getElementById('resultContent');
+            
+            let html = `<h4>${title} (${data.length}개)</h4>`;
+            
+            if (data.length === 0) {
+                html += '<p>해당 범위 내에 장소가 없습니다.</p>';
+            } else {
+                data.forEach((item, index) => {
+                    html += `
+                        <div class="place-item">
+                            <h5>${index + 1}. ${item.name}</h5>
+                            <p><strong>주소:</strong> ${item.address}</p>
+                            ${item.distance ? `<p><strong>거리:</strong> ${item.distance}km</p>` : ''}
+                            ${item.rating ? `<p><strong>평점:</strong> ${item.rating}</p>` : ''}
+                            ${item.description ? `<p><strong>설명:</strong> ${item.description}</p>` : ''}
+                            ${item.category ? `<p><strong>카테고리:</strong> ${item.category}</p>` : ''}
+                            ${item.place_url ? `<p><strong>URL:</strong> <a href="${item.place_url}" target="_blank">${item.place_url}</a></p>` : ''}
+                        </div>
+                    `;
+                });
+            }
+            
+            contentDiv.innerHTML = html;
+            resultDiv.style.display = 'block';
+        }
+        
+        function displayAllResults(data) {
+            const resultDiv = document.getElementById('result');
+            const contentDiv = document.getElementById('resultContent');
+            
+            let html = '<h4>모든 주변 장소</h4>';
+            
+            // 관광지 섹션
+            html += `<div class="category-section">
+                <div class="category-title">관광지 (${data.tourist_spots.length}개)</div>`;
+            if (data.tourist_spots.length === 0) {
+                html += '<p>해당 범위 내에 관광지가 없습니다.</p>';
+            } else {
+                data.tourist_spots.forEach((item, index) => {
+                    html += `
+                        <div class="place-item">
+                            <h5>${index + 1}. ${item.name}</h5>
+                            <p><strong>주소:</strong> ${item.address}</p>
+                            ${item.distance ? `<p><strong>거리:</strong> ${item.distance}km</p>` : ''}
+                            ${item.rating ? `<p><strong>평점:</strong> ${item.rating}</p>` : ''}
+                        </div>
+                    `;
+                });
+            }
+            html += '</div>';
+            
+            // 카페 섹션
+            html += `<div class="category-section">
+                <div class="category-title">카페 (${data.cafes.length}개)</div>`;
+            if (data.cafes.length === 0) {
+                html += '<p>해당 범위 내에 카페가 없습니다.</p>';
+            } else {
+                data.cafes.forEach((item, index) => {
+                    html += `
+                        <div class="place-item">
+                            <h5>${index + 1}. ${item.name}</h5>
+                            <p><strong>주소:</strong> ${item.address}</p>
+                            ${item.distance ? `<p><strong>거리:</strong> ${item.distance}km</p>` : ''}
+                            ${item.rating ? `<p><strong>평점:</strong> ${item.rating}</p>` : ''}
+                            ${item.category ? `<p><strong>카테고리:</strong> ${item.category}</p>` : ''}
+                        </div>
+                    `;
+                });
+            }
+            html += '</div>';
+            
+            // 식당 섹션
+            html += `<div class="category-section">
+                <div class="category-title">식당 (${data.restaurants.length}개)</div>`;
+            if (data.restaurants.length === 0) {
+                html += '<p>해당 범위 내에 식당이 없습니다.</p>';
+            } else {
+                data.restaurants.forEach((item, index) => {
+                    html += `
+                        <div class="place-item">
+                            <h5>${index + 1}. ${item.name}</h5>
+                            <p><strong>주소:</strong> ${item.address}</p>
+                            ${item.distance ? `<p><strong>거리:</strong> ${item.distance}km</p>` : ''}
+                            ${item.rating ? `<p><strong>평점:</strong> ${item.rating}</p>` : ''}
+                            ${item.category ? `<p><strong>카테고리:</strong> ${item.category}</p>` : ''}
+                        </div>
+                    `;
+                });
+            }
+            html += '</div>';
+            
+            contentDiv.innerHTML = html;
+            resultDiv.style.display = 'block';
+        }
+        
+        function displayError(message) {
+            const resultDiv = document.getElementById('result');
+            const contentDiv = document.getElementById('resultContent');
+            
+            contentDiv.innerHTML = `<div class="error">${message}</div>`;
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html> 
