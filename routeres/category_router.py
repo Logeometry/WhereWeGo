@@ -17,17 +17,17 @@ logger = logging.getLogger(__name__)
 # 반환 모델 정의
 # 프론트엔드에서 사용할 응답 모델 정의, 필요에 따라 필드 추가 가능
 # 예시로 id, name, tags 필드를 포함
-class Respose_model(BaseModel):
+class Response_model(BaseModel):
     id: str
     name: str
     tags: List[str]
 
     class Config:
-        varidate_by_name = True
+        validate_by_name = True
         extra = Extra.ignore
 
-# 카테고리 라우터터
-@router.get("/category", response_model=Respose_model)
+# 카테고리 라우터
+@router.get("/category", response_model=List[Response_model])
 async def get_places_by_category(
     category: Optional[str] = Query(None, description="검색할 카테고리")
 ):
@@ -41,9 +41,25 @@ async def get_places_by_category(
             ]
         }
     try:
-        cusor = places_col.find({})
+        cursor = places_col.find(query)
         docs = await cursor.to_list(length=None)
-        return docs
+        
+        # Response_model 형식에 맞게 데이터 변환
+        result = []
+        for doc in docs:
+            # category_group이 문자열이면 리스트로 변환
+            tags = doc.get("category_group", [])
+            if isinstance(tags, str):
+                tags = [tags]
+            elif not isinstance(tags, list):
+                tags = []
+            
+            result.append(Response_model(
+                id=str(doc.get("_id", "")),
+                name=doc.get("name", ""),
+                tags=tags
+            ))
+        return result
     
     except Exception as e:
         logger.error(f"DB 조회 중 오류: {e}")
