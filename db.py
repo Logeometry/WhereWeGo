@@ -10,7 +10,7 @@ _client: AsyncIOMotorClient = AsyncIOMotorClient(MONGO_ATLAS_URI)
 
 _place_db = _client.get_database("place_db")
 places_col = _place_db.get_collection("tourism")
-cafa_col = _place_db.get_collection("cafa")
+cafa_col = _place_db.get_collection("cafe")
 restaurant_col = _place_db.get_collection("restaurant")
 
 _user_db = _client.get_database("user_db")
