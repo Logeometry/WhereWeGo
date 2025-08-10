@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>로그인 테스트</title>
+  <title>카카오 로그인 테스트</title>
   <style>
     body {
       font-family: sans-serif;
@@ -32,54 +32,102 @@
       width: 100%;
       padding: 12px;
       font-size: 16px;
-      background: #ff1150;
-      color: white;
+      background: #FEE500;
+      color: #000000;
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      margin-bottom: 12px;
     }
     button:hover {
-      background: #e01048;
+      background: #FDD835;
+    }
+    .kakao-btn {
+      background: #FEE500;
+      color: #000000;
+    }
+    .kakao-btn:hover {
+      background: #FDD835;
     }
     #user-info {
       text-align: center;
       margin-top: 24px;
     }
+    .user-details {
+      margin: 16px 0;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+    .user-details p {
+      margin: 4px 0;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <h2 style="text-align: center; color: #333;">카카오 로그인 테스트</h2>
+    
     <div id="login-form">
-      <button onclick="loginWithGoogle()">구글 로그인</button>
+      <button class="kakao-btn" onclick="loginWithKakao()">
+        🟡 카카오 로그인
+      </button>
     </div>
 
     <div id="user-info" style="display:none;">
-      <p><strong id="user-name"></strong>님 환영합니다.</p>
-      <img id="user-picture" alt="프로필 이미지" style="width: 100px; height: 100px; border-radius: 50%;" />
-      <button onclick="logout()">로그아웃</button>
+      <h3>로그인 성공! 🎉</h3>
+      <img id="user-picture" alt="프로필 이미지" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #FEE500;" />
+      <h4 id="user-name"></h4>
+      
+      <div class="user-details">
+        <p><strong>이메일:</strong> <span id="user-email"></span></p>
+        <p><strong>로그인 방식:</strong> <span id="user-oauth"></span></p>
+        <p><strong>사용자 ID:</strong> <span id="user-id"></span></p>
+      </div>
+      
+      <button onclick="logout()" style="background: #dc3545; color: white;">
+        로그아웃
+      </button>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script>
-    function loginWithGoogle() {
-      window.location.href = "/api/v1/auth/google/login";
+    function loginWithKakao() {
+      window.location.href = "/api/v1/auth/kakao/login";
     }
 
     async function checkLogin() {
       try {
-        const res = await axios.get("/api/v1/me", {
+        const res = await axios.get("/api/v1/auth/me", {
           withCredentials: true
         });
 
         if (res.data.email) {
+          // 로그인 성공 시 UI 업데이트
           document.getElementById("login-form").style.display = "none";
           document.getElementById("user-info").style.display = "block";
-          document.getElementById("user-name").textContent = res.data.name;
-          document.getElementById("user-picture").src = res.data.picture;
+          
+          // 사용자 정보 표시
+          document.getElementById("user-name").textContent = res.data.name || "사용자";
+          document.getElementById("user-email").textContent = res.data.email || "이메일 없음";
+          document.getElementById("user-oauth").textContent = res.data.oauth || "알 수 없음";
+          document.getElementById("user-id").textContent = res.data.user_id || "ID 없음";
+          
+          // 프로필 이미지 설정
+          const userPicture = document.getElementById("user-picture");
+          if (res.data.picture) {
+            userPicture.src = res.data.picture;
+          } else {
+            userPicture.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23FEE500'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='40' text-anchor='middle' dy='.3em' fill='%23000'%3E👤%3C/text%3E%3C/svg%3E";
+          }
+          
+          console.log("로그인 성공:", res.data);
         }
       } catch (err) {
-        console.error("checkLogin 실패:", err);
+        console.error("로그인 확인 실패:", err);
+        // 로그인되지 않은 상태
         document.getElementById("login-form").style.display = "block";
         document.getElementById("user-info").style.display = "none";
       }
@@ -87,17 +135,24 @@
 
     async function logout() {
       try {
-        await axios.post("/api/v1/logout", {}, {
+        await axios.post("/api/v1/auth/logout", {}, {
           withCredentials: true
         });
+        console.log("로그아웃 성공");
         location.reload();
       } catch (err) {
-        console.error("logout 실패:", err);
-        alert("로그아웃 실패");
+        console.error("로그아웃 실패:", err);
+        alert("로그아웃 실패: " + err.message);
       }
     }
 
+    // 페이지 로드 시 로그인 상태 확인
     window.onload = checkLogin;
+    
+    // 디버깅을 위한 콘솔 로그
+    console.log("카카오 로그인 테스트 페이지 로드됨");
+    console.log("API 엔드포인트: /api/v1/auth/kakao/login");
+    console.log("로그인 확인 엔드포인트: /api/v1/auth/me");
   </script>
 </body>
 </html>
