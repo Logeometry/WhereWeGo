@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # 라우터 imports
 from routeres.search_router import router as search_router
 from routeres.category_router import router as category_router
+from routeres.auth_router import router as auth_router
 from routeres.google_login_router import router as google_login_router
 from routeres.kakao_login_router import router as kakao_login_router
 from routeres.nearby_place_router import router as nearby_place_router
@@ -31,12 +32,14 @@ app = FastAPI()
 
 origins = [
     "http://localhost:8000",
+    "http://localhost:3000",
+    FRONTEND_URL
 ]
 
 # CORS 설정 추가
 app.add_middleware(
    CORSMiddleware,
-   allow_origins=FRONTEND_URL,  # 리액트 개발 서버 주소
+   allow_origins=origins,  # 리스트 형태, 추후 배포 서버만 가능하게 수정할 예정
    allow_credentials=True,
    allow_methods=["*"],  # 모든 HTTP 메서드 허용
    allow_headers=["*"],  # 모든 헤더 허용
@@ -54,6 +57,7 @@ app.include_router(weather_router, prefix="/api/v1", tags=["날씨"])
 app.include_router(festival_router, prefix="/api/v1", tags=["축제"])
 app.include_router(recommended_course_router, prefix="/api/v1", tags=["추천코스"])
 app.include_router(wish_router, prefix="/api/v1", tags=["찜기능"])
+app.include_router(auth_router, prefix="/api/v1", tags=["인증"])  # 공통 인증 라우터를 마지막에 등록
 # app.include_router(map_spot_router, prefix="/api/v1", tags=["지도"])  # 임시 비활성화
 
 app.mount("/test", StaticFiles(directory="test"), name="test")
