@@ -127,6 +127,13 @@
         }
       } catch (err) {
         console.error("로그인 확인 실패:", err);
+        
+        // 401 오류인 경우 (토큰은 있지만 DB에 사용자가 없음)
+        if (err.response && err.response.status === 401) {
+          console.log("자동 로그아웃 후 다시 로그인 필요");
+          // 쿠키가 자동으로 삭제되었으므로 로그인 폼 표시
+        }
+        
         // 로그인되지 않은 상태
         document.getElementById("login-form").style.display = "block";
         document.getElementById("user-info").style.display = "none";
