@@ -19,6 +19,8 @@ from routeres.festival_router import router as festival_router
 from routeres.survey_router import router as survey_router
 from routeres.recommeded_cors_router import router as recommended_course_router
 from routeres.wish_router import router as wish_router
+from routeres.crowding_router import router as crowding_router
+from routeres.tmap_crowding_router import router as tmap_crowding_router
 # from routeres.map_spot import router as map_spot_router  # 임시 비활성화
 
 from dotenv import load_dotenv
@@ -57,6 +59,8 @@ app.include_router(weather_router, prefix="/api/v1", tags=["날씨"])
 app.include_router(festival_router, prefix="/api/v1", tags=["축제"])
 app.include_router(recommended_course_router, prefix="/api/v1", tags=["추천코스"])
 app.include_router(wish_router, prefix="/api/v1", tags=["찜기능"])
+app.include_router(crowding_router, prefix="/api/v1", tags=["혼잡도"])
+app.include_router(tmap_crowding_router, prefix="/api/v1", tags=["티맵 혼잡도"])
 app.include_router(auth_router, prefix="/api/v1", tags=["인증"])  # 공통 인증 라우터를 마지막에 등록
 # app.include_router(map_spot_router, prefix="/api/v1", tags=["지도"])  # 임시 비활성화
 
