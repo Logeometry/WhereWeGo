@@ -1,58 +1,41 @@
-import json
 import os
 from typing import Optional, Dict
+from pymongo import MongoClient
+from dotenv import load_dotenv
 
-DATA_PATH = os.path.join(os.path.dirname(__file__), "../data/users.json")
+load_dotenv()
 
-
-def load_users() -> list[Dict]:
-    if not os.path.exists(DATA_PATH):
-        return []
-    with open(DATA_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def save_users(users: list[Dict]) -> None:
-    with open(DATA_PATH, "w", encoding="utf-8") as f:
-        json.dump(users, f, indent=2, ensure_ascii=False)
+MONGO_ATLAS_URI: str = os.getenv("MONGO_ATLAS_URI", "")
+_client = MongoClient(MONGO_ATLAS_URI)
+_user_db = _client.get_database("user_db")
+user_data_col = _user_db.get_collection("user_data")
 
 
 def find_user_by_id(user_id: str) -> Optional[Dict]:
-    for u in load_users():
-        if u.get("user_id") == user_id:
-            return u
+    print(f"[DEBUG] find_user_by_id called with: {user_id}")
+    user = user_data_col.find_one({"user_id": user_id})
+    if user:
+        print(f"[DEBUG] User found: {user}")
+        return user
+    print(f"[DEBUG] User not found for ID: {user_id}")
     return None
 
 
 def find_user_by_email(email: str) -> Optional[Dict]:
-    for u in load_users():
-        if u.get("email") == email:
-            return u
-    return None
+    return user_data_col.find_one({"email": email})
 
 
 def find_user_by_oauth(oauth: str, oauth_id: str) -> Optional[Dict]:
-    for u in load_users():
-        if u.get("oauth") == oauth and u.get("oauth_id") == oauth_id:
-            return u
-    return None
+    print(f"[DEBUG] find_user_by_oauth called with: oauth={oauth}, oauth_id={oauth_id}")
+    user = user_data_col.find_one({"oauth": oauth, "oauth_id": oauth_id})
+    if user:
+        print(f"[DEBUG] Existing user found: {user}")
+    else:
+        print(f"[DEBUG] No existing user found for oauth={oauth}, oauth_id={oauth_id}")
+    return user
 
 
 def add_user(user: Dict) -> None:
-    users = load_users()
-    users.append(user)
-    save_users(users)
-
-# DB 연결 시 아래 코드를 대체하여 사용
-
-# def find_user_by_id(user_id: str):
-#     return db.users.find_one({"user_id": user_id})
-
-# def find_user_by_email(email: str):
-#     return db.users.find_one({"email": email})
-
-# def find_user_by_oauth(oauth: str, oauth_id: str):
-#     return db.users.find_one({"oauth": oauth, "oauth_id": oauth_id})
-
-# def add_user(user: Dict):
-#     return db.users.insert_one(user)
+    print(f"[DEBUG] add_user called with: {user}")
+    result = user_data_col.insert_one(user)
+    print(f"[DEBUG] User saved successfully with ID: {result.inserted_id}")
