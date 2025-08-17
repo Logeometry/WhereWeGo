@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>티맵 실시간 혼잡도 테스트</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #555;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        .success {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .level-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .level-card {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+        }
+        .level-1 { background-color: #28a745; }
+        .level-2 { background-color: #ffc107; color: #333; }
+        .level-3 { background-color: #fd7e14; }
+        .level-4 { background-color: #dc3545; }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚦 티맵 실시간 혼잡도 API 테스트</h1>
+        
+        <h2>1. POI 기반 혼잡도 조회</h2>
+        <div class="form-group">
+            <label for="poiId">POI ID:</label>
+            <input type="text" id="poiId" placeholder="예: 10067845" value="10067845">
+        </div>
+        <div class="form-group">
+            <label for="poiLat">위도 (선택사항):</label>
+            <input type="number" id="poiLat" placeholder="예: 37.568085523" step="any">
+        </div>
+        <div class="form-group">
+            <label for="poiLng">경도 (선택사항):</label>
+            <input type="number" id="poiLng" placeholder="예: 126.986057" step="any">
+        </div>
+        <button onclick="getPoiCrowding()">POI 혼잡도 조회</button>
+        <div id="poiResult" class="result" style="display: none;"></div>
+
+        <h2>2. 지역 기반 혼잡도 조회</h2>
+        <div class="form-group">
+            <label for="areaLat">위도:</label>
+            <input type="number" id="areaLat" placeholder="예: 37.568085523" step="any" value="37.568085523">
+        </div>
+        <div class="form-group">
+            <label for="areaLng">경도:</label>
+            <input type="number" id="areaLng" placeholder="예: 126.986057" step="any" value="126.986057">
+        </div>
+        <div class="form-group">
+            <label for="areaPoiId">POI ID (선택사항):</label>
+            <input type="text" id="areaPoiId" placeholder="예: 10067845">
+        </div>
+        <button onclick="getAreaCrowding()">지역 혼잡도 조회</button>
+        <div id="areaResult" class="result" style="display: none;"></div>
+
+        <h2>3. 혼잡도 레벨 정보</h2>
+        <button onclick="getLevelInfo()">혼잡도 레벨 정보 조회</button>
+        <div id="levelResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/v1';
+
+        async function makeRequest(url, params = {}) {
+            try {
+                const queryString = new URLSearchParams(params).toString();
+                const fullUrl = queryString ? `${url}?${queryString}` : url;
+                
+                const response = await fetch(fullUrl);
+                const data = await response.json();
+                
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        function showResult(elementId, result, title) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            
+            if (result.success) {
+                element.className = 'result success';
+                element.innerHTML = `
+                    <h3>✅ ${title} 성공</h3>
+                    <pre>${JSON.stringify(result.data, null, 2)}</pre>
+                `;
+            } else {
+                element.className = 'result error';
+                element.innerHTML = `
+                    <h3>❌ ${title} 실패</h3>
+                    <p>상태 코드: ${result.status || 'N/A'}</p>
+                    <pre>${JSON.stringify(result.data || result.error, null, 2)}</pre>
+                `;
+            }
+        }
+
+        async function getPoiCrowding() {
+            const poiId = document.getElementById('poiId').value;
+            const lat = document.getElementById('poiLat').value;
+            const lng = document.getElementById('poiLng').value;
+            
+            if (!poiId) {
+                alert('POI ID를 입력해주세요.');
+                return;
+            }
+            
+            const params = {};
+            if (lat) params.lat = lat;
+            if (lng) params.lng = lng;
+            
+            const result = await makeRequest(`${API_BASE}/tmap-crowding/poi/${poiId}`, params);
+            showResult('poiResult', result, 'POI 혼잡도 조회');
+        }
+
+        async function getAreaCrowding() {
+            const lat = document.getElementById('areaLat').value;
+            const lng = document.getElementById('areaLng').value;
+            const poiId = document.getElementById('areaPoiId').value;
+            
+            if (!lat || !lng) {
+                alert('위도와 경도를 모두 입력해주세요.');
+                return;
+            }
+            
+            const params = { lat, lng };
+            if (poiId) params.poi_id = poiId;
+            
+            const result = await makeRequest(`${API_BASE}/tmap-crowding/area`, params);
+            showResult('areaResult', result, '지역 혼잡도 조회');
+        }
+
+        async function getLevelInfo() {
+            const result = await makeRequest(`${API_BASE}/tmap-crowding/level-info`);
+            
+            if (result.success && result.data.data.levels) {
+                const element = document.getElementById('levelResult');
+                element.style.display = 'block';
+                element.className = 'result success';
+                
+                const levelsHtml = result.data.data.levels.map(level => `
+                    <div class="level-card level-${level.level}">
+                        <h3>레벨 ${level.level}: ${level.name}</h3>
+                        <p>범위: ${level.range}</p>
+                        <p>${level.description}</p>
+                    </div>
+                `).join('');
+                
+                element.innerHTML = `
+                    <h3>✅ 혼잡도 레벨 정보</h3>
+                    <p><strong>단위:</strong> ${result.data.data.unit}</p>
+                    <p><strong>좌표계:</strong> ${result.data.data.coordinate_system}</p>
+                    <div class="level-info">
+                        ${levelsHtml}
+                    </div>
+                `;
+            } else {
+                showResult('levelResult', result, '혼잡도 레벨 정보 조회');
+            }
+        }
+
+        // 페이지 로드 시 혼잡도 레벨 정보 자동 조회
+        window.onload = function() {
+            getLevelInfo();
+        };
+    </script>
+</body>
+</html>

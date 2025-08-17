@@ -57,7 +57,8 @@
 
     <!-- 1) 로그인 / 로그아웃 버튼 -->
     <div id="auth-section">
-      <button id="login-btn">Google로 로그인</button>
+      <button id="google-login-btn">Google로 로그인</button>
+      <button id="kakao-login-btn">카카오로 로그인</button>
       <button id="logout-btn" style="display: none;">로그아웃</button>
       <div id="user-info" style="margin-top: 10px; color: #555;"></div>
     </div>
@@ -87,7 +88,8 @@
     // =========================
     // DOM 요소 가져오기
     // =========================
-    const loginBtn       = document.getElementById("login-btn");
+    const googleLoginBtn = document.getElementById("google-login-btn");
+    const kakaoLoginBtn  = document.getElementById("kakao-login-btn");
     const logoutBtn      = document.getElementById("logout-btn");
     const userInfoEl     = document.getElementById("user-info");
     const placesSec      = document.getElementById("places-section");
@@ -101,25 +103,42 @@
     // =========================
     async function checkLoginStatus() {
       try {
+        console.log("=== 로그인 상태 확인 시작 ===");
+        console.log("요청 URL:", `${API_BASE}/me`);
+        
         const resp = await fetch(`${API_BASE}/me`, {
           method: "GET",
           credentials: "include",   // 쿠키 전송을 위해 반드시 include
         });
+        
+        console.log("응답 상태:", resp.status);
+        console.log("응답 헤더:", Object.fromEntries(resp.headers.entries()));
+        
         if (!resp.ok) {
-          throw new Error("로그인되지 않음");
+          const errorText = await resp.text();
+          console.log("오류 응답:", errorText);
+          throw new Error(`로그인되지 않음 (${resp.status})`);
         }
+        
         const data = await resp.json();
+        console.log("사용자 데이터:", data);
+        
         // 예시 응답: { user_id: "...", oauth: "google", email: "...", name: "...", picture: "..." }
         currentUserId = data.user_id;
         userInfoEl.textContent = `로그인 사용자: ${data.name} (${data.email})`;
-        loginBtn.style.display = "none";
+        googleLoginBtn.style.display = "none";
+        kakaoLoginBtn.style.display = "none";
         logoutBtn.style.display = "inline-block";
         placesSec.style.display = "block";   // 장소 버튼 보이기
+        
+        console.log("로그인 성공!");
       } catch (err) {
+        console.log("로그인 확인 실패:", err.message);
         // 로그인되지 않은 상태
         currentUserId = null;
         userInfoEl.textContent = "로그인되지 않음";
-        loginBtn.style.display = "inline-block";
+        googleLoginBtn.style.display = "inline-block";
+        kakaoLoginBtn.style.display = "inline-block";
         logoutBtn.style.display = "none";
         placesSec.style.display = "none";    // 장소 버튼 숨기기
       }
@@ -128,10 +147,19 @@
     // =========================
     // 2) Google 로그인 버튼 이벤트
     // =========================
-    loginBtn.addEventListener("click", () => {
+    googleLoginBtn.addEventListener("click", () => {
       // 이 URL은 FastAPI의 google_login_router가 정의한 엔드포인트입니다.
       // 리디렉션을 따라가면서 Google 로그인 화면으로 넘어갑니다.
       window.location.href = `${API_BASE}/auth/google/login`;
+    });
+
+    // =========================
+    // 2-1) 카카오 로그인 버튼 이벤트
+    // =========================
+    kakaoLoginBtn.addEventListener("click", () => {
+      // 이 URL은 FastAPI의 kakao_login_router가 정의한 엔드포인트입니다.
+      // 리디렉션을 따라가면서 카카오 로그인 화면으로 넘어갑니다.
+      window.location.href = `${API_BASE}/auth/kakao/login`;
     });
 
     // =========================

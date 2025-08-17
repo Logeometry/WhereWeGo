@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관광지 혼잡도 테스트</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #555;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        .success {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .place-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: white;
+        }
+        .place-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .place-info {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .crowding-info {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .crowding-level-1 { background-color: #d4edda; color: #155724; }
+        .crowding-level-2 { background-color: #fff3cd; color: #856404; }
+        .crowding-level-3 { background-color: #ffeaa7; color: #d63031; }
+        .crowding-level-4 { background-color: #fab1a0; color: #d63031; }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        .search-results {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .search-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .search-item:hover {
+            background-color: #f8f9fa;
+        }
+        .search-item.selected {
+            background-color: #e3f2fd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏖️ 관광지 혼잡도 테스트</h1>
+        
+        <h2>1. 관광지 검색 및 선택</h2>
+        <div class="form-group">
+            <label for="searchKeyword">검색 키워드:</label>
+            <input type="text" id="searchKeyword" placeholder="예: 해운대, 광안리, 부산타워" value="해운대">
+        </div>
+        <button onclick="searchPlaces()">관광지 검색</button>
+        <div id="searchResults" class="search-results" style="display: none;"></div>
+
+        <h2>2. 선택된 관광지 정보</h2>
+        <div id="selectedPlaceInfo" class="result" style="display: none;"></div>
+
+        <h2>3. 혼잡도 조회</h2>
+        <div class="form-group">
+            <label for="maxDistance">최대 거리 (km):</label>
+            <input type="number" id="maxDistance" value="5.0" step="0.1" min="0.1" max="20">
+        </div>
+        <button onclick="getPlaceCrowding()">장소 혼잡도 조회</button>
+        <button onclick="getNearbyCrowding()">주변 관광지 혼잡도 조회</button>
+        <div id="crowdingResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/v1';
+        let selectedPlace = null;
+
+        async function makeRequest(url, params = {}) {
+            try {
+                const queryString = new URLSearchParams(params).toString();
+                const fullUrl = queryString ? `${url}?${queryString}` : url;
+                
+                const response = await fetch(fullUrl);
+                const data = await response.json();
+                
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        function showResult(elementId, result, title) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            
+            if (result.success) {
+                element.className = 'result success';
+                element.innerHTML = `
+                    <h3>✅ ${title} 성공</h3>
+                    <pre>${JSON.stringify(result.data, null, 2)}</pre>
+                `;
+            } else {
+                element.className = 'result error';
+                element.innerHTML = `
+                    <h3>❌ ${title} 실패</h3>
+                    <p>상태 코드: ${result.status || 'N/A'}</p>
+                    <pre>${JSON.stringify(result.data || result.error, null, 2)}</pre>
+                `;
+            }
+        }
+
+        async function searchPlaces() {
+            const keyword = document.getElementById('searchKeyword').value;
+            if (!keyword) {
+                alert('검색 키워드를 입력해주세요.');
+                return;
+            }
+
+            const result = await makeRequest(`${API_BASE}/search`, { query: keyword });
+            
+            if (result.success && result.data.length > 0) {
+                displaySearchResults(result.data);
+            } else {
+                showResult('searchResults', result, '관광지 검색');
+            }
+        }
+
+        function displaySearchResults(places) {
+            const container = document.getElementById('searchResults');
+            container.style.display = 'block';
+            
+            let html = '<h3>검색 결과:</h3>';
+                         places.forEach((place, index) => {
+                 const coords = place.location ? place.location.coordinates : [0, 0];
+                 html += `
+                     <div class="search-item" onclick="selectPlace('${place.id}', '${place.name}', ${coords[0]}, ${coords[1]})">
+                         <div class="place-name">${place.name}</div>
+                         <div class="place-info">${place.address || ''}</div>
+                         <div class="place-info">카테고리: ${place.category || ''}</div>
+                     </div>
+                 `;
+             });
+            
+            container.innerHTML = html;
+        }
+
+        function selectPlace(contentId, title, mapx, mapy) {
+            selectedPlace = {
+                content_id: contentId,
+                title: title,
+                mapx: mapx,
+                mapy: mapy
+            };
+
+            // 선택된 항목 하이라이트
+            document.querySelectorAll('.search-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.target.closest('.search-item').classList.add('selected');
+
+            // 선택된 관광지 정보 표시
+            const container = document.getElementById('selectedPlaceInfo');
+            container.style.display = 'block';
+            container.className = 'result success';
+            container.innerHTML = `
+                <h3>✅ 선택된 관광지</h3>
+                <div class="place-card">
+                    <div class="place-name">${title}</div>
+                    <div class="place-info">Content ID: ${contentId}</div>
+                    <div class="place-info">좌표: ${mapx}, ${mapy}</div>
+                </div>
+            `;
+        }
+
+        async function getPlaceCrowding() {
+            if (!selectedPlace) {
+                alert('먼저 관광지를 선택해주세요.');
+                return;
+            }
+
+            const result = await makeRequest(`${API_BASE}/place/crowding/${selectedPlace.content_id}`);
+            showResult('crowdingResult', result, '장소 혼잡도 조회');
+        }
+
+        async function getNearbyCrowding() {
+            if (!selectedPlace) {
+                alert('먼저 관광지를 선택해주세요.');
+                return;
+            }
+
+            const maxDistance = document.getElementById('maxDistance').value;
+            const result = await makeRequest(`${API_BASE}/nearby/crowding/${selectedPlace.content_id}`, { max_distance: maxDistance });
+            
+            if (result.success && result.data.places) {
+                displayNearbyCrowding(result.data);
+            } else {
+                showResult('crowdingResult', result, '주변 관광지 혼잡도 조회');
+            }
+        }
+
+        function displayNearbyCrowding(data) {
+            const container = document.getElementById('crowdingResult');
+            container.style.display = 'block';
+            container.className = 'result success';
+            
+            let html = `
+                <h3>✅ 주변 관광지 혼잡도 조회 성공</h3>
+                <p><strong>기준 장소:</strong> ${selectedPlace.title}</p>
+                <p><strong>최대 거리:</strong> ${data.max_distance}km</p>
+                <p><strong>조회된 장소 수:</strong> ${data.places.length}개</p>
+            `;
+            
+            data.places.forEach(place => {
+                const crowdingInfo = place.crowding_info;
+                let crowdingHtml = '';
+                
+                if (crowdingInfo.error) {
+                    crowdingHtml = `<div class="crowding-info error">${crowdingInfo.error}</div>`;
+                } else if (crowdingInfo.contents && crowdingInfo.contents.rltm) {
+                    const rltm = crowdingInfo.contents.rltm[0];
+                    const levelClass = `crowding-level-${rltm.congestionLevel}`;
+                    crowdingHtml = `
+                        <div class="crowding-info ${levelClass}">
+                            <strong>혼잡도 레벨:</strong> ${rltm.congestionLevel}<br>
+                            <strong>혼잡도 수치:</strong> ${rltm.congestion} 명/㎡<br>
+                            <strong>데이터 시간:</strong> ${rltm.datetime}
+                        </div>
+                    `;
+                } else {
+                    crowdingHtml = '<div class="crowding-info">혼잡도 데이터 없음</div>';
+                }
+                
+                                 html += `
+                     <div class="place-card">
+                         <div class="place-name">${place.name}</div>
+                         <div class="place-info">거리: ${place.distance ? place.distance.toFixed(2) : 'N/A'}km</div>
+                         <div class="place-info">주소: ${place.address || ''}</div>
+                         ${crowdingHtml}
+                     </div>
+                 `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // 페이지 로드 시 기본 검색 실행
+        window.onload = function() {
+            searchPlaces();
+        };
+    </script>
+</body>
+</html>
