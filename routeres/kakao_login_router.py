@@ -19,19 +19,29 @@ load_dotenv()
 
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 SECRET_KEY = os.getenv("SECRET_KEY")
-KAKAO_CLIENT_ID = os.getenv("KAKAO_CLIENT_ID")
+KAKAO_REST_API_KEY = os.getenv("KAKAKO_REST_API_KEY")  # REST API 키로 통일
 KAKAO_REDIRECT_URI = "http://localhost:8000/api/v1/auth/kakao/callback"
 KAKAO_AUTH_BASE = "https://kauth.kakao.com/oauth/authorize"
+
+# 디버깅: 환경변수 확인
+print(f"KAKAO_REST_API_KEY: {KAKAO_REST_API_KEY}")
+print(f"FRONTEND_URL: {FRONTEND_URL}")
+print(f"SECRET_KEY: {SECRET_KEY}")
 
 # 카카오 로그인 페이지 연결 라우터
 @router.get("/auth/kakao/login")
 def login_with_kakao():
     params = {
-        "client_id": KAKAO_CLIENT_ID,
+        "client_id": KAKAO_REST_API_KEY,
         "redirect_uri": KAKAO_REDIRECT_URI,
         "response_type": "code"
     }
     url = KAKAO_AUTH_BASE + "?" + urllib.parse.urlencode(params)
+    
+    # 디버깅: 생성된 URL 출력
+    print(f"[DEBUG] Generated Kakao login URL: {url}")
+    print(f"[DEBUG] REST API Key: {KAKAO_REST_API_KEY}")
+    print(f"[DEBUG] Redirect URI: {KAKAO_REDIRECT_URI}")
     
     return RedirectResponse(url)
 
@@ -39,13 +49,22 @@ def login_with_kakao():
 @router.get("/auth/kakao/callback")
 def kakao_callback(request: Request):
     code = request.query_params.get("code")
+    error = request.query_params.get("error")
+    error_description = request.query_params.get("error_description")
+    
+    # 오류가 있는 경우 상세 정보 출력
+    if error:
+        print(f"[KAKAO ERROR] Error: {error}")
+        print(f"[KAKAO ERROR] Description: {error_description}")
+        raise HTTPException(status_code=400, detail=f"Kakao OAuth error: {error} - {error_description}")
+    
     if not code:
         raise HTTPException(status_code=400)
     
     # 카카오에 access_token 요청하기
     token_resp = requests.post("https://kauth.kakao.com/oauth/token", data={
         "grant_type": "authorization_code",
-        "client_id": KAKAO_CLIENT_ID,
+        "client_id": KAKAO_REST_API_KEY,
         "redirect_uri": KAKAO_REDIRECT_URI,
         "code": code
     })
@@ -93,8 +112,13 @@ def kakao_callback(request: Request):
         algorithm="HS256"
     )
     
-    # 현재는 테스트를 위해 /login 페이지, 홈페이지로 바꿀 예정 => 변경 완료
-    homepage_url = f"{FRONTEND_URL.rstrip('/')}/"
+    # 디버깅: 토큰 생성 확인
+    print(f"[DEBUG] Generated JWT token: {token[:50]}...")
+    print(f"[DEBUG] User ID: {user['user_id']}")
+    print(f"[DEBUG] User data: {user}")
+    
+    # 테스트 페이지로 리디렉션 (개발 중)
+    homepage_url = "http://localhost:8000/test/login_test.html"
 
     # 로그인 후 홈페이지로 리디렉션
     response = RedirectResponse(url=homepage_url)
@@ -108,43 +132,9 @@ def kakao_callback(request: Request):
         secure=False,  # HTTPS 배포 시 True로 바꿔야함
         path="/"
     )
+    
+    # 디버깅: 쿠키 설정 확인
+    print(f"[DEBUG] Cookie set: access_token={token[:20]}...")
+    print(f"[DEBUG] Redirecting to: {homepage_url}")
+    
     return response
-
-# 로그인 확인
-def get_current_user(request: Request) -> str:
-    token = request.cookies.get("access_token")
-    if not token:
-        # 1-1) HTTP 401: 쿠키가 없거나, fetch의 credentials: "include" 누락
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-    except JWTError as e:
-        # 2-1) HTTP 401: 잘못된 토큰(서명 실패, 만료, 알고리즘 불일치 등)
-        raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
-
-    user_id = payload.get("sub")
-    if not user_id:
-        # 3-1) HTTP 401: payload에 sub가 없어서 user_id를 꺼낼 수 없음
-        raise HTTPException(status_code=401, detail="Invalid token payload")
-
-    return user_id
-
-@router.get("/me")
-def read_me(user_id=Depends(get_current_user)):
-    user = find_user_by_id(user_id)
-    if not user:
-        raise HTTPException(status_code=404)
-    return {
-        "user_id": user["user_id"],   # 내부 식별자
-        "oauth":   user["oauth"],     # 로그인 방식 (google, kakao 등)
-        "email":   user["email"],
-        "name":    user["name"],
-        "picture": user["picture"],
-    }
-
-# 로그아웃
-@router.post("/logout")
-def logout(response: Response):
-    response.delete_cookie("access_token")
-    return {"message": "로그아웃"}
