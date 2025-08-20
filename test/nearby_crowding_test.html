@@ -153,12 +153,7 @@
         <div id="selectedPlaceInfo" class="result" style="display: none;"></div>
 
         <h2>3. 혼잡도 조회</h2>
-        <div class="form-group">
-            <label for="maxDistance">최대 거리 (km):</label>
-            <input type="number" id="maxDistance" value="5.0" step="0.1" min="0.1" max="20">
-        </div>
         <button onclick="getPlaceCrowding()">장소 혼잡도 조회</button>
-        <button onclick="getNearbyCrowding()">주변 관광지 혼잡도 조회</button>
         <div id="crowdingResult" class="result" style="display: none;"></div>
     </div>
 
@@ -270,7 +265,30 @@
             }
 
             const result = await makeRequest(`${API_BASE}/place/crowding/${selectedPlace.content_id}`);
-            showResult('crowdingResult', result, '장소 혼잡도 조회');
+            
+            if (result.status === 429) {
+                showCrowdingError('API 호출 한도 초과', '티맵 API 호출 한도를 초과했습니다. 잠시 후 다시 시도해주세요.');
+            } else {
+                showResult('crowdingResult', result, '장소 혼잡도 조회');
+            }
+        }
+
+        function showCrowdingError(title, message) {
+            const container = document.getElementById('crowdingResult');
+            container.style.display = 'block';
+            container.className = 'result error';
+            container.innerHTML = `
+                <h3>❌ ${title}</h3>
+                <p>${message}</p>
+                <div style="margin-top: 15px; padding: 10px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
+                    <strong>💡 해결 방법:</strong>
+                    <ul style="margin: 10px 0 0 20px;">
+                        <li>잠시 후 다시 시도해주세요</li>
+                        <li>티맵 API 키의 호출 한도를 확인해주세요</li>
+                        <li>유료 계정으로 업그레이드하면 더 많은 호출이 가능합니다</li>
+                    </ul>
+                </div>
+            `;
         }
 
         async function getNearbyCrowding() {
