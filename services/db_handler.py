@@ -28,13 +28,13 @@ try:
     # 서버 정보 확인으로 연결 테스트
     client.server_info()
     print("✅ MongoDB에 성공적으로 연결되었습니다.")
-except AsyncIOMotorClient.errors.PyMongoError as e:
+except Exception as e:
     print(f"❌ MongoDB 연결에 실패했습니다: {e}")
     client = None
     tourism_collection = None
 
 
-def get_random_places(count: int = 10) -> List[ObjectId]:
+async def get_random_places(count: int = 10) -> List[ObjectId]:
     """
     tourism 컬렉션에서 무작위로 N개의 관광지 _id를 가져옵니다.
 
@@ -57,8 +57,9 @@ def get_random_places(count: int = 10) -> List[ObjectId]:
             {"$project": {"_id": 1}}
         ]
         
-        # aggregation 실행
-        random_docs = list(tourism_collection.aggregate(pipeline))
+        # aggregation 실행 (비동기)
+        random_docs_cursor = tourism_collection.aggregate(pipeline)
+        random_docs = await random_docs_cursor.to_list(length=count)
 
         if not random_docs:
             print(f"경고: DB에서 랜덤 장소를 찾지 못했습니다. 컬렉션이 비어있을 수 있습니다.")
@@ -69,7 +70,7 @@ def get_random_places(count: int = 10) -> List[ObjectId]:
         
         return place_ids
 
-    except AsyncIOMotorClient.errors.PyMongoError as e:
+    except Exception as e:
         print(f"DB에서 랜덤 장소를 가져오는 중 오류 발생: {e}")
         return []
 

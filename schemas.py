@@ -8,11 +8,10 @@ from typing import List, Optional, Dict
 # --- 입력 모델 (프론트 -> 백엔드) ---
 class ItineraryRequest(BaseModel):
     """프론트엔드에서 여행 코스 생성을 위해 보내는 데이터 모델"""
-    departureCity: str
-    otherCity: Optional[str] = None
     travelDuration: int = Field(..., description="여행 기간 (일)")
     travelStartDate: str = Field(..., description="여행 시작일 (YYYY-MM-DD)")
-    startingPoint: str = Field(..., description="여행 시작 장소 ID")
+    selected_places: List[str] = Field(..., description="사용자가 선택한 장소 ID 리스트")
+    starting_point: Optional[str] = Field(None, description="부산 내 여행 시작점 장소 ID (선택사항)")
     # 아래 필드들은 프롬프트에 활용될 수 있으므로 포함합니다.
     preferences: Optional[Dict[str, bool]] = None
     surveyAttractions: Optional[List[str]] = None

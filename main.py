@@ -22,12 +22,26 @@ from routeres.wish_router import router as wish_router
 from routeres.crowding_router import router as crowding_router
 from routeres.tmap_crowding_router import router as tmap_crowding_router
 from routeres.photo_gallery_router import router as photo_gallery_router
+from routeres.recommend_location import router as recommend_location_router
 # from routeres.map_spot import router as map_spot_router  # 임시 비활성화
 
 from dotenv import load_dotenv
 import os
+import asyncio
 
 load_dotenv()
+
+# ML 모델 초기화
+async def initialize_ml_model():
+    """ML 모델 초기화"""
+    try:
+        from services.ml_recommendation_service import ml_recommendation_service
+        ckpt_path = os.path.join(os.path.dirname(__file__), "model", "model_epoch_10.pth")
+        await ml_recommendation_service.load_model(ckpt_path)
+        print("ML 모델 초기화 완료!")
+    except Exception as e:
+        print(f"ML 모델 초기화 실패: {e}")
+        print("인기도 기반 추천으로 폴백합니다.")
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
@@ -63,6 +77,7 @@ app.include_router(wish_router, prefix="/api/v1", tags=["찜기능"])
 app.include_router(crowding_router, prefix="/api/v1", tags=["혼잡도"])
 app.include_router(tmap_crowding_router, prefix="/api/v1", tags=["티맵 혼잡도"])
 app.include_router(photo_gallery_router, prefix="/api/v1", tags=["관광사진갤러리"])
+app.include_router(recommend_location_router, prefix="/api/v1", tags=["장소추천"])
 app.include_router(auth_router, prefix="/api/v1", tags=["인증"])  # 공통 인증 라우터를 마지막에 등록
 # app.include_router(map_spot_router, prefix="/api/v1", tags=["지도"])  # 임시 비활성화
 
@@ -90,6 +105,11 @@ async def favicon():
 @app.get("/")
 async def root():
     return {"message": "Welcome to the API"}
+
+@app.on_event("startup")
+async def startup_event():
+    """서버 시작 시 ML 모델 초기화"""
+    await initialize_ml_model()
 
 
 @app.get("/attractions")

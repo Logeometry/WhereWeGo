@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>부산 관광지 추천 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .recommendations-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .selected-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .filter-group select {
+            padding: 8px 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+            transition: border-color 0.3s;
+        }
+
+        .filter-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #495057;
+            border: 2px solid #e9ecef;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .places-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .place-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .place-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .place-card.selected {
+            border-color: #28a745;
+            background: #e8f5e8;
+        }
+
+        .place-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .place-category {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .place-score {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .place-description {
+            color: #555;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .place-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .selected-places-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .selected-place-item {
+            background: #e8f5e8;
+            border: 1px solid #28a745;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .selected-place-name {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .course-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-top: 30px;
+        }
+
+        .course-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .course-result {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .day-schedule {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .day-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .place-item {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-left: 3px solid #28a745;
+        }
+
+        .travel-tips {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .tips-title {
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .places-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .course-form {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏖️ 부산 관광지 추천 시스템</h1>
+            <p>나만의 맞춤형 부산 여행 코스를 만들어보세요!</p>
+        </div>
+
+        <div class="main-content">
+            <!-- 왼쪽: 추천 장소 섹션 -->
+            <div class="recommendations-section">
+                <div class="section-title">
+                    📍 추천 관광지
+                </div>
+                
+                <div class="filters">
+                    <div class="filter-group">
+                        <label>카테고리</label>
+                        <select id="categoryFilter">
+                            <option value="">전체</option>
+                            <option value="해수욕장">해수욕장</option>
+                            <option value="시장">시장</option>
+                            <option value="문화재">문화재</option>
+                            <option value="공원">공원</option>
+                            <option value="맛집">맛집</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>지역</label>
+                        <select id="locationFilter">
+                            <option value="">전체</option>
+                            <option value="해운대구">해운대구</option>
+                            <option value="남포동">남포동</option>
+                            <option value="영도구">영도구</option>
+                            <option value="부산진구">부산진구</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="getRecommendations()">
+                        🔍 추천 장소 가져오기
+                    </button>
+                    <button class="btn btn-secondary" onclick="refreshRecommendations()">
+                        🔄 새로고침
+                    </button>
+                </div>
+
+                <div id="recommendationsResult">
+                    <div class="empty-state">
+                        <div>🎯</div>
+                        <p>위 버튼을 클릭하여 추천 관광지를 확인해보세요!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 선택된 장소 섹션 -->
+            <div class="selected-section">
+                <div class="section-title">
+                    ✅ 선택된 장소
+                </div>
+                
+                <div id="selectedPlaces">
+                    <div class="empty-state">
+                        <div>📝</div>
+                        <p>왼쪽에서 관광지를 선택해주세요</p>
+                    </div>
+                </div>
+                
+                <button class="btn btn-secondary" onclick="clearSelectedPlaces()" style="width: 100%; margin-top: 15px;">
+                    🗑️ 선택 초기화
+                </button>
+            </div>
+        </div>
+
+        <!-- 코스 생성 섹션 -->
+        <div class="course-section">
+            <div class="section-title">
+                🗺️ 여행 코스 생성
+            </div>
+            
+            <div class="course-form">
+                <div class="form-group">
+                    <label>여행 기간</label>
+                    <select id="travelDuration">
+                        <option value="1">1일</option>
+                        <option value="2">2일</option>
+                        <option value="3" selected>3일</option>
+                        <option value="4">4일</option>
+                        <option value="5">5일</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>시작일</label>
+                    <input type="date" id="travelStartDate" value="2025-01-15">
+                </div>
+                <div class="form-group">
+                    <label>테스트 사용자</label>
+                    <select id="testUserId">
+                        <option value="test123">test123 - 관광지/문화시설 선호</option>
+                        <option value="test_user_123">test_user_123 - 음식점/카페 선호</option>
+                        <option value="random">랜덤 사용자</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>시작점 (선택사항)</label>
+                    <input type="text" id="startingPoint" placeholder="시작점 장소 ID (선택사항)">
+                    <small style="color: #666; font-style: italic;">
+                        비워두면 선택된 장소 중 첫 번째가 시작점이 됩니다
+                    </small>
+                </div>
+            </div>
+            
+            <button class="btn btn-success" onclick="generateCourse()" style="width: 100%;">
+                🚀 코스 생성하기
+            </button>
+            
+            <div id="courseResult"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedPlaces = [];
+        let currentRecommendations = [];
+
+        // 장소 추천 가져오기
+        async function getRecommendations() {
+            try {
+                const categoryFilter = document.getElementById('categoryFilter').value;
+                const locationFilter = document.getElementById('locationFilter').value;
+                
+                const testUserId = document.getElementById('testUserId').value;
+                const userId = testUserId === 'random' ? 'random_user_' + Math.floor(Math.random() * 1000) : testUserId;
+                
+                const requestBody = {
+                    user_id: userId,
+                    use_ml: true,  // ML 모델 사용
+                    exclude_places: selectedPlaces.map(place => place.place_id),
+                    category_filter: categoryFilter || null,
+                    location_filter: locationFilter || null
+                };
+
+                const response = await fetch('/api/v1/recommendations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                currentRecommendations = data.places;
+                displayRecommendations(data.places);
+                
+                showMessage('추천 장소를 성공적으로 가져왔습니다!', 'success');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('추천 장소 가져오기 실패: ' + error.message, 'error');
+            }
+        }
+
+        // 추천 장소 표시
+        function displayRecommendations(places) {
+            const resultDiv = document.getElementById('recommendationsResult');
+            
+            if (places.length === 0) {
+                resultDiv.innerHTML = `
+                    <div class="empty-state">
+                        <div>😔</div>
+                        <p>추천할 장소가 없습니다.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div class="places-grid">';
+            
+            places.forEach((place, index) => {
+                const isSelected = selectedPlaces.some(sp => sp.place_id === place.place_id);
+                const cardClass = isSelected ? 'place-card selected' : 'place-card';
+                
+                                 html += `
+                     <div class="${cardClass}" onclick="togglePlaceSelection('${place.place_id}', '${place.name}')">
+                         <div class="place-name">${place.name}</div>
+                         <div class="place-category">${place.category}</div>
+                         <div class="place-score">추천점수: ${(place.recommendation_score * 100).toFixed(1)}%</div>
+                         <div class="place-actions">
+                             <button class="btn btn-sm ${isSelected ? 'btn-secondary' : 'btn-primary'}" onclick="event.stopPropagation(); togglePlaceSelection('${place.place_id}', '${place.name}')">
+                                 ${isSelected ? '선택 해제' : '선택하기'}
+                             </button>
+                         </div>
+                     </div>
+                 `;
+            });
+            
+            html += '</div>';
+            resultDiv.innerHTML = html;
+        }
+
+        // 장소 선택/해제
+        function togglePlaceSelection(placeId, placeName) {
+            const existingIndex = selectedPlaces.findIndex(place => place.place_id === placeId);
+            
+            if (existingIndex >= 0) {
+                // 선택 해제
+                selectedPlaces.splice(existingIndex, 1);
+                showMessage(`${placeName} 선택을 해제했습니다.`, 'success');
+            } else {
+                // 선택
+                selectedPlaces.push({
+                    place_id: placeId,
+                    name: placeName
+                });
+                showMessage(`${placeName}을 선택했습니다.`, 'success');
+            }
+            
+            updateSelectedPlacesDisplay();
+            // 추천 목록 다시 표시 (선택 상태 반영)
+            displayRecommendations(currentRecommendations);
+        }
+
+        // 선택된 장소들 표시
+        function updateSelectedPlacesDisplay() {
+            const selectedDiv = document.getElementById('selectedPlaces');
+            
+            if (selectedPlaces.length === 0) {
+                selectedDiv.innerHTML = `
+                    <div class="empty-state">
+                        <div>📝</div>
+                        <p>왼쪽에서 관광지를 선택해주세요</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div class="selected-places-list">';
+            selectedPlaces.forEach((place, index) => {
+                html += `
+                    <div class="selected-place-item">
+                        <div class="selected-place-name">${index + 1}. ${place.name}</div>
+                        <button class="btn btn-sm btn-secondary" onclick="removeSelectedPlace('${place.place_id}')">
+                            제거
+                        </button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            selectedDiv.innerHTML = html;
+        }
+
+        // 선택된 장소 제거
+        function removeSelectedPlace(placeId) {
+            selectedPlaces = selectedPlaces.filter(place => place.place_id !== placeId);
+            updateSelectedPlacesDisplay();
+            displayRecommendations(currentRecommendations);
+        }
+
+        // 선택 초기화
+        function clearSelectedPlaces() {
+            selectedPlaces = [];
+            updateSelectedPlacesDisplay();
+            displayRecommendations(currentRecommendations);
+            showMessage('선택된 장소들을 모두 초기화했습니다.', 'success');
+        }
+
+        // 새로고침 (다른 10개)
+        function refreshRecommendations() {
+            getRecommendations();
+        }
+
+        // 코스 생성 (recommeded_cors_router.py 사용)
+        async function generateCourse() {
+            if (selectedPlaces.length === 0) {
+                showMessage('코스를 생성하려면 최소 1개 이상의 장소를 선택해주세요.', 'error');
+                return;
+            }
+
+            try {
+                const travelDuration = parseInt(document.getElementById('travelDuration').value);
+                const travelStartDate = document.getElementById('travelStartDate').value;
+                const startingPoint = document.getElementById('startingPoint').value || null;
+
+                const requestBody = {
+                    travelDuration: travelDuration,
+                    travelStartDate: travelStartDate,
+                    selected_places: selectedPlaces,
+                    starting_point: startingPoint
+                };
+
+                const response = await fetch('/api/v1/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayCourse(data);
+                showMessage('여행 코스가 성공적으로 생성되었습니다!', 'success');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('코스 생성 실패: ' + error.message, 'error');
+            }
+        }
+
+        // 코스 표시
+        function displayCourse(courseData) {
+            const resultDiv = document.getElementById('courseResult');
+            
+            let html = '<div class="course-result">';
+            
+            courseData.dailySchedule.forEach(day => {
+                html += `
+                    <div class="day-schedule">
+                        <div class="day-title">DAY ${day.day} (${day.date})</div>
+                `;
+                
+                if (day.places.length === 0) {
+                    html += '<p style="color: #6c757d; font-style: italic;">일정이 없습니다.</p>';
+                } else {
+                    day.places.forEach((place, index) => {
+                        html += `
+                            <div class="place-item">
+                                <strong>${index + 1}. ${place.name}</strong><br>
+                                <small>${place.category} | 예상 소요시간: ${place.estimated_duration}시간</small>
+                            </div>
+                        `;
+                    });
+                }
+                
+                html += '</div>';
+            });
+            
+            if (courseData.travelTips) {
+                html += `
+                    <div class="travel-tips">
+                        <div class="tips-title">💡 여행 팁</div>
+                        <p>${courseData.travelTips}</p>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            resultDiv.innerHTML = html;
+        }
+
+        // 메시지 표시
+        function showMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                document.body.removeChild(messageDiv);
+            }, 3000);
+        }
+
+        // 페이지 로드 시 초기화
+        window.onload = function() {
+            updateSelectedPlacesDisplay();
+            getRecommendations();
+        };
+    </script>
+</body>
+</html>
