@@ -205,3 +205,50 @@ class RankingItem(BaseModel):
     place_id: str
     visits: int
 
+# 코스에 장소 추가를 위한 스키마들
+class AddPlaceToCourseRequest(BaseModel):
+    """코스에 장소 추가 요청 모델"""
+    course_id: str = Field(..., description="코스 ID")
+    place_id: str = Field(..., description="추가할 장소 ID")
+    day: int = Field(..., description="추가할 날짜 (1부터 시작)")
+    position: int = Field(..., description="해당 날짜 내에서의 위치 (0부터 시작)")
+    estimated_duration: int = Field(2, description="예상 체류 시간 (시간 단위, 기본값: 2)")
+    travel_time_from_previous: int = Field(20, description="이전 장소로부터의 이동 시간 (분 단위, 기본값: 20)")
+
+class UpdatePlaceInCourseRequest(BaseModel):
+    """코스 내 장소 정보 수정 요청 모델"""
+    course_id: str = Field(..., description="코스 ID")
+    place_id: str = Field(..., description="수정할 장소 ID")
+    day: int = Field(..., description="장소가 있는 날짜")
+    position: int = Field(..., description="해당 날짜 내에서의 위치")
+    estimated_duration: Optional[int] = Field(None, description="예상 체류 시간 (시간 단위)")
+    travel_time_from_previous: Optional[int] = Field(None, description="이전 장소로부터의 이동 시간 (분 단위)")
+
+class RemovePlaceFromCourseRequest(BaseModel):
+    """코스에서 장소 제거 요청 모델"""
+    course_id: str = Field(..., description="코스 ID")
+    place_id: str = Field(..., description="제거할 장소 ID")
+    day: int = Field(..., description="장소가 있는 날짜")
+    position: int = Field(..., description="해당 날짜 내에서의 위치")
+
+class CoursePlace(BaseModel):
+    """코스 내 장소 정보 모델"""
+    place_id: str
+    estimated_duration: int
+    travel_time_from_previous: int
+    place_details: Optional[Place] = None
+
+class CourseDay(BaseModel):
+    """코스의 하루 일정 모델"""
+    day: int
+    date: str
+    places: List[CoursePlace]
+
+class CourseResponse(BaseModel):
+    """코스 응답 모델"""
+    course_id: str
+    dailySchedule: List[CourseDay]
+    travelTips: str
+    created_at: datetime
+    updated_at: datetime
+

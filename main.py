@@ -4,9 +4,11 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 # from fastapi.templating import Jinja2Templates  # 임시 비활성화
 
 # 라우터 imports
+from settings import Settings
 from routeres.search_router import router as search_router
 from routeres.category_router import router as category_router
 from routeres.auth_router import router as auth_router
@@ -18,6 +20,7 @@ from routeres.weather_router import router as weather_router
 from routeres.festival_router import router as festival_router
 from routeres.survey_router import router as survey_router
 from routeres.recommeded_cors_router import router as recommended_course_router
+from routeres.course_management_router import router as course_management_router
 from routeres.wish_router import router as wish_router
 from routeres.crowding_router import router as crowding_router
 from routeres.tmap_crowding_router import router as tmap_crowding_router
@@ -31,12 +34,18 @@ import asyncio
 
 load_dotenv()
 
+# 환경변수 기본값 설정
+os.environ.setdefault("SECRET_KEY", "y314adfas...23414afdafasf524515411")
+os.environ.setdefault("FRONTEND_URL", "http://localhost:3000")
+os.environ.setdefault("MONGO_ATLAS_URI", "mongodb://localhost:27017")
+os.environ.setdefault("ENVIRONMENT", "dev")
+
 # ML 모델 초기화
 async def initialize_ml_model():
     """ML 모델 초기화"""
     try:
         from services.ml_recommendation_service import ml_recommendation_service
-        ckpt_path = os.path.join(os.path.dirname(__file__), "model", "model_epoch_10.pth")
+        ckpt_path = os.path.join(os.path.dirname(__file__), "model", "model_epoch_5.pth")
         await ml_recommendation_service.load_model(ckpt_path)
         print("ML 모델 초기화 완료!")
     except Exception as e:
@@ -45,7 +54,17 @@ async def initialize_ml_model():
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
-app = FastAPI()
+settings = Settings()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await initialize_ml_model()
+    yield
+    # Shutdown
+    pass
+
+app = FastAPI(lifespan=lifespan)
 
 origins = [
     "http://localhost:8000",
@@ -73,6 +92,7 @@ app.include_router(location_detail_router, prefix="/api/v1", tags=["장소상세
 app.include_router(weather_router, prefix="/api/v1", tags=["날씨"])
 app.include_router(festival_router, prefix="/api/v1", tags=["축제"])
 app.include_router(recommended_course_router, prefix="/api/v1", tags=["추천코스"])
+app.include_router(course_management_router, prefix="/api/v1", tags=["코스관리"])
 app.include_router(wish_router, prefix="/api/v1", tags=["찜기능"])
 app.include_router(crowding_router, prefix="/api/v1", tags=["혼잡도"])
 app.include_router(tmap_crowding_router, prefix="/api/v1", tags=["티맵 혼잡도"])
@@ -106,10 +126,7 @@ async def favicon():
 async def root():
     return {"message": "Welcome to the API"}
 
-@app.on_event("startup")
-async def startup_event():
-    """서버 시작 시 ML 모델 초기화"""
-    await initialize_ml_model()
+
 
 
 @app.get("/attractions")
@@ -136,3 +153,8 @@ async def show_attractions():
 @app.get("/login")
 def serve_test_page():
     return FileResponse("test/login_test.html")
+
+# 통합 코스 빌더
+@app.get("/course-builder")
+def serve_course_builder():
+    return FileResponse("test/integrated_course_builder.html")
