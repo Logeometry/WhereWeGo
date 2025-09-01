@@ -9,7 +9,7 @@
 
 from fastapi import APIRouter, HTTPException, Query, Body, Depends, Header
 from typing import List, Optional, Dict
-from pydantic import BaseModel
+
 from datetime import datetime, timedelta
 import random
 import os
@@ -17,7 +17,16 @@ import jwt
 from bson import ObjectId
 from services.db_handler import tourism_collection
 from services.ml_recommendation_service import MLRecommendationService
-from schemas import SurveyResponse
+from schemas import (
+    SurveyResponse, 
+    RecommendedPlace, 
+    RecommendationRequest, 
+    RecommendationResponse,
+    CategoryInfo,
+    LocationInfo,
+    CategoriesResponse,
+    LocationsResponse
+)
 
 router = APIRouter()
 
@@ -36,25 +45,6 @@ async def get_current_user_id(authorization: Optional[str] = Header(None)) -> Op
         return None
     except jwt.InvalidTokenError:
         return None
-
-class RecommendedPlace(BaseModel):
-    place_id: str
-    name: str
-    category: str
-    recommendation_score: float
-
-class RecommendationRequest(BaseModel):
-    user_id: Optional[str] = None
-    user_preferences: Optional[List[SurveyResponse]] = None
-    exclude_places: Optional[List[str]] = None
-    category_filter: Optional[str] = None
-    location_filter: Optional[str] = None
-    use_ml: bool = False
-
-class RecommendationResponse(BaseModel):
-    places: List[RecommendedPlace]
-    total_count: int
-    message: str
 
 @router.post("/recommendations", response_model=RecommendationResponse)
 async def get_place_recommendations(
@@ -123,7 +113,6 @@ async def get_ml_recommendations(
     survey_preferences: List[SurveyResponse] = None,
     is_logged_in: bool = True
 ) -> List[RecommendedPlace]:
-    """ML 모델 기반 추천"""
     
     try:
         if not hasattr(get_ml_recommendations, 'ml_service'):
@@ -181,18 +170,17 @@ async def get_ml_recommendations(
         return await get_popularity_recommendations(base_query)
 
 async def get_popularity_recommendations(base_query: Dict) -> List[RecommendedPlace]:
-    """인기도 기반 추천 (기본값)"""
     
     try:
-        # 인기도 점수 계산 (실제 DB 필드명에 맞게 수정)
+
         pipeline = [
             {"$match": base_query},
             {"$addFields": {
                 "base_score": {
                     "$add": [
-                        {"$multiply": [{"$ifNull": ["$rating", 0]}, 0.4]},        # 평점 40%
-                        {"$multiply": [{"$ifNull": ["$visitors_count", 0]}, 0.3]}, # 방문자수 30%
-                        {"$multiply": [{"$ifNull": ["$review_count", 0]}, 0.2]}    # 리뷰수 20%
+                        {"$multiply": [{"$ifNull": ["$rating", 0]}, 0.4]},
+                        {"$multiply": [{"$ifNull": ["$visitors_count", 0]}, 0.3]},
+                        {"$multiply": [{"$ifNull": ["$review_count", 0]}, 0.2]}
                     ]
                 }
             }},
@@ -200,36 +188,34 @@ async def get_popularity_recommendations(base_query: Dict) -> List[RecommendedPl
                 "popularity_score": {
                     "$add": [
                         "$base_score",
-                        {"$multiply": [{"$rand": {}}, 0.1]}  # 랜덤 요소 10%로 감소
+                        {"$multiply": [{"$rand": {}}, 0.1]}
                     ]
                 }
             }},
             {"$sort": {"popularity_score": -1}},
-            {"$limit": 20}  # 더 많은 후보에서 선택
+            {"$limit": 20}
         ]
         
         places_cursor = tourism_collection.aggregate(pipeline)
         places = await places_cursor.to_list(length=20)
         
-        # 응답 형식 변환 (ID 중심으로 단순화)
         recommendations = []
         for place in places:
             recommendations.append(RecommendedPlace(
                 place_id=str(place["_id"]),
                 name=place.get("name", ""),
                 category=place.get("category", ""),
-                recommendation_score=min(place.get("popularity_score", 0.0), 1.0)  # 1.0 이하로 제한
+                recommendation_score=min(place.get("popularity_score", 0.0), 1.0)
             ))
         
         return recommendations
         
     except Exception as e:
         print(f"인기도 추천 오류: {e}")
-        # 최후의 수단: 랜덤 추천
+        # 랜덤 추천
         return await get_random_recommendations(base_query)
 
 async def get_random_recommendations(base_query: Dict) -> List[RecommendedPlace]:
-    """랜덤 추천 (폴백)"""
     
     try:
         # 랜덤 샘플링
@@ -249,7 +235,7 @@ async def get_random_recommendations(base_query: Dict) -> List[RecommendedPlace]
                 place_id=str(place["_id"]),
                 name=place.get("name", ""),
                 category=place.get("category", ""),
-                recommendation_score=round(random.uniform(0.2, 0.9), 2)  # 더 다양한 랜덤 점수
+                recommendation_score=round(random.uniform(0.2, 0.9), 2)
             ))
         
         return recommendations
@@ -270,12 +256,12 @@ async def get_categories():
         categories_cursor = tourism_collection.aggregate(pipeline)
         categories = await categories_cursor.to_list(length=None)
         
-        return {
-            "categories": [
-                {"name": cat["_id"], "count": cat["count"]} 
+        return CategoriesResponse(
+            categories=[
+                CategoryInfo(name=cat["_id"], count=cat["count"]) 
                 for cat in categories if cat["_id"]
             ]
-        }
+        )
         
     except Exception as e:
         raise HTTPException(
@@ -295,12 +281,12 @@ async def get_locations():
         locations_cursor = tourism_collection.aggregate(pipeline)
         locations = await locations_cursor.to_list(length=None)
         
-        return {
-            "locations": [
-                {"name": loc["_id"], "count": loc["count"]} 
+        return LocationsResponse(
+            locations=[
+                LocationInfo(name=loc["_id"], count=loc["count"]) 
                 for loc in locations if loc["_id"]
             ]
-        }
+        )
         
     except Exception as e:
         raise HTTPException(

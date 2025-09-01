@@ -252,3 +252,44 @@ class CourseResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+# 추천 관련 스키마들
+class RecommendedPlace(BaseModel):
+    """추천 장소 모델"""
+    place_id: str
+    name: str
+    category: str
+    recommendation_score: float
+
+class RecommendationRequest(BaseModel):
+    """장소 추천 요청 모델"""
+    user_id: Optional[str] = None
+    user_preferences: Optional[List[SurveyResponse]] = None
+    exclude_places: Optional[List[str]] = None
+    category_filter: Optional[str] = None
+    location_filter: Optional[str] = None
+    use_ml: bool = False
+
+class RecommendationResponse(BaseModel):
+    """장소 추천 응답 모델"""
+    places: List[RecommendedPlace]
+    total_count: int
+    message: str
+
+class CategoryInfo(BaseModel):
+    """카테고리 정보 모델"""
+    name: str
+    count: int
+
+class LocationInfo(BaseModel):
+    """지역 정보 모델"""
+    name: str
+    count: int
+
+class CategoriesResponse(BaseModel):
+    """카테고리 목록 응답 모델"""
+    categories: List[CategoryInfo]
+
+class LocationsResponse(BaseModel):
+    """지역 목록 응답 모델"""
+    locations: List[LocationInfo]
+

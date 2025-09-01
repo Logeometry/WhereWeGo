@@ -18,11 +18,8 @@ class MLRecommendationService:
         self.is_loaded = False
         
     async def load_model(self, ckpt_path: str, mapping_path: str = None):
-        """체크포인트에서 모델 로드"""
         try:
-            print(f"모델 로딩 시작: {ckpt_path}")
             ckpt = torch.load(ckpt_path, map_location="cpu")
-            print(f"체크포인트 로드 완료: {type(ckpt)}")
             
             if 'model_state_dict' in ckpt:
                 model_state_dict = ckpt['model_state_dict']
@@ -89,19 +86,15 @@ class MLRecommendationService:
             
             self.model.load_state_dict(model_state_dict, strict=False)
             self.model.eval()
-            print(f"모델 초기화 완료: n_users={n_users}, n_items={n_items}")
-            
+           
             if not self.user_mapping or not self.item_mapping:
-                print("매핑 초기화 시작...")
                 try:
                     await self._initialize_mappings()
-                    print(f"매핑 초기화 완료: users={len(self.user_mapping)}, items={len(self.item_mapping)}")
                 except Exception as e:
                     print(f"매핑 초기화 실패, 기본 매핑 사용: {e}")
                     # 기본 매핑으로 계속 진행
             
             self.is_loaded = True
-            print("ML 모델 로딩 성공!")
             
         except Exception as e:
             print(f"ML 모델 로딩 실패: {e}")
@@ -206,23 +199,14 @@ class MLRecommendationService:
             return []
         
         try:
-            print(f"ML 추천 시작 - user_id: {user_id}, save_to_logs: {save_to_logs}")
-            print(f"설문조사 데이터: {survey_preferences}")
-            print(f"모델 로드 상태: {self.is_loaded}")
-            print(f"아이템 매핑 개수: {len(self.item_mapping)}")
-            
             if survey_preferences and save_to_logs:
                 await self.save_survey_to_user_logs(user_id, survey_preferences)
             
             if user_id in self.user_mapping:
                 user_idx = self.user_mapping[user_id]
-                print(f"기존 사용자 인덱스: {user_idx}")
             else:
-                # 새로운 사용자는 해시 기반으로 임시 인덱스 할당
-                user_idx = hash(user_id) % 7434
-                print(f"새 사용자 인덱스: {user_idx}")
+                 user_idx = hash(user_id) % 7434
             
-            # 사용자의 실제 로그 데이터 가져오기 (로그인된 사용자만)
             if save_to_logs:
                 user_logs = await self.get_user_logs(user_id)
                 survey_prefs = await self.get_user_survey_preferences(user_id)
