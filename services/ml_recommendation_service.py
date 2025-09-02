@@ -165,28 +165,37 @@ class MLRecommendationService:
         except Exception as e:
             return False
     
-    async def get_user_survey_preferences(self, user_id: str) -> List[Dict]:
-        """사용자의 설문조사 선호도 가져오기 (유저 로그에서)"""
+    async def get_user_behavior_logs(self, user_id: str) -> List[Dict]:
+        """사용자의 모든 행동 로그 가져오기 (찜, 클릭, 방문 등)"""
         from services.db_handler import user_log_collection
         
         try:
+            # 모든 사용자 행동 로그 가져오기
             logs_cursor = user_log_collection.find({
-                "user_id": user_id,
-                "event": {"$regex": "^survey_"}
-            })
+                "user_id": user_id
+            }).sort("timestamp", -1)  # 최신순 정렬
             
-            survey_prefs = []
+            behavior_logs = []
             async for log in logs_cursor:
                 event = log.get("event")
-                if event.startswith("survey_"):
-                    response = event.replace("survey_", "")
-                    survey_prefs.append({
-                        "content_id": log.get("target_id"),
-                        "responses": response
-                    })
+                target_id = log.get("target_id")
+                timestamp = log.get("timestamp")
+                
+                # TODO: 추후 이벤트 타입별 가중치 부여 시스템 구현
+                # 현재는 모든 이벤트에 동일한 가중치 적용
+
+                weight = 1.0
+                
+                behavior_logs.append({
+                    "content_id": target_id,
+                    "event": event,
+                    "weight": weight,
+                    "timestamp": timestamp
+                })
             
-            return survey_prefs
+            return behavior_logs
         except Exception as e:
+            print(f"사용자 행동 로그 조회 실패: {e}")
             return []
     
     async def get_recommendations(self, user_id: str, count: int = 10, 
@@ -218,9 +227,9 @@ class MLRecommendationService:
             
             if save_to_logs:
                 user_logs = await self.get_user_logs(user_id)
-                survey_prefs = await self.get_user_survey_preferences(user_id)
+                behavior_logs = await self.get_user_behavior_logs(user_id)
             else:
-                survey_prefs = []
+                behavior_logs = []
             
 
             
