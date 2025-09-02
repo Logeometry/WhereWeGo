@@ -47,10 +47,8 @@ async def initialize_ml_model():
         from services.ml_recommendation_service import ml_recommendation_service
         ckpt_path = os.path.join(os.path.dirname(__file__), "model", "model_epoch_5.pth")
         await ml_recommendation_service.load_model(ckpt_path)
-        print("ML 모델 초기화 완료!")
     except Exception as e:
         print(f"ML 모델 초기화 실패: {e}")
-        print("인기도 기반 추천으로 폴백합니다.")
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 FRONTEND_URL = os.getenv("FRONTEND_URL")

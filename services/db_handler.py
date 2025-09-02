@@ -27,9 +27,9 @@ try:
     user_log_collection = client.user_db.user_log
     # 서버 정보 확인으로 연결 테스트
     client.server_info()
-    print("✅ MongoDB에 성공적으로 연결되었습니다.")
+    print("MongoDB 연결 성공")
 except Exception as e:
-    print(f"❌ MongoDB 연결에 실패했습니다: {e}")
+    print(f"MongoDB 연결 실패: {e}")
     client = None
     tourism_collection = None
 
