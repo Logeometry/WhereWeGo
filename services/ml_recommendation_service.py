@@ -205,7 +205,16 @@ class MLRecommendationService:
             if user_id in self.user_mapping:
                 user_idx = self.user_mapping[user_id]
             else:
-                 user_idx = hash(user_id) % 7434
+                # 새로운 사용자: 임베딩 확장 및 기본값 설정
+                new_user_idx = len(self.user_mapping)
+                self.user_mapping[user_id] = new_user_idx
+                
+                # 모델 임베딩 확장
+                if not self.expand_user_embeddings(new_user_idx):
+                    print(f"사용자 임베딩 확장 실패, 기본 사용자(0) 사용")
+                    user_idx = 0
+                else:
+                    user_idx = new_user_idx
             
             if save_to_logs:
                 user_logs = await self.get_user_logs(user_id)
@@ -229,8 +238,7 @@ class MLRecommendationService:
                     
                     recommendations.append({
                         "place_id": item_id,
-                        "score": model_score,
-                        "model_score": model_score
+                        "score": model_score
                     })
             
             recommendations.sort(key=lambda x: x["score"], reverse=True)
@@ -242,6 +250,94 @@ class MLRecommendationService:
             traceback.print_exc()
             return []
     
+    def expand_user_embeddings(self, new_user_idx):
+        """새로운 사용자 임베딩 확장 (기본값으로 초기화)"""
+        try:
+            # 기본값 설정
+            default_activity = 1      # 중간 활동성
+            default_time = 1          # 오후
+            default_season = 1        # 여름  
+            default_preference = 0    # 활동성 중심
+            default_category = [0.125] * 8  # 모든 카테고리 동일 선호도
+            
+            # 1. 사용자 임베딩 확장
+            self.model.user_embedding_gmf.weight.data = torch.cat([
+                self.model.user_embedding_gmf.weight.data,
+                torch.randn(1, 128)
+            ], dim=0)
+            
+            self.model.user_embedding_mlp.weight.data = torch.cat([
+                self.model.user_embedding_mlp.weight.data,
+                torch.randn(1, 128)
+            ], dim=0)
+            
+            # 2. 사용자 특성 임베딩 확장
+            self.model.user_category_preference.weight.data = torch.cat([
+                self.model.user_category_preference.weight.data,
+                torch.randn(1, 8)
+            ], dim=0)
+            
+            self.model.user_activity_level.weight.data = torch.cat([
+                self.model.user_activity_level.weight.data,
+                torch.randn(1, 3)
+            ], dim=0)
+            
+            self.model.user_time_period.weight.data = torch.cat([
+                self.model.user_time_period.weight.data,
+                torch.randn(1, 3)
+            ], dim=0)
+            
+            self.model.user_season.weight.data = torch.cat([
+                self.model.user_season.weight.data,
+                torch.randn(1, 4)
+            ], dim=0)
+            
+            self.model.user_preference.weight.data = torch.cat([
+                self.model.user_preference.weight.data,
+                torch.randn(1, 2)
+            ], dim=0)
+            
+            # 3. 기본값 설정
+            self.set_default_embedding_values(new_user_idx, default_activity, default_time, default_season, default_preference, default_category)
+            
+            print(f"새로운 사용자 임베딩 확장 완료: user_idx={new_user_idx}")
+            return True
+            
+        except Exception as e:
+            print(f"사용자 임베딩 확장 실패: {e}")
+            return False
+    
+    def set_default_embedding_values(self, user_idx, activity, time, season, preference, category):
+        """새로운 사용자 임베딩에 기본값 설정"""
+        try:
+            # 활동성 레벨 (one-hot encoding)
+            activity_embedding = torch.zeros(1, 3)
+            activity_embedding[0, activity] = 1.0
+            self.model.user_activity_level.weight.data[user_idx] = activity_embedding.squeeze()
+            
+            # 시간대 (one-hot encoding)
+            time_embedding = torch.zeros(1, 3)
+            time_embedding[0, time] = 1.0
+            self.model.user_time_period.weight.data[user_idx] = time_embedding.squeeze()
+            
+            # 계절 (one-hot encoding)
+            season_embedding = torch.zeros(1, 4)
+            season_embedding[0, season] = 1.0
+            self.model.user_season.weight.data[user_idx] = season_embedding.squeeze()
+            
+            # 선호도 (one-hot encoding)
+            preference_embedding = torch.zeros(1, 2)
+            preference_embedding[0, preference] = 1.0
+            self.model.user_preference.weight.data[user_idx] = preference_embedding.squeeze()
+            
+            # 카테고리 선호도 (균등 분포)
+            self.model.user_category_preference.weight.data[user_idx] = torch.tensor(category)
+            
+            print(f"사용자 {user_idx} 기본값 설정 완료")
+            
+        except Exception as e:
+            print(f"기본값 설정 실패: {e}")
+
     async def get_similar_places(self, place_id: str, count: int = 5) -> List[Dict]:
         if not self.is_loaded:
             return []
