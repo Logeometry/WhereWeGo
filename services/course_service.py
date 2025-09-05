@@ -20,7 +20,9 @@ from services.db_handler import tourism_collection
 class CourseService:
     def __init__(self):
         # MongoDB 연결
-        mongo_uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+        mongo_uri = os.getenv("MONGO_ATLAS_URI")  # 환경변수명 통일
+        if not mongo_uri:
+            raise ValueError("MONGO_ATLAS_URI 환경변수가 설정되지 않았습니다.")
         self.client = MongoClient(mongo_uri)
         self.db = self.client.wherewego
         self.courses_collection = self.db.courses

@@ -37,7 +37,7 @@ load_dotenv()
 # 환경변수 기본값 설정
 os.environ.setdefault("SECRET_KEY", "y314adfas...23414afdafasf524515411")
 os.environ.setdefault("FRONTEND_URL", "http://localhost:3000")
-os.environ.setdefault("MONGO_ATLAS_URI", "mongodb://localhost:27017")
+# os.environ.setdefault("MONGO_ATLAS_URI", "mongodb://localhost:27017")  # 하드코딩 제거
 os.environ.setdefault("ENVIRONMENT", "dev")
 
 # ML 모델 초기화
