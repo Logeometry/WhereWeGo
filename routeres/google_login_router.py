@@ -6,7 +6,7 @@
 import uuid
 from fastapi import APIRouter, Depends, Request, HTTPException, Response
 from fastapi.responses import RedirectResponse, JSONResponse
-from services.user_store import find_user_by_oauth, find_user_by_id, add_user, update_user_refresh_token
+from services.user_store import find_user_by_oauth, find_user_by_id, add_user, update_user_refresh_token, find_user_by_email, update_user_refresh_token_expiry
 import urllib.parse
 import requests
 from datetime import datetime, timedelta
@@ -79,18 +79,32 @@ def google_callback(request: Request):
 
     user = find_user_by_oauth(oauth, oauth_id)
     if not user:
-        # 새 사용자 생성
-        user = {
-            "user_id": str(uuid.uuid4()), 
-            "oauth": "google", 
-            "email":     user_info.get("email"),
-            "name": user_info.get("name"),
-            "oauth_id": user_info.get("sub"),
-            "picture": user_info.get("picture"),
-            "refresh_token": refresh_token
-        }
-        user["created_at"] = datetime.utcnow().isoformat()
-        add_user(user)
+        # 같은 이메일로 다른 OAuth 제공자로 가입한 사용자가 있는지 확인
+        existing_user = find_user_by_email(user_info.get("email"))
+        
+        if existing_user:
+            # 기존 사용자의 OAuth 정보를 구글로 변경하고 리프레시 토큰 갱신
+            print(f"[DEBUG] Found existing user with same email, updating OAuth provider to Google")
+            update_user_refresh_token_expiry(existing_user["user_id"], refresh_token)
+            user = existing_user
+            user["oauth"] = "google"
+            user["oauth_id"] = oauth_id
+            user["picture"] = user_info.get("picture")
+        else:
+            # 새 사용자 생성
+            refresh_token_expiry = datetime.utcnow() + timedelta(days=1)
+            user = {
+                "user_id": str(uuid.uuid4()), 
+                "oauth": "google", 
+                "email":     user_info.get("email"),
+                "name": user_info.get("name"),
+                "oauth_id": user_info.get("sub"),
+                "picture": user_info.get("picture"),
+                "refresh_token": refresh_token,
+                "refresh_token_expiry": refresh_token_expiry.isoformat()
+            }
+            user["created_at"] = datetime.utcnow().isoformat()
+            add_user(user)
     else:
         # 기존 사용자의 마지막 로그인 시간 업데이트 및 리프레시 토큰 갱신
         current_time = datetime.utcnow().isoformat()
@@ -98,6 +112,9 @@ def google_callback(request: Request):
         if refresh_token:
             update_user_refresh_token(user["user_id"], refresh_token)
 
+    # 리프레시 토큰 만료 시간을 1일로 설정 (JWT 토큰은 2시간 유지)
+    refresh_token_expiry = datetime.utcnow() + timedelta(days=1)
+    
     token = jwt.encode(
         {"sub": user["user_id"], "exp": datetime.utcnow() + timedelta(minutes=120)},
         SECRET_KEY,

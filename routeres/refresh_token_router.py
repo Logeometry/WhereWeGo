@@ -65,12 +65,15 @@ async def refresh_access_token(request: Request):
         else:
             raise HTTPException(status_code=400, detail="Unsupported OAuth provider")
         
-        # 새로운 JWT 토큰 생성
+        # 새로운 JWT 토큰 생성 (2시간 유효)
         new_jwt_token = jwt.encode(
             {"sub": user_id, "exp": datetime.utcnow() + timedelta(minutes=120)},
             SECRET_KEY,
             algorithm="HS256"
         )
+        
+        # 리프레시 토큰 만료 시간을 1일로 설정
+        refresh_token_expiry = datetime.utcnow() + timedelta(days=1)
         
         # 응답 생성
         response = JSONResponse({

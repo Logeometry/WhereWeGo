@@ -4,7 +4,7 @@
 ## 404 : 로그인이 되었으나 인증 실패 - 쿠키 저장X, 잘못된 토큰 등
 
 from fastapi import APIRouter, Depends, Request, HTTPException, Response
-from services.user_store import find_user_by_id
+from services.user_store import find_user_by_id, is_token_blacklisted, add_to_blacklist, is_refresh_token_expired
 from jose import jwt, JWTError
 from dotenv import load_dotenv
 import os
@@ -33,6 +33,11 @@ def get_current_user(request: Request) -> str:
         print(f"[DEBUG] JWT decode error: {e}")
         raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
 
+    # 블랙리스트 확인
+    if is_token_blacklisted(token):
+        print("[DEBUG] Token is blacklisted")
+        raise HTTPException(status_code=401, detail="Token is blacklisted")
+
     user_id = payload.get("sub")
     print(f"[DEBUG] Extracted user_id: {user_id}")
     
@@ -40,6 +45,13 @@ def get_current_user(request: Request) -> str:
         # 3-1) HTTP 401: payload에 sub가 없어서 user_id를 꺼낼 수 없음
         print("[DEBUG] No user_id in payload")
         raise HTTPException(status_code=401, detail="Invalid token payload")
+    
+    # 리프레시 토큰 만료 확인
+    if is_refresh_token_expired(user_id):
+        print(f"[DEBUG] Refresh token expired for user: {user_id}, adding JWT to blacklist")
+        # 리프레시 토큰이 만료된 경우 현재 JWT 토큰을 블랙리스트에 추가
+        add_to_blacklist(token, user_id, "refresh_token_expired")
+        raise HTTPException(status_code=401, detail="Refresh token expired, please login again")
 
     return user_id
 
@@ -61,7 +73,24 @@ def read_me(user_id=Depends(get_current_user)):
 
 # 로그아웃
 @router.post("/logout")
-def logout(response: Response):
+def logout(request: Request, response: Response):
+    token = request.cookies.get("access_token")
+    
+    if token:
+        try:
+            # JWT 토큰에서 user_id 추출
+            payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            user_id = payload.get("sub")
+            
+            if user_id:
+                # 토큰을 블랙리스트에 추가
+                add_to_blacklist(token, user_id, "logout")
+                print(f"[DEBUG] Token blacklisted for user: {user_id}")
+        except JWTError:
+            # 토큰이 이미 만료되었거나 잘못된 경우 무시
+            print("[DEBUG] Invalid token during logout, skipping blacklist")
+    
+    # 쿠키에서 토큰 삭제
     response.delete_cookie("access_token")
     return {"message": "로그아웃"}
 

@@ -6,7 +6,7 @@
 import uuid
 from fastapi import APIRouter, Depends, Request, HTTPException, Response
 from fastapi.responses import RedirectResponse, JSONResponse
-from services.user_store import find_user_by_oauth, find_user_by_id, add_user, update_user_refresh_token
+from services.user_store import find_user_by_oauth, find_user_by_id, add_user, update_user_refresh_token, find_user_by_email, update_user_refresh_token_expiry
 import urllib.parse
 import requests
 from datetime import datetime, timedelta
@@ -95,23 +95,42 @@ def kakao_callback(request: Request):
         # 카카오 응답 구조에 맞게 사용자 정보 추출
         kakao_account = user_info.get("kakao_account", {})
         properties = user_info.get("properties", {})
+        email = kakao_account.get("email")
         
-        user = {
-            "user_id": str(uuid.uuid4()),
-            "oauth": "kakao",
-            "email": kakao_account.get("email"),
-            "name": properties.get("nickname"),
-            "oauth_id": str(user_info["id"]),
-            "picture": properties.get("profile_image"),
-            "refresh_token": refresh_token
-        }
-        user["created_at"] = datetime.utcnow().isoformat()
-        add_user(user)
+        # 같은 이메일로 다른 OAuth 제공자로 가입한 사용자가 있는지 확인
+        existing_user = find_user_by_email(email) if email else None
+        
+        if existing_user:
+            # 기존 사용자의 OAuth 정보를 카카오로 변경하고 리프레시 토큰 갱신
+            print(f"[DEBUG] Found existing user with same email, updating OAuth provider to Kakao")
+            update_user_refresh_token_expiry(existing_user["user_id"], refresh_token)
+            user = existing_user
+            user["oauth"] = "kakao"
+            user["oauth_id"] = oauth_id
+            user["picture"] = properties.get("profile_image")
+        else:
+            # 새 사용자 생성
+            refresh_token_expiry = datetime.utcnow() + timedelta(days=1)
+            user = {
+                "user_id": str(uuid.uuid4()),
+                "oauth": "kakao",
+                "email": email,
+                "name": properties.get("nickname"),
+                "oauth_id": str(user_info["id"]),
+                "picture": properties.get("profile_image"),
+                "refresh_token": refresh_token,
+                "refresh_token_expiry": refresh_token_expiry.isoformat()
+            }
+            user["created_at"] = datetime.utcnow().isoformat()
+            add_user(user)
     else:
         # 기존 사용자의 리프레시 토큰 업데이트
         if refresh_token:
             update_user_refresh_token(user["user_id"], refresh_token)
 
+    # 리프레시 토큰 만료 시간을 1일로 설정 (JWT 토큰은 2시간 유지)
+    refresh_token_expiry = datetime.utcnow() + timedelta(days=1)
+    
     token = jwt.encode(
         {"sub": user["user_id"], "exp": datetime.utcnow() + timedelta(minutes=120)},
         SECRET_KEY,
