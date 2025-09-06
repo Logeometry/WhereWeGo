@@ -6,7 +6,7 @@
 import uuid
 from fastapi import APIRouter, Depends, Request, HTTPException, Response
 from fastapi.responses import RedirectResponse, JSONResponse
-from services.user_store import find_user_by_oauth, find_user_by_id, add_user
+from services.user_store import find_user_by_oauth, find_user_by_id, add_user, update_user_refresh_token
 import urllib.parse
 import requests
 from datetime import datetime, timedelta
@@ -63,6 +63,7 @@ def google_callback(request: Request):
 
     token_data = token_resp.json()
     access_token = token_data.get("access_token")
+    refresh_token = token_data.get("refresh_token")
 
     # access_token으로 사용자 정보 요청
     user_info_resp = requests.get(
@@ -78,16 +79,24 @@ def google_callback(request: Request):
 
     user = find_user_by_oauth(oauth, oauth_id)
     if not user:
+        # 새 사용자 생성
         user = {
             "user_id": str(uuid.uuid4()), 
             "oauth": "google", 
             "email":     user_info.get("email"),
             "name": user_info.get("name"),
             "oauth_id": user_info.get("sub"),
-            "picture": user_info.get("picture")
+            "picture": user_info.get("picture"),
+            "refresh_token": refresh_token
         }
         user["created_at"] = datetime.utcnow().isoformat()
         add_user(user)
+    else:
+        # 기존 사용자의 마지막 로그인 시간 업데이트 및 리프레시 토큰 갱신
+        current_time = datetime.utcnow().isoformat()
+        user["last_login"] = current_time
+        if refresh_token:
+            update_user_refresh_token(user["user_id"], refresh_token)
 
     token = jwt.encode(
         {"sub": user["user_id"], "exp": datetime.utcnow() + timedelta(minutes=120)},

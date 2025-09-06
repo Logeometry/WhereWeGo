@@ -2,6 +2,7 @@ import os
 from typing import Optional, Dict
 from pymongo import MongoClient
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -39,3 +40,24 @@ def add_user(user: Dict) -> None:
     print(f"[DEBUG] add_user called with: {user}")
     result = user_data_col.insert_one(user)
     print(f"[DEBUG] User saved successfully with ID: {result.inserted_id}")
+
+
+def update_user_refresh_token(user_id: str, refresh_token: str) -> None:
+    """사용자의 리프레시 토큰을 업데이트"""
+    print(f"[DEBUG] update_user_refresh_token called with user_id: {user_id}")
+    result = user_data_col.update_one(
+        {"user_id": user_id},
+        {"$set": {"refresh_token": refresh_token, "updated_at": datetime.utcnow().isoformat()}}
+    )
+    print(f"[DEBUG] Refresh token updated: {result.modified_count} documents modified")
+
+
+def get_user_refresh_token(user_id: str) -> Optional[str]:
+    """사용자의 리프레시 토큰을 조회"""
+    print(f"[DEBUG] get_user_refresh_token called with user_id: {user_id}")
+    user = user_data_col.find_one({"user_id": user_id}, {"refresh_token": 1})
+    if user and "refresh_token" in user:
+        print(f"[DEBUG] Refresh token found for user: {user_id}")
+        return user["refresh_token"]
+    print(f"[DEBUG] No refresh token found for user: {user_id}")
+    return None

@@ -14,6 +14,7 @@ from routeres.category_router import router as category_router
 from routeres.auth_router import router as auth_router
 from routeres.google_login_router import router as google_login_router
 from routeres.kakao_login_router import router as kakao_login_router
+from routeres.refresh_token_router import router as refresh_token_router
 from routeres.nearby_place_router import router as nearby_place_router
 from routeres.location_datail_router import router as location_detail_router
 from routeres.weather_router import router as weather_router
@@ -85,6 +86,7 @@ app.include_router(category_router, prefix="/api", tags=["카테고리"])
 app.include_router(survey_router, prefix="/api/v1", tags=["설문조사"])
 app.include_router(google_login_router, prefix="/api/v1", tags=["인증"])
 app.include_router(kakao_login_router, prefix="/api/v1", tags=["인증"])
+app.include_router(refresh_token_router, prefix="/api/v1", tags=["인증"])
 app.include_router(nearby_place_router, prefix="/api/v1", tags=["주변장소"])
 app.include_router(location_detail_router, prefix="/api/v1", tags=["장소상세"])
 app.include_router(weather_router, prefix="/api/v1", tags=["날씨"])

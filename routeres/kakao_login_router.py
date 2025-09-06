@@ -6,7 +6,7 @@
 import uuid
 from fastapi import APIRouter, Depends, Request, HTTPException, Response
 from fastapi.responses import RedirectResponse, JSONResponse
-from services.user_store import find_user_by_oauth, find_user_by_id, add_user
+from services.user_store import find_user_by_oauth, find_user_by_id, add_user, update_user_refresh_token
 import urllib.parse
 import requests
 from datetime import datetime, timedelta
@@ -76,6 +76,7 @@ def kakao_callback(request: Request):
 
     token_data = token_resp.json()
     access_token = token_data.get("access_token")
+    refresh_token = token_data.get("refresh_token")
 
     # access_token으로 사용자 정보 요청
     user_info_resp = requests.get(
@@ -101,10 +102,15 @@ def kakao_callback(request: Request):
             "email": kakao_account.get("email"),
             "name": properties.get("nickname"),
             "oauth_id": str(user_info["id"]),
-            "picture": properties.get("profile_image")
+            "picture": properties.get("profile_image"),
+            "refresh_token": refresh_token
         }
         user["created_at"] = datetime.utcnow().isoformat()
         add_user(user)
+    else:
+        # 기존 사용자의 리프레시 토큰 업데이트
+        if refresh_token:
+            update_user_refresh_token(user["user_id"], refresh_token)
 
     token = jwt.encode(
         {"sub": user["user_id"], "exp": datetime.utcnow() + timedelta(minutes=120)},
@@ -118,7 +124,7 @@ def kakao_callback(request: Request):
     print(f"[DEBUG] User data: {user}")
     
     # 테스트 페이지로 리디렉션 (개발 중)
-    homepage_url = "http://localhost:8000/test/login_test.html"
+    homepage_url = f"{FRONTEND_URL.rstrip('/')}/"
 
     # 로그인 후 홈페이지로 리디렉션
     response = RedirectResponse(url=homepage_url)
