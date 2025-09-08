@@ -140,12 +140,16 @@ class Restaurant(BaseModel):
     class Config:
         extra = "ignore"
 
- # 설문조사 반환형태
+ # 설문조사 반환형태 (새로운 구조)
 class SurveyResponse(BaseModel):
-    username: str
-    content_id: str
-    name: str
-    responses: Literal['like', 'neutral', 'dislike']
+    user_id: str
+    category_group: str
+    activity_level_idx: int = Field(..., ge=0, le=2, description="0: high, 1: medium, 2: low")
+    time_period: int = Field(..., ge=0, le=2, description="0: 아침, 1: 오후, 2: 저녁")
+    season: int = Field(..., ge=0, le=3, description="0: 봄, 1: 여름, 2: 가을, 3: 겨울")
+    preference: int = Field(..., ge=0, le=1, description="0: 활동성 선호, 1: 시간대 선호")
+    pos_item_index: int = Field(..., description="선호 아이템 인덱스")
+    neg_item_index: int = Field(..., description="비선호 아이템 인덱스")
 
 class AutoMultiCourseInput(BaseModel):
     survey: List[SurveyResponse]  # ✅ 리스트로 변경
@@ -172,6 +176,19 @@ class User_log(BaseModel):
     user_id: str
     event: str
     target_id: str
+    timestamp: datetime
+
+# 설문조사 로그를 위한 새로운 스키마 (8요소 구조)
+class Survey_log(BaseModel):
+    id: Optional[str] = Field(default=None, alias="_id")
+    user_id: str
+    category_group: str
+    activity_level_idx: int  # 0: high, 1: medium, 2: low
+    time_period: int  # 0: 아침, 1: 오후, 2: 저녁
+    season: int  # 0: 봄, 1: 여름, 2: 가을, 3: 겨울
+    preference: int  # 0: 활동성 선호, 1: 시간대 선호
+    pos_item_index: int  # 선택한 관광지 인덱스
+    neg_item_index: int  # 선택하지 않은 관광지 인덱스
     timestamp: datetime
 
 
@@ -292,4 +309,47 @@ class CategoriesResponse(BaseModel):
 class LocationsResponse(BaseModel):
     """지역 목록 응답 모델"""
     locations: List[LocationInfo]
+
+# 1.localserver.py와 호환되는 모델들
+class SurveySelectionData(BaseModel):
+    """설문조사 선택 데이터 모델 (1.localserver.py에서 가져옴)"""
+    step: str
+    value: str
+
+class SurveyData(BaseModel):
+    """설문조사 데이터 모델"""
+    activity: Optional[str] = None
+    activity_level: Optional[str] = None
+    time: Optional[str] = None
+    season: Optional[str] = None
+    preference: Optional[str] = None
+
+class VoteData(BaseModel):
+    """투표 데이터 모델"""
+    round_number: int  # 1-5 라운드 번호
+    choice: str        # "primary" 또는 "alternative"
+    item_name: str     # 선택한 관광지 이름
+
+class LoginData(BaseModel):
+    """로그인 데이터 모델"""
+    user_id: str
+
+# ML 추천 관련 모델
+class MLRecommendationRequest(BaseModel):
+    """ML 추천 요청 모델"""
+    user_id: Optional[str] = None
+    vote_schemas: Optional[List[List]] = None
+    top_k: int = 10
+    exclude_items: Optional[List[int]] = None
+
+class MLRecommendationResponse(BaseModel):
+    """ML 추천 응답 모델"""
+    status: str
+    message: str
+    user_id: Optional[str] = None
+    recommendations: List[Dict]
+    method: Optional[str] = None
+    base_user_info: Optional[Dict] = None
+    vote_summary: Optional[Dict] = None
+    personalization_info: Optional[Dict] = None
 

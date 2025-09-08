@@ -1,7 +1,7 @@
 import random
 from datetime import datetime, timedelta, time, date
 from typing import List, Dict
-from .travel_time_estimator import TravelTimeService
+from services.travel_time_estimator import TravelTimeService
 
 class ItineraryService:
     def __init__(self, estimator: TravelTimeService, alpha: float = 0.5):

@@ -25,6 +25,8 @@ try:
     starting_point_collection = db.starting_point
     # 'user_log' 컬렉션 사용
     user_log_collection = client.user_db.user_log
+    # 'survey_log' 컬렉션 사용 (8요소 구조화된 설문조사 로그)
+    survey_log_collection = client.user_db.survey_log
     # 서버 정보 확인으로 연결 테스트
     client.server_info()
     print("MongoDB 연결 성공")

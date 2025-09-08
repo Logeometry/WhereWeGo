@@ -38,18 +38,22 @@ load_dotenv()
 # 환경변수 기본값 설정
 os.environ.setdefault("SECRET_KEY", "y314adfas...23414afdafasf524515411")
 os.environ.setdefault("FRONTEND_URL", "http://localhost:3000")
-# os.environ.setdefault("MONGO_ATLAS_URI", "mongodb://localhost:27017")  # 하드코딩 제거
+os.environ.setdefault("MONGO_ATLAS_URI", "mongodb://localhost:27017")
 os.environ.setdefault("ENVIRONMENT", "dev")
 
 # ML 모델 초기화
 async def initialize_ml_model():
-    """ML 모델 초기화"""
+    """ML 모델 초기화 (1.localserver.py와 호환)"""
     try:
         from services.ml_recommendation_service import ml_recommendation_service
-        ckpt_path = os.path.join(os.path.dirname(__file__), "model", "model_epoch_5.pth")
-        await ml_recommendation_service.load_model(ckpt_path)
+        # 모델 파일 경로를 자동으로 찾도록 수정
+        success = await ml_recommendation_service.load_model()
+        if success:
+            print("✅ ML 모델 초기화 완료")
+        else:
+            print("⚠️ ML 모델 초기화 실패 - 기본 추천 모드로 동작")
     except Exception as e:
-        print(f"ML 모델 초기화 실패: {e}")
+        print(f"⚠️ ML 모델 초기화 실패: {e} - 기본 추천 모드로 동작")
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
@@ -106,6 +110,26 @@ app.mount("/static", StaticFiles(directory="."), name="static")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+def get_safe_file_path(filename):
+    """파일 경로를 안전하게 찾아서 반환"""
+    # 현재 디렉토리 기준으로 찾기
+    current_path = os.path.join(BASE_DIR, "test", filename)
+    if os.path.exists(current_path):
+        return current_path
+    
+    # 상위 디렉토리에서 찾기 (실행 위치가 다를 때)
+    parent_path = os.path.join(os.path.dirname(BASE_DIR), "WhereWeGo-backend", "test", filename)
+    if os.path.exists(parent_path):
+        return parent_path
+    
+    # 현재 작업 디렉토리에서 찾기
+    cwd_path = os.path.join(os.getcwd(), "WhereWeGo-backend", "test", filename)
+    if os.path.exists(cwd_path):
+        return cwd_path
+    
+    # 모든 경로에서 찾지 못한 경우 원래 경로 반환 (에러 메시지를 위해)
+    return current_path
+
 # templates 설정 (임시 비활성화)
 # templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "test"))
 
@@ -152,9 +176,39 @@ async def show_attractions():
 # 로그인 테스트
 @app.get("/login")
 def serve_test_page():
-    return FileResponse("test/login_test.html")
+    file_path = get_safe_file_path("login_test.html")
+    return FileResponse(file_path)
 
 # 통합 코스 빌더
 @app.get("/course-builder")
 def serve_course_builder():
-    return FileResponse("test/integrated_course_builder.html")
+    file_path = get_safe_file_path("integrated_course_builder.html")
+    return FileResponse(file_path)
+
+# 원본 설문조사 템플릿 (1.localserver.py 스타일)
+@app.get("/survey")
+def serve_survey_template():
+    file_path = get_safe_file_path("survey_original_template.html")
+    return FileResponse(file_path)
+
+# 완전한 설문조사 템플릿
+@app.get("/survey-complete")
+def serve_complete_survey():
+    file_path = get_safe_file_path("complete_survey_test.html")
+    return FileResponse(file_path)
+
+if __name__ == "__main__":
+    # 상대 import 문제 해결을 위한 패키지 경로 설정
+    import sys
+    from pathlib import Path
+    import os
+    
+    # 현재 디렉토리를 sys.path에 추가 (상대 import를 위해)
+    current_dir = Path(__file__).parent
+    if str(current_dir) not in sys.path:
+        sys.path.insert(0, str(current_dir))
+    
+    # 작업 디렉토리를 WhereWeGo-backend로 변경
+    os.chdir(current_dir)
+    
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
