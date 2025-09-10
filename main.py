@@ -20,9 +20,11 @@ from routeres.location_datail_router import router as location_detail_router
 from routeres.weather_router import router as weather_router
 from routeres.festival_router import router as festival_router
 from routeres.survey_router import router as survey_router
+from routeres.survey_router_simple import router as survey_router_simple
 from routeres.recommeded_cors_router import router as recommended_course_router
 from routeres.course_management_router import router as course_management_router
 from routeres.wish_router import router as wish_router
+from routeres.wishList_router import router as wishlist_router
 from routeres.crowding_router import router as crowding_router
 from routeres.tmap_crowding_router import router as tmap_crowding_router
 # from routeres.photo_gallery_router import router as photo_gallery_router
@@ -72,6 +74,8 @@ app = FastAPI(lifespan=lifespan)
 origins = [
     "http://localhost:8000",
     "http://localhost:3000",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:3000",
     FRONTEND_URL
 ]
 
@@ -100,6 +104,7 @@ app.include_router(festival_router, prefix="/api/v1", tags=["축제"])
 app.include_router(recommended_course_router, prefix="/api/v1", tags=["추천코스"])
 app.include_router(course_management_router, prefix="/api/v1", tags=["코스관리"])
 app.include_router(wish_router, prefix="/api/v1", tags=["찜기능"])
+app.include_router(wishlist_router, prefix="/api/v1", tags=["찜목록"])
 app.include_router(crowding_router, prefix="/api/v1", tags=["혼잡도"])
 app.include_router(tmap_crowding_router, prefix="/api/v1", tags=["티맵 혼잡도"])
 # app.include_router(photo_gallery_router, prefix="/api/v1", tags=["관광사진갤러리"])

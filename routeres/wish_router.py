@@ -6,19 +6,19 @@ from services.wish_service import toggle_wish, delete_wish, is_wished
 router = APIRouter(prefix="/wish", tags=["Wish"])
 
 @router.post("")
-def add_or_toggle_wish(data: WishRequest):
-    result = toggle_wish(data.user_id, data.place_id)
-    return {"status" : result}
+async def add_or_toggle_wish(data: WishRequest):
+    result = await toggle_wish(data.user_id, data.place_id)
+    return {"status": result}
 
 @router.delete("")
-def remove_wish(data: WishRequest):
-    delete_wish(data.user_id, data.place_id)
-    return {"status" : "deleted"}
+async def remove_wish(data: WishRequest):
+    success = await delete_wish(data.user_id, data.place_id)
+    return {"status": "deleted" if success else "not_found"}
 
 @router.get("/status")
-def check_wish_status(
+async def check_wish_status(
     user_id: str = Query(...),
     place_id: str = Query(...)
 ):
-    wished = is_wished(user_id, place_id)
+    wished = await is_wished(user_id, place_id)
     return {"wished": wished}
