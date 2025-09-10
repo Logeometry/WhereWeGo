@@ -82,12 +82,14 @@ app.add_middleware(
    allow_credentials=True,
    allow_methods=["*"],  # 모든 HTTP 메서드 허용
    allow_headers=["*"],  # 모든 헤더 허용
+   expose_headers=["*"],  # 응답 헤더 노출
 )
 
 # API 라우터 등록
 app.include_router(search_router, prefix="/api/v1", tags=["검색"])
 app.include_router(category_router, prefix="/api", tags=["카테고리"])
-app.include_router(survey_router, prefix="/api/v1", tags=["설문조사"])
+# app.include_router(survey_router, prefix="/api/v1", tags=["설문조사"])  # 기존 라우터 비활성화
+app.include_router(survey_router_simple, prefix="/api/v1", tags=["설문조사"])
 app.include_router(google_login_router, prefix="/api/v1", tags=["인증"])
 app.include_router(kakao_login_router, prefix="/api/v1", tags=["인증"])
 app.include_router(refresh_token_router, prefix="/api/v1", tags=["인증"])
