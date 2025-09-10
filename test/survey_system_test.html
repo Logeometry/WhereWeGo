@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>설문조사 시스템 테스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 2px solid #f0f0f0;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #4facfe;
+            padding-bottom: 10px;
+        }
+
+        .login-section {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-color: #fcb69f;
+        }
+
+        .survey-section {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border-color: #fed6e3;
+        }
+
+        .recommendation-section {
+            background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);
+            border-color: #fef9d7;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button.google {
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+        }
+
+        .button.kakao {
+            background: linear-gradient(135deg, #fee500 0%, #ff6b35 100%);
+            color: #333;
+        }
+
+        .button.danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group select:focus, .form-group input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .result-box {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+
+        .result-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .result-item h4 {
+            color: #495057;
+            margin-bottom: 8px;
+        }
+
+        .result-item p {
+            color: #6c757d;
+            margin: 5px 0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .vote-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .vote-item:hover {
+            border-color: #4facfe;
+            transform: translateY(-2px);
+        }
+
+        .vote-item.selected {
+            border-color: #4facfe;
+            background: #f0f8ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ WhereWeGo 설문조사 시스템</h1>
+            <p>JWT 토큰 기반 보안 설문조사 및 추천 시스템 테스트</p>
+        </div>
+
+        <div class="content">
+            <!-- 로그인 상태 표시 -->
+            <div id="userInfo" class="user-info hidden">
+                <h3>👤 로그인된 사용자</h3>
+                <p id="userDetails">사용자 정보 로딩 중...</p>
+            </div>
+
+            <!-- 1. 로그인 섹션 -->
+            <div class="section login-section">
+                <h2>🔐 1. 로그인</h2>
+                <div class="grid">
+                    <div>
+                        <h3>Google 로그인</h3>
+                        <a href="/api/v1/auth/google/login" class="button google">Google로 로그인</a>
+                    </div>
+                    <div>
+                        <h3>Kakao 로그인</h3>
+                        <a href="/api/v1/auth/kakao/login" class="button kakao">Kakao로 로그인</a>
+                    </div>
+                </div>
+                <button onclick="checkLoginStatus()" class="button">로그인 상태 확인</button>
+                <button onclick="logout()" class="button danger">로그아웃</button>
+            </div>
+
+            <!-- 2. 설문조사 섹션 -->
+            <div class="section survey-section">
+                <h2>📝 2. 설문조사</h2>
+                
+                <div class="form-group">
+                    <label for="activity">활동 유형:</label>
+                    <select id="activity">
+                        <option value="">선택하세요</option>
+                        <option value="자연풍경">자연풍경</option>
+                        <option value="자연산림">자연산림</option>
+                        <option value="관람및체험">관람및체험</option>
+                        <option value="휴양">휴양</option>
+                        <option value="테마거리">테마거리</option>
+                        <option value="예술 감상">예술감상</option>
+                        <option value="공연관람">공연관람</option>
+                        <option value="트레킹">트레킹</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="activityLevel">활동 수준:</label>
+                    <select id="activityLevel">
+                        <option value="">선택하세요</option>
+                        <option value="낮음">낮음</option>
+                        <option value="중간">보통</option>
+                        <option value="높음">높음</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="time">시간대:</label>
+                    <select id="time">
+                        <option value="">선택하세요</option>
+                        <option value="오전">오전</option>
+                        <option value="오후">오후</option>
+                        <option value="저녁">저녁</option>
+                        <option value="밤">밤</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="season">계절:</label>
+                    <select id="season">
+                        <option value="">선택하세요</option>
+                        <option value="봄">봄</option>
+                        <option value="여름">여름</option>
+                        <option value="가을">가을</option>
+                        <option value="겨울">겨울</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="preference">선호도:</label>
+                    <select id="preference">
+                        <option value="">선택하세요</option>
+                        <option value="활동성">활동성</option>
+                        <option value="시간대">휴식</option>
+                        <option value="활동성">문화</option>
+                        <option value="시간대">자연</option>
+                    </select>
+                </div>
+
+                <button onclick="submitSurvey()" class="button">설문조사 제출</button>
+                <button onclick="checkSurveyStatus()" class="button">설문조사 상태 확인</button>
+            </div>
+
+            <!-- 3. 투표 섹션 -->
+            <div class="section survey-section">
+                <h2>🗳️ 3. 투표 (5라운드)</h2>
+                <button onclick="getPlaceRecommendations()" class="button">장소 추천 받기</button>
+                <button onclick="submitVotes()" class="button">투표 제출</button>
+                <div id="voteResults" class="result-box hidden"></div>
+            </div>
+
+            <!-- 4. ML 추천 섹션 -->
+            <div class="section recommendation-section">
+                <h2>🤖 4. ML 모델 추천</h2>
+                <button onclick="getMLRecommendations()" class="button">ML 추천 받기 (20곳)</button>
+                <button onclick="checkModelStatus()" class="button">모델 상태 확인</button>
+                <div id="mlResults" class="result-box hidden"></div>
+            </div>
+
+            <!-- 5. 관리 섹션 -->
+            <div class="section">
+                <h2>⚙️ 5. 관리</h2>
+                <button onclick="resetAllData()" class="button danger">모든 데이터 초기화</button>
+            </div>
+
+            <!-- 6. 테스트 섹션 -->
+            <div class="section">
+                <h2>🧪 6. 테스트</h2>
+                <button onclick="testGetEndpoint()" class="button">GET 테스트</button>
+                <button onclick="testPostEndpoint()" class="button">POST 테스트</button>
+            </div>
+
+            <!-- 로딩 표시 -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>처리 중...</p>
+            </div>
+
+            <!-- 상태 메시지 -->
+            <div id="statusMessage"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/v1';
+        let currentVotes = [];
+        let placeRecommendations = [];
+
+        // 로딩 표시
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+
+        // 상태 메시지 표시
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('statusMessage');
+            // 줄바꿈을 <br>로 변환
+            const formattedMessage = message.replace(/\n/g, '<br>');
+            statusDiv.innerHTML = `<div class="status ${type}">${formattedMessage}</div>`;
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 8000); // 메시지가 길어서 시간을 늘림
+        }
+
+        // API 호출 헬퍼
+        async function apiCall(url, options = {}) {
+            try {
+                console.log('[DEBUG] apiCall 호출됨:', { url, options });
+                
+                const requestBody = options.body ? JSON.stringify(options.body) : undefined;
+                console.log('[DEBUG] 요청 본문:', requestBody);
+                
+                const response = await fetch(url, {
+                    method: options.method || 'GET',
+                    credentials: 'include', // 쿠키 포함
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        ...options.headers
+                    },
+                    body: requestBody,
+                    ...options
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+                    throw new Error(errorData.detail || `HTTP ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API 호출 오류:', error);
+                throw error;
+            }
+        }
+
+        // 1. 로그인 상태 확인
+        async function checkLoginStatus() {
+            showLoading();
+            try {
+                const response = await apiCall(`${API_BASE}/survey/status`);
+                
+                if (response.logged_in) {
+                    document.getElementById('userInfo').classList.remove('hidden');
+                    document.getElementById('userDetails').innerHTML = 
+                        `<strong>✅ 로그인됨</strong><br>
+                         📝 설문조사: ${response.has_survey_data ? '✅ 완료' : '❌ 미완료'}<br>
+                         🗳️ 투표: ${response.has_votes ? '✅ 완료' : '❌ 미완료'}<br>
+                         📊 상태: ${response.status}`;
+                    showStatus('✅ 로그인 상태 확인 완료 - 로그인되어 있습니다', 'success');
+                } else {
+                    document.getElementById('userInfo').classList.add('hidden');
+                    showStatus('❌ 로그인되지 않음 - Google 또는 Kakao로 로그인해주세요', 'error');
+                }
+            } catch (error) {
+                document.getElementById('userInfo').classList.add('hidden');
+                if (error.message.includes('401') || error.message.includes('Not authenticated')) {
+                    showStatus('❌ 로그인되지 않음 - Google 또는 Kakao로 로그인해주세요', 'error');
+                } else {
+                    showStatus(`❌ 로그인 상태 확인 실패: ${error.message}`, 'error');
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 로그아웃
+        async function logout() {
+            showLoading();
+            try {
+                await apiCall(`${API_BASE}/auth/logout`, { method: 'POST' });
+                document.getElementById('userInfo').classList.add('hidden');
+                showStatus('로그아웃 완료', 'success');
+            } catch (error) {
+                showStatus(`로그아웃 실패: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 2. 설문조사 제출
+        async function submitSurvey() {
+            const surveyData = {
+                activity: document.getElementById('activity').value,
+                activity_level: document.getElementById('activityLevel').value,
+                time: document.getElementById('time').value,
+                season: document.getElementById('season').value,
+                preference: document.getElementById('preference').value
+            };
+
+            console.log('[DEBUG] 설문조사 데이터:', surveyData);
+            console.log('[DEBUG] JSON.stringify 결과:', JSON.stringify(surveyData));
+
+            // 모든 필드 검증
+            if (!Object.values(surveyData).every(value => value)) {
+                showStatus('모든 설문조사 항목을 선택해주세요.', 'error');
+                return;
+            }
+
+            showLoading();
+            try {
+                // 직접 fetch 사용 (디버깅용)
+                console.log('[DEBUG] 직접 fetch 호출 시작');
+                const response = await fetch(`${API_BASE}/survey/submit`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(surveyData)
+                });
+                
+                console.log('[DEBUG] 응답 상태:', response.status);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+                    throw new Error(errorData.detail || `HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('[DEBUG] 응답 데이터:', result);
+                
+                showStatus(`설문조사 제출 완료: ${result.message}`, 'success');
+                checkLoginStatus(); // 상태 업데이트
+            } catch (error) {
+                showStatus(`설문조사 제출 실패: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 설문조사 상태 확인
+        async function checkSurveyStatus() {
+            showLoading();
+            try {
+                const response = await apiCall(`${API_BASE}/survey/status`);
+                
+                if (response.logged_in) {
+                    let statusMessage = '📊 설문조사 상태 확인 완료\n\n';
+                    statusMessage += `✅ 로그인: 완료\n`;
+                    statusMessage += `📝 설문조사: ${response.has_survey_data ? '✅ 완료' : '❌ 미완료'}\n`;
+                    statusMessage += `🗳️ 투표: ${response.has_votes ? '✅ 완료' : '❌ 미완료'}\n`;
+                    statusMessage += `📊 전체 상태: ${response.status}`;
+                    
+                    if (response.has_survey_data && response.has_votes) {
+                        statusMessage += '\n\n🎉 모든 단계가 완료되었습니다! ML 추천을 받을 수 있습니다.';
+                        showStatus(statusMessage, 'success');
+                    } else if (response.has_survey_data) {
+                        statusMessage += '\n\n⏭️ 다음 단계: 장소 추천을 받고 투표를 진행하세요.';
+                        showStatus(statusMessage, 'info');
+                    } else {
+                        statusMessage += '\n\n⏭️ 다음 단계: 설문조사를 완료하세요.';
+                        showStatus(statusMessage, 'info');
+                    }
+                } else {
+                    showStatus('❌ 로그인이 필요합니다. Google 또는 Kakao로 로그인해주세요.', 'error');
+                }
+            } catch (error) {
+                if (error.message.includes('401') || error.message.includes('Not authenticated')) {
+                    showStatus('❌ 로그인이 필요합니다. Google 또는 Kakao로 로그인해주세요.', 'error');
+                } else {
+                    showStatus(`❌ 설문조사 상태 확인 실패: ${error.message}`, 'error');
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 3. 장소 추천 받기
+        async function getPlaceRecommendations() {
+            showLoading();
+            try {
+                const response = await apiCall(`${API_BASE}/survey/place-recommendations`);
+                
+                placeRecommendations = response.recommendations;
+                displayPlaceRecommendations(response.recommendations);
+                showStatus('장소 추천 완료', 'success');
+            } catch (error) {
+                showStatus(`장소 추천 실패: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 장소 추천 결과 표시
+        function displayPlaceRecommendations(recommendations) {
+            const resultsDiv = document.getElementById('voteResults');
+            resultsDiv.classList.remove('hidden');
+            
+            let html = '<h3>🗳️ 투표할 장소를 선택하세요 (5라운드)</h3>';
+            
+            recommendations.forEach((round, index) => {
+                html += `<div class="vote-round">
+                    <h4>라운드 ${index + 1}</h4>
+                    <div class="vote-options">`;
+                
+                // Primary 옵션
+                html += `<div class="vote-item" onclick="selectVote(${index}, 'primary', '${round.primary.name}')">
+                    <h4>${round.primary.name}</h4>
+                    <p>📍 ${round.primary.address}</p>
+                    <p>🏷️ ${round.primary.category}</p>
+                </div>`;
+                
+                // Alternative 옵션
+                html += `<div class="vote-item" onclick="selectVote(${index}, 'alternative', '${round.alternative.name}')">
+                    <h4>${round.alternative.name}</h4>
+                    <p>📍 ${round.alternative.address}</p>
+                    <p>🏷️ ${round.alternative.category}</p>
+                </div>`;
+                
+                html += '</div></div>';
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // 투표 선택
+        function selectVote(round, choice, itemName) {
+            // 기존 선택 제거
+            const voteItems = document.querySelectorAll('.vote-item');
+            voteItems.forEach(item => item.classList.remove('selected'));
+            
+            // 새 선택 추가
+            event.target.closest('.vote-item').classList.add('selected');
+            
+            // 투표 데이터 업데이트
+            currentVotes[round] = {
+                round: round + 1,
+                choice: choice,
+                item_name: itemName
+            };
+        }
+
+        // 투표 제출
+        async function submitVotes() {
+            if (currentVotes.length < 5) {
+                showStatus('모든 라운드에 투표해주세요.', 'error');
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await apiCall(`${API_BASE}/survey/votes`, {
+                    method: 'POST',
+                    body: { votes: currentVotes }
+                });
+                
+                showStatus(`투표 제출 완료: ${response.message}`, 'success');
+                checkLoginStatus(); // 상태 업데이트
+            } catch (error) {
+                showStatus(`투표 제출 실패: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 4. ML 추천 받기
+        async function getMLRecommendations() {
+            showLoading();
+            try {
+                const response = await apiCall(`${API_BASE}/survey/ml-recommendations`);
+                
+                displayMLRecommendations(response.recommendations);
+                showStatus('ML 추천 완료 (20곳)', 'success');
+            } catch (error) {
+                showStatus(`ML 추천 실패: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ML 추천 결과 표시
+        function displayMLRecommendations(recommendations) {
+            const resultsDiv = document.getElementById('mlResults');
+            resultsDiv.classList.remove('hidden');
+            
+            let html = '<h3>🤖 ML 모델 추천 결과 (20곳)</h3>';
+            
+            recommendations.forEach((place, index) => {
+                html += `<div class="result-item">
+                    <h4>${index + 1}. ${place.name}</h4>
+                    <p>📍 ${place.address}</p>
+                    <p>🏷️ ${place.category}</p>
+                    <p>⭐ 평점: ${place.rating || 'N/A'}</p>
+                    <p>📝 ${place.description || '설명 없음'}</p>
+                </div>`;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // 모델 상태 확인
+        async function checkModelStatus() {
+            showLoading();
+            try {
+                const response = await apiCall(`${API_BASE}/survey/model-status`);
+                
+                const status = response.model_loaded ? '로드됨' : '로드되지 않음';
+                showStatus(`ML 모델 상태: ${status}`, 'info');
+            } catch (error) {
+                showStatus(`모델 상태 확인 실패: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 5. 모든 데이터 초기화
+        async function resetAllData() {
+            if (!confirm('모든 설문조사 및 투표 데이터를 삭제하시겠습니까?')) {
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await apiCall(`${API_BASE}/survey/reset`, {
+                    method: 'DELETE'
+                });
+                
+                showStatus(`데이터 초기화 완료: ${response.message}`, 'success');
+                checkLoginStatus(); // 상태 업데이트
+                
+                // UI 초기화
+                document.getElementById('voteResults').classList.add('hidden');
+                document.getElementById('mlResults').classList.add('hidden');
+                currentVotes = [];
+                placeRecommendations = [];
+            } catch (error) {
+                showStatus(`데이터 초기화 실패: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 테스트 함수들
+        async function testGetEndpoint() {
+            showLoading();
+            try {
+                const response = await apiCall(`${API_BASE}/survey/test`);
+                showStatus(`GET 테스트 성공: ${JSON.stringify(response)}`, 'success');
+            } catch (error) {
+                showStatus(`GET 테스트 실패: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function testPostEndpoint() {
+            showLoading();
+            try {
+                const testData = {
+                    test: "데이터",
+                    number: 123,
+                    array: [1, 2, 3]
+                };
+                const response = await apiCall(`${API_BASE}/survey/test-post`, {
+                    method: 'POST',
+                    body: testData
+                });
+                showStatus(`POST 테스트 성공: ${JSON.stringify(response)}`, 'success');
+            } catch (error) {
+                showStatus(`POST 테스트 실패: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 페이지 로드 시 로그인 상태 확인
+        window.onload = function() {
+            checkLoginStatus();
+        };
+    </script>
+</body>
+</html>
