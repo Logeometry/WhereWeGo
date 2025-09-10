@@ -520,7 +520,7 @@ async def get_model_status(user_id=Depends(get_current_user)):
 async def reset_survey_data(user_id=Depends(get_current_user)):
     """설문조사 데이터 초기화 (JWT 토큰 기반 보안)"""
     try:
-        if not IMPORTS_AVAILABLE or user_log_col is None:
+        if not IMPORTS_AVAILABLE or not user_log_col:
             raise HTTPException(status_code=500, detail="데이터베이스 연결을 사용할 수 없습니다.")
         
         # JWT 토큰으로 인증된 사용자만 자신의 데이터를 삭제할 수 있음
