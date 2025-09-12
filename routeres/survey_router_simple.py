@@ -64,9 +64,15 @@ class SurveySubmitResponse(BaseModel):
     message: str
     survey_id: str
 
+class VoteData(BaseModel):
+    """개별 투표 데이터"""
+    round: int
+    choice: str  # "primary" 또는 "alternative"
+    item_name: str
+
 class VoteSubmitRequest(BaseModel):
     """투표 제출 요청"""
-    votes: List[Dict]  # [{"round": 1, "choice": "primary", "item_name": "해운대해수욕장"}, ...]
+    votes: List[VoteData]
 
 class VoteSubmitResponse(BaseModel):
     """투표 제출 응답"""
@@ -215,11 +221,30 @@ async def submit_survey(request: Request, user_id=Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=f"설문조사 저장 실패: {str(e)}")
 
 @router.post("/survey/votes", response_model=VoteSubmitResponse)
-async def submit_votes(vote_data: VoteSubmitRequest, user_id=Depends(get_current_user)):
+async def submit_votes(request: Request, user_id=Depends(get_current_user)):
     """투표 데이터를 user_log에 저장 (JWT 토큰 기반 보안)"""
     try:
+        # Raw request body 확인
+        try:
+            body = await request.json()
+            print(f"[DEBUG] Raw request body: {body}")
+            print(f"[DEBUG] Body type: {type(body)}")
+        except Exception as json_error:
+            print(f"[DEBUG] JSON 파싱 에러: {json_error}")
+            print(f"[DEBUG] Request content type: {request.headers.get('content-type')}")
+            print(f"[DEBUG] Request body raw: {await request.body()}")
+            raise HTTPException(status_code=400, detail=f"JSON 파싱 에러: {str(json_error)}")
+        
+        # 수동으로 데이터 파싱
+        if "votes" not in body:
+            raise HTTPException(status_code=400, detail="votes 필드가 없습니다.")
+        
+        votes_data = body["votes"]
+        print(f"[DEBUG] Votes data: {votes_data}")
+        print(f"[DEBUG] Votes type: {type(votes_data)}")
+        
         # 투표 데이터 검증
-        if not vote_data.votes or len(vote_data.votes) == 0:
+        if not votes_data or len(votes_data) == 0:
             raise HTTPException(status_code=400, detail="투표 데이터를 입력해주세요.")
         
         if not IMPORTS_AVAILABLE or user_log_col is None:
@@ -235,11 +260,11 @@ async def submit_votes(vote_data: VoteSubmitRequest, user_id=Depends(get_current
         vote_log = {
             "user_id": user_id,  # JWT 토큰에서 검증된 사용자 ID
             "type": "votes",
-            "data": vote_data.votes,
+            "data": votes_data,
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat(),
             "status": "completed",
-            "total_votes": len(vote_data.votes)
+            "total_votes": len(votes_data)
         }
         
         if existing_votes:
@@ -329,35 +354,33 @@ async def generate_survey_place_recommendations(survey_data: dict) -> list:
             print(f"추천 생성 오류: {recommendations_result['error']}")
             return []
         
-        # 5라운드 추천 데이터를 리스트로 변환
+        # 5라운드 추천 데이터를 프론트엔드 호환 형식으로 변환
         rounds = recommendations_result.get("rounds", [])
         recommendations = []
         
         for round_data in rounds:
             # 주 카테고리 아이템
             primary_item = round_data.get("primary", {}).get("item", {})
-            if primary_item:
-                recommendations.append({
-                    "place_id": str(primary_item.get("index", "")),
-                    "name": primary_item.get("name", ""),
-                    "category": primary_item.get("category", ""),
-                    "score": primary_item.get("final_score", 0.0),
-                    "reason": round_data.get("primary", {}).get("reason", ""),
-                    "round": round_data.get("round_number", 0),
-                    "type": "primary"
-                })
-            
             # 대안 카테고리 아이템
             alternative_item = round_data.get("alternative", {}).get("item", {})
-            if alternative_item:
+            
+            if primary_item and alternative_item:
                 recommendations.append({
-                    "place_id": str(alternative_item.get("index", "")),
-                    "name": alternative_item.get("name", ""),
-                    "category": alternative_item.get("category", ""),
-                    "score": alternative_item.get("final_score", 0.0),
-                    "reason": round_data.get("alternative", {}).get("reason", ""),
-                    "round": round_data.get("round_number", 0),
-                    "type": "alternative"
+                    "primary": {
+                        "name": primary_item.get("name", ""),
+                        "address": primary_item.get("address", "주소 정보 없음"),
+                        "category": primary_item.get("category", ""),
+                        "score": primary_item.get("final_score", 0.0),
+                        "reason": round_data.get("primary", {}).get("reason", "")
+                    },
+                    "alternative": {
+                        "name": alternative_item.get("name", ""),
+                        "address": alternative_item.get("address", "주소 정보 없음"),
+                        "category": alternative_item.get("category", ""),
+                        "score": alternative_item.get("final_score", 0.0),
+                        "reason": round_data.get("alternative", {}).get("reason", "")
+                    },
+                    "round_number": round_data.get("round_number", 0)
                 })
         
         return recommendations
@@ -520,7 +543,7 @@ async def get_model_status(user_id=Depends(get_current_user)):
 async def reset_survey_data(user_id=Depends(get_current_user)):
     """설문조사 데이터 초기화 (JWT 토큰 기반 보안)"""
     try:
-        if not IMPORTS_AVAILABLE or not user_log_col:
+        if not IMPORTS_AVAILABLE or user_log_col is None:
             raise HTTPException(status_code=500, detail="데이터베이스 연결을 사용할 수 없습니다.")
         
         # JWT 토큰으로 인증된 사용자만 자신의 데이터를 삭제할 수 있음

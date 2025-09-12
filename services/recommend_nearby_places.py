@@ -142,8 +142,8 @@ async def recommend_nearby_cafes(
     else:
         raise ValueError("기준 장소의 좌표 정보를 찾을 수 없습니다.")
 
-    print(f"기준 좌표: {base_coords}")
-    print(f"최대 거리: {max_distance}km")
+    # print(f"기준 좌표: {base_coords}")
+    # print(f"최대 거리: {max_distance}km")
 
     # 카페 컬렉션 확인
     cafe_count_total = await cafa_col.count_documents({})
@@ -189,7 +189,6 @@ async def recommend_nearby_cafes(
 
         try:
             dist_km = geodesic(base_coords, target_coords).km
-            print(f"카페 '{doc.get('name', 'Unknown')}': 거리 {dist_km:.2f}km")
         except Exception as e:
             print(f"거리 계산 오류: {e}")
             continue
@@ -202,9 +201,9 @@ async def recommend_nearby_cafes(
             cafe_data["_id"] = str(cafe_data["_id"])
             nearby_cafes_with_dist.append((cafe_data, dist_km))
 
-    print(f"총 카페 수: {cafe_count}")
-    print(f"유효한 좌표를 가진 카페 수: {valid_coords_count}")
-    print(f"최대 거리 내 카페 수: {len(nearby_cafes_with_dist)}")
+    # print(f"총 카페 수: {cafe_count}")
+    # print(f"유효한 좌표를 가진 카페 수: {valid_coords_count}")
+    # print(f"최대 거리 내 카페 수: {len(nearby_cafes_with_dist)}")
 
     # 3) 거리 기준 오름차순 정렬
     nearby_cafes_with_dist.sort(key=lambda x: x[1])
@@ -262,6 +261,7 @@ async def recommend_nearby_restaurants(
         if dist_km <= max_distance:
             # 거리 정보를 식당 데이터에 추가
             restaurant_data = doc.copy()
+            restaurant_data["_id"] = str(restaurant_data["_id"])  # ObjectId를 문자열로 변환
             restaurant_data["distance"] = round(dist_km, 2)
             nearby_restaurants_with_dist.append((restaurant_data, dist_km))
 
