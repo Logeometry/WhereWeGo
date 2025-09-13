@@ -305,10 +305,13 @@
                     <select id="activity">
                         <option value="">선택하세요</option>
                         <option value="자연풍경">자연풍경</option>
-                        <option value="역사문화">역사문화</option>
-                        <option value="쇼핑">쇼핑</option>
-                        <option value="맛집">맛집</option>
-                        <option value="액티비티">액티비티</option>
+                        <option value="자연산림">자연산림</option>
+                        <option value="관람및체험">관람및체험</option>
+                        <option value="휴양">휴양</option>
+                        <option value="테마거리">테마거리</option>
+                        <option value="예술 감상">예술감상</option>
+                        <option value="공연관람">공연관람</option>
+                        <option value="트레킹">트레킹</option>
                     </select>
                 </div>
 
@@ -349,10 +352,9 @@
                     <select id="preference">
                         <option value="">선택하세요</option>
                         <option value="활동성">활동성</option>
-                        <option value="시간대">시간대</option>
-                        <option value="휴식">휴식</option>
-                        <option value="문화">문화</option>
-                        <option value="자연">자연</option>
+                        <option value="시간대">휴식</option>
+                        <option value="활동성">문화</option>
+                        <option value="시간대">자연</option>
                     </select>
                 </div>
 
@@ -402,7 +404,7 @@
 
     <script>
         const API_BASE = 'http://localhost:8000/api/v1';
-        let currentVotes = {};  // 객체로 초기화
+        let currentVotes = [];
         let placeRecommendations = [];
 
         // 로딩 표시
@@ -430,28 +432,20 @@
             try {
                 console.log('[DEBUG] apiCall 호출됨:', { url, options });
                 
-                // fetch 옵션 구성
-                const fetchOptions = {
+                const requestBody = options.body ? JSON.stringify(options.body) : undefined;
+                console.log('[DEBUG] 요청 본문:', requestBody);
+                
+                const response = await fetch(url, {
                     method: options.method || 'GET',
                     credentials: 'include', // 쿠키 포함
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    }
-                };
-                
-                // body가 있으면 JSON으로 변환
-                if (options.body) {
-                    fetchOptions.body = JSON.stringify(options.body);
-                    console.log('[DEBUG] 요청 본문:', fetchOptions.body);
-                }
-                
-                // 추가 헤더가 있으면 병합
-                if (options.headers) {
-                    fetchOptions.headers = { ...fetchOptions.headers, ...options.headers };
-                }
-                
-                const response = await fetch(url, fetchOptions);
+                        'Accept': 'application/json',
+                        ...options.headers
+                    },
+                    body: requestBody,
+                    ...options
+                });
 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
@@ -648,10 +642,9 @@
 
         // 투표 선택
         function selectVote(round, choice, itemName) {
-            // 해당 라운드의 기존 선택 제거
-            const roundDiv = event.target.closest('.vote-round');
-            const roundVoteItems = roundDiv.querySelectorAll('.vote-item');
-            roundVoteItems.forEach(item => item.classList.remove('selected'));
+            // 기존 선택 제거
+            const voteItems = document.querySelectorAll('.vote-item');
+            voteItems.forEach(item => item.classList.remove('selected'));
             
             // 새 선택 추가
             event.target.closest('.vote-item').classList.add('selected');
@@ -662,39 +655,20 @@
                 choice: choice,
                 item_name: itemName
             };
-            
-            console.log(`[DEBUG] 라운드 ${round + 1} 선택: ${itemName} (${choice})`);
-            console.log('[DEBUG] 현재 투표 상태:', currentVotes);
         }
 
         // 투표 제출
         async function submitVotes() {
-            console.log('[DEBUG] currentVotes 객체:', currentVotes);
-            console.log('[DEBUG] currentVotes keys:', Object.keys(currentVotes));
-            
-            // 객체를 배열로 변환
-            const votesArray = Object.values(currentVotes);
-            console.log('[DEBUG] votesArray:', votesArray);
-            
-            if (votesArray.length < 5) {
-                const missingRounds = [];
-                for (let i = 0; i < 5; i++) {
-                    if (!currentVotes[i]) {
-                        missingRounds.push(i + 1);
-                    }
-                }
-                showStatus(`모든 라운드에 투표해주세요. (현재: ${votesArray.length}/5) - 누락된 라운드: ${missingRounds.join(', ')}`, 'error');
+            if (currentVotes.length < 5) {
+                showStatus('모든 라운드에 투표해주세요.', 'error');
                 return;
             }
 
             showLoading();
             try {
-                console.log('[DEBUG] 투표 데이터 전송:', votesArray);
-                console.log('[DEBUG] 투표 데이터 JSON:', JSON.stringify({ votes: votesArray }));
-                
                 const response = await apiCall(`${API_BASE}/survey/votes`, {
                     method: 'POST',
-                    body: { votes: votesArray }
+                    body: { votes: currentVotes }
                 });
                 
                 showStatus(`투표 제출 완료: ${response.message}`, 'success');
