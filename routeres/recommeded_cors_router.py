@@ -1,6 +1,8 @@
 import os
 import json
+import uuid
 from datetime import datetime, timedelta
+from typing import Union, List
 
 import google.generativeai as genai
 from bson import ObjectId
@@ -9,10 +11,17 @@ from fastapi import APIRouter, HTTPException, Body
 from pymongo import MongoClient
 
 # Pydantic 모델 import
-from schemas import ItineraryRequest, ItineraryResponse
+from schemas import ItineraryRequest, ItineraryResponse, FrontendItineraryResponse, FrontendDay, FrontendPlace, CourseSaveRequest, CourseItinerary, CourseDay, CoursePlace
 
 # MongoDB 핸들러 함수 import (새로 추가)
 from services.db_handler import get_random_places, tourism_collection, starting_point_collection
+from services.data_converter import data_converter
+
+# MongoDB 클라이언트 설정 (코스 저장용)
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+client = MongoClient(MONGO_URI)
+db = client["wherewego"]
+courses_collection = db["courses"]
 
 # .env 파일에서 환경 변수 로드
 load_dotenv()
@@ -98,9 +107,115 @@ def build_gemini_prompt(request_data: ItineraryRequest, places_info: list, start
 
     return prompt.strip()
 
+def convert_to_frontend_format(itinerary_response: ItineraryResponse) -> FrontendItineraryResponse:
+    """
+    백엔드 응답을 프론트엔드가 원하는 형태로 변환하는 함수
+    """
+    frontend_days = []
+    
+    for day_schedule in itinerary_response.dailySchedule:
+        # 날짜 형식 변환: "2026-08-21" -> "2026. 8. 21."
+        date_parts = day_schedule.date.split("-")
+        formatted_date = f"{date_parts[0]}. {int(date_parts[1])}. {int(date_parts[2])}."
+        
+        # Day 이름 생성
+        day_name = f"Day {day_schedule.day}"
+        
+        # 장소 정보 변환
+        frontend_places = []
+        for i, place in enumerate(day_schedule.places):
+            # 시간 계산 (첫 장소는 14:00부터 시작, 이후 장소는 이전 장소 + 체류시간 + 이동시간)
+            if i == 0:
+                start_hour = 14
+                start_minute = 0
+            else:
+                # 이전 장소의 체류시간과 이동시간을 고려하여 시간 계산
+                prev_place = day_schedule.places[i-1]
+                travel_time_minutes = prev_place.travel_time_from_previous
+                duration_hours = prev_place.estimated_duration
+                
+                # 간단한 시간 계산 (실제로는 더 정교한 로직 필요)
+                total_minutes = travel_time_minutes + (duration_hours * 60)
+                start_hour = 14 + (total_minutes // 60)
+                start_minute = total_minutes % 60
+            
+            time_str = f"{start_hour:02d}:{start_minute:02d}"
+            
+            # 아이콘 타입 결정 (카테고리 기반)
+            icon_type = "MuseumIcon"  # 기본값
+            if hasattr(place, 'category'):
+                if '해수욕장' in place.name or '해변' in place.name:
+                    icon_type = "BeachAccessIcon"
+                elif '시장' in place.name or '상가' in place.name:
+                    icon_type = "ShoppingCartIcon"
+                elif '식당' in place.name or '맛집' in place.name:
+                    icon_type = "RestaurantIcon"
+                elif '케이블카' in place.name or '공원' in place.name:
+                    icon_type = "FlightTakeoffIcon"
+            
+            frontend_place = FrontendPlace(
+                id=str(i + 1),  # 프론트엔드에서 사용하는 순서 ID
+                name=place.name,
+                placeId=place.id,
+                time=time_str,
+                icon=icon_type
+            )
+            frontend_places.append(frontend_place)
+        
+        frontend_day = FrontendDay(
+            date=formatted_date,
+            dayName=day_name,
+            places=frontend_places
+        )
+        frontend_days.append(frontend_day)
+    
+    return FrontendItineraryResponse(
+        itinerary=frontend_days
+    )
+
+def convert_frontend_to_save_format(frontend_response: FrontendItineraryResponse, user_id: str, course_name: str) -> CourseSaveRequest:
+    """
+    프론트엔드 형태를 DB 저장 형태로 변환하는 함수
+    """
+    course_days = []
+    
+    for day_data in frontend_response.itinerary:
+        day_number = int(day_data.dayName.split(" ")[1])  # "Day 1" -> 1
+        
+        # 날짜 형식 변환: "2026. 8. 21." -> "2026-08-21"
+        date_parts = day_data.date.replace(".", "").split()
+        formatted_date = f"{date_parts[0]}-{date_parts[1].zfill(2)}-{date_parts[2].zfill(2)}"
+        
+        day_places = []
+        for place in day_data.places:
+            course_place = CoursePlace(
+                place_id=place.placeId or place.id,
+                name=place.name,
+                time=place.time
+            )
+            day_places.append(course_place)
+        
+        course_day = CourseDay(
+            day=day_number,
+            date=formatted_date,
+            places=day_places
+        )
+        course_days.append(course_day)
+    
+    # 실제 여행 코스 데이터 구성
+    itinerary = CourseItinerary(
+        days=course_days
+    )
+    
+    return CourseSaveRequest(
+        user_id=user_id,
+        course_name=course_name,
+        itinerary=itinerary
+    )
 
 
-@router.post("/generate", response_model=ItineraryResponse)
+
+@router.post("/generate", response_model=FrontendItineraryResponse)
 async def generate_itinerary(request: ItineraryRequest = Body(...)):
     """
     사용자 설문조사 결과를 바탕으로 Gemini API를 호출하여 여행 코스를 생성합니다.
@@ -199,13 +314,155 @@ async def generate_itinerary(request: ItineraryRequest = Body(...)):
                 "places": day_places,
             })
         
-        return ItineraryResponse(
+        # 백엔드 형태로 응답 생성
+        backend_response = ItineraryResponse(
             dailySchedule=final_schedule,
             travelTips=gemini_result.get("travelTips", "즐거운 부산 여행 되세요!")
         )
+        
+        # 프론트엔드 형태로 변환하여 반환
+        return convert_to_frontend_format(backend_response)
 
     except HTTPException as e:
         raise e
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+        raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
+
+@router.post("/save")
+async def save_course(request_data: Union[List[dict], dict] = Body(...)):
+    """
+    생성된 여행 코스를 DB에 저장합니다.
+    프론트엔드 형식과 백엔드 형식을 모두 자동으로 지원합니다.
+    """
+    try:
+        # 데이터 변환 서비스 사용
+        from services.data_converter import data_converter
+        
+        normalized_data = data_converter.normalize_course_data(request_data)
+        
+        # 고유한 코스 ID 생성
+        course_id = str(uuid.uuid4())
+        
+        # 현재 시간
+        now = datetime.now()
+        
+        # DB에 저장할 문서 구성
+        course_document = {
+            "course_id": course_id,
+            "user_id": normalized_data["user_id"],
+            "course_name": normalized_data["course_name"],
+            "itinerary": normalized_data["itinerary"],
+            "created_at": now,
+            "updated_at": now
+        }
+        
+        # MongoDB에 저장
+        result = courses_collection.insert_one(course_document)
+        
+        if result.inserted_id:
+            return {
+                "success": True,
+                "course_id": course_id,
+                "message": "코스가 성공적으로 저장되었습니다."
+            }
+        else:
+            raise HTTPException(status_code=500, detail="코스 저장에 실패했습니다.")
+            
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"코스 저장 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
+
+@router.get("/user/{user_id}")
+async def get_user_courses(user_id: str):
+    """
+    특정 사용자의 저장된 코스 목록을 조회합니다.
+    """
+    try:
+        # 사용자의 코스 목록 조회
+        courses = list(courses_collection.find(
+            {"user_id": user_id},
+            {"course_id": 1, "course_name": 1, "created_at": 1, "updated_at": 1}
+        ).sort("created_at", -1))
+        
+        # ObjectId를 문자열로 변환
+        for course in courses:
+            course["_id"] = str(course["_id"])
+            course["created_at"] = course["created_at"].isoformat()
+            course["updated_at"] = course["updated_at"].isoformat()
+        
+        return {
+            "success": True,
+            "courses": courses
+        }
+        
+    except Exception as e:
+        print(f"코스 조회 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
+
+@router.get("/course/{course_id}")
+async def get_course_detail(course_id: str, format: str = "backend"):
+    """
+    특정 코스의 상세 정보를 조회합니다.
+    
+    Args:
+        course_id: 코스 ID
+        format: 응답 형식 ("backend" 또는 "frontend")
+    """
+    try:
+        # 코스 상세 정보 조회
+        course = courses_collection.find_one({"course_id": course_id})
+        
+        if not course:
+            raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다.")
+        
+        # ObjectId를 문자열로 변환
+        course["_id"] = str(course["_id"])
+        course["created_at"] = course["created_at"].isoformat()
+        course["updated_at"] = course["updated_at"].isoformat()
+        
+        if format == "frontend":
+            # 프론트엔드 형식으로 변환
+            frontend_data = data_converter.convert_backend_to_frontend(course)
+            return {
+                "success": True,
+                "course": course,  # 원본 데이터
+                "itinerary": frontend_data  # 프론트엔드 형식 데이터
+            }
+        else:
+            # 기존 백엔드 형식
+            return {
+                "success": True,
+                "course": course
+            }
+        
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"코스 상세 조회 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
+
+@router.get("/course/{course_id}/frontend")
+async def get_course_for_frontend(course_id: str):
+    """
+    프론트엔드 TravelPlanSamplePage에서 바로 사용할 수 있는 형식으로 코스를 반환합니다.
+    """
+    try:
+        # 코스 상세 정보 조회
+        course = courses_collection.find_one({"course_id": course_id})
+        
+        if not course:
+            raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다.")
+        
+        # 프론트엔드 형식으로 변환
+        frontend_data = data_converter.convert_backend_to_frontend(course)
+        
+        return frontend_data  # 배열 형태로 직접 반환
+        
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"프론트엔드용 코스 조회 중 오류 발생: {e}")
         raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")

@@ -43,6 +43,58 @@ class ItineraryResponse(BaseModel):
     dailySchedule: List[DailySchedule]
     travelTips: str = Field(..., description="Gemini가 생성한 종합 여행 팁")
 
+# 프론트엔드가 원하는 형태의 응답 스키마
+class FrontendPlace(BaseModel):
+    """프론트엔드용 장소 정보"""
+    id: str
+    name: str
+    placeId: Optional[str] = None
+    time: str
+    icon: Optional[str] = None  # 아이콘 타입을 문자열로 저장
+
+class FrontendDay(BaseModel):
+    """프론트엔드용 일별 스케줄"""
+    date: str  # "2026. 8. 21." 형태
+    dayName: str  # "Day 1" 형태
+    places: List[FrontendPlace]
+
+class FrontendItineraryResponse(BaseModel):
+    """프론트엔드가 원하는 형태의 여행 코스 응답"""
+    itinerary: List[FrontendDay]
+
+# 코스 저장용 스키마 - 코스별 구별 가능한 형태
+class CoursePlace(BaseModel):
+    """코스 내 장소 정보"""
+    place_id: Optional[str] = None  # placeId가 null일 수 있도록 수정
+    id: Optional[str] = None        # 프론트엔드 id 필드 추가 지원
+    name: str
+    time: str
+
+class CourseDay(BaseModel):
+    """코스 내 일별 정보"""
+    day: int
+    date: str
+    places: List[CoursePlace]
+
+class CourseItinerary(BaseModel):
+    """실제 여행 코스 데이터"""
+    days: List[CourseDay]
+
+class CourseSaveRequest(BaseModel):
+    """코스 저장 요청"""
+    user_id: str
+    course_name: str
+    itinerary: CourseItinerary
+
+class SavedCourse(BaseModel):
+    """DB에 저장된 코스"""
+    course_id: str  # 코스 구별용 고유 ID
+    user_id: str    # 만든 사용자 ID
+    course_name: str
+    itinerary: CourseItinerary  # 실제 여행 코스
+    created_at: datetime
+    updated_at: datetime
+
 class PlaceVisit(BaseModel):
     place_id: str
     start_time: Optional[datetime]
