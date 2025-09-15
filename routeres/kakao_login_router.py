@@ -143,7 +143,7 @@ def kakao_callback(request: Request):
     print(f"[DEBUG] User data: {user}")
     
     # 테스트 페이지로 리디렉션 (개발 중)
-    homepage_url = "http://localhost:8000/test/survey_system_test.html"
+    homepage_url = f"{FRONTEND_URL.rstrip('/')}/"
 
     # 로그인 후 홈페이지로 리디렉션
     response = RedirectResponse(url=homepage_url)
