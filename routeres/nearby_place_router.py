@@ -4,6 +4,13 @@ from typing import List, Optional, Dict
 from schemas import Tourism, Cafe, Restaurant
 from services.data_loader import load_location_data_from_db
 from services.recommend_nearby_places import recommend_nearby_places, recommend_nearby_cafes, recommend_nearby_restaurants
+# 최적화된 서비스 추가
+from services.recommend_nearby_places_optimized import (
+    recommend_nearby_places_optimized,
+    recommend_nearby_cafes_optimized, 
+    recommend_nearby_restaurants_optimized,
+    recommend_nearby_all_optimized
+)
 import httpx
 import os
 from dotenv import load_dotenv
@@ -57,7 +64,7 @@ async def get_tmap_crowding_data(poi_id: str, lat: Optional[float] = None, lng: 
 @router.get("/nearby/{place_id}", response_model=List[Tourism])
 async def get_nearby_places(place_id: str, max_distance: float = 5.0, include_crowding: bool = False):
     """
-    기준 장소 주변의 관광지들을 반환합니다.
+    기준 장소 주변의 관광지들을 반환합니다. (최적화됨)
     
     Args:
         place_id: 기준 장소의 content_id
@@ -67,7 +74,8 @@ async def get_nearby_places(place_id: str, max_distance: float = 5.0, include_cr
     Returns:
         List[Tourism]: 주변 관광지 목록 (거리순 정렬, 최대 10개)
     """
-    places = await recommend_nearby_places(place_id, max_distance)
+    # 최적화된 서비스 사용
+    places = await recommend_nearby_places_optimized(place_id, max_distance)
     
     if include_crowding:
         # 각 장소에 혼잡도 정보 추가
@@ -99,7 +107,8 @@ async def get_nearby_cafes(place_id: str, max_distance: float = 5.0):
     Returns:
         List[Cafe]: 주변 카페 목록 (거리순 정렬, 최대 10개)
     """
-    cafes = await recommend_nearby_cafes(place_id, max_distance)
+    # 최적화된 서비스 사용
+    cafes = await recommend_nearby_cafes_optimized(place_id, max_distance)
     return [Cafe(**cafe) for cafe in cafes]
 
 @router.get("/nearby/restaurants/{place_id}", response_model=List[Restaurant])
@@ -114,13 +123,14 @@ async def get_nearby_restaurants(place_id: str, max_distance: float = 5.0):
     Returns:
         List[Restaurant]: 주변 식당 목록 (거리순 정렬, 최대 10개)
     """
-    restaurants = await recommend_nearby_restaurants(place_id, max_distance)
+    # 최적화된 서비스 사용
+    restaurants = await recommend_nearby_restaurants_optimized(place_id, max_distance)
     return [Restaurant(**restaurant) for restaurant in restaurants]
 
 @router.get("/nearby/all/{place_id}")
 async def get_nearby_all_places(place_id: str, max_distance: float = 5.0):
     """
-    기준 장소 주변의 모든 장소들(관광지, 카페, 식당)을 반환합니다.
+    기준 장소 주변의 모든 장소들(관광지, 카페, 식당)을 반환합니다. (최적화됨 - 병렬처리)
     
     Args:
         place_id: 기준 장소의 content_id
@@ -129,15 +139,8 @@ async def get_nearby_all_places(place_id: str, max_distance: float = 5.0):
     Returns:
         dict: 주변 장소들을 카테고리별로 분류하여 반환
     """
-    places = await recommend_nearby_places(place_id, max_distance)
-    cafes = await recommend_nearby_cafes(place_id, max_distance)
-    restaurants = await recommend_nearby_restaurants(place_id, max_distance)
-    
-    return {
-        "tourist_spots": [place.dict() for place in places],
-        "cafes": [Cafe(**cafe).dict() for cafe in cafes],
-        "restaurants": [Restaurant(**restaurant).dict() for restaurant in restaurants]
-    }
+    # 최적화된 병렬 처리 서비스 사용
+    return await recommend_nearby_all_optimized(place_id, max_distance)
 
 
 
