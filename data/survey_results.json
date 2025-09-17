@@ -1,0 +1,18 @@
+[
+  {
+    "username": "test1",
+    "travel_type": "도시 관광",
+    "climate": "온화한 사계절 기후",
+    "budget": "2",
+    "duration": "8-14일",
+    "companion": "커플/부부"
+  },
+  {
+    "username": "test2",
+    "travel_type": "도시 관광",
+    "climate": "온화한 사계절 기후",
+    "budget": "2",
+    "duration": "8-14일",
+    "companion": "커플/부부"
+  }
+]

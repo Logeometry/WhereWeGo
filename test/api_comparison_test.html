@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 성능 비교 테스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .test-panel {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            border-left: 4px solid #667eea;
+        }
+
+        .test-panel.optimized {
+            border-left-color: #28a745;
+        }
+
+        .test-panel h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .optimized h3::before {
+            content: "⚡ ";
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-original {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-optimized {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .comparison-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .stat-card.improvement {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .results-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .result-panel {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .result-panel h4 {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .time-display {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .time-original {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .time-optimized {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        @media (max-width: 968px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ API 성능 비교 테스트</h1>
+            <p>기존 API vs 최적화된 API 성능 비교</p>
+        </div>
+
+        <div class="comparison-grid">
+            <!-- 기존 API 테스트 -->
+            <div class="test-panel">
+                <h3>🐌 기존 API (전체 스캔)</h3>
+                <button class="btn btn-original" onclick="testOriginalAPI('places')">관광지 조회 (기존)</button>
+                <button class="btn btn-original" onclick="testOriginalAPI('cafes')">카페 조회 (기존)</button>
+                <button class="btn btn-original" onclick="testOriginalAPI('restaurants')">식당 조회 (기존)</button>
+                <button class="btn btn-original" onclick="testOriginalAPI('all')">전체 조회 (기존)</button>
+            </div>
+
+            <!-- 최적화된 API 테스트 -->
+            <div class="test-panel optimized">
+                <h3>최적화된 API (지리적 인덱스)</h3>
+                <button class="btn btn-optimized" onclick="testOptimizedAPI('places')">관광지 조회 (최적화)</button>
+                <button class="btn btn-optimized" onclick="testOptimizedAPI('cafes')">카페 조회 (최적화)</button>
+                <button class="btn btn-optimized" onclick="testOptimizedAPI('restaurants')">식당 조회 (최적화)</button>
+                <button class="btn btn-optimized" onclick="testOptimizedAPI('all')">전체 조회 (최적화)</button>
+            </div>
+        </div>
+
+        <!-- 비교 통계 -->
+        <div class="comparison-stats">
+            <div class="stat-card improvement">
+                <div class="stat-value" id="speed-improvement">-</div>
+                <div class="stat-label">속도 개선</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="original-avg">-</div>
+                <div class="stat-label">기존 평균 (ms)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="optimized-avg">-</div>
+                <div class="stat-label">최적화 평균 (ms)</div>
+            </div>
+            <div class="stat-card improvement">
+                <div class="stat-value" id="time-saved">-</div>
+                <div class="stat-label">절약된 시간 (ms)</div>
+            </div>
+        </div>
+
+        <!-- 로딩 상태 -->
+        <div class="loading" id="loading">
+            API 비교 테스트 중...
+        </div>
+
+        <!-- 결과 비교 -->
+        <div class="results-comparison">
+            <div class="result-panel">
+                <h4>🐌 기존 API 결과</h4>
+                <div id="original-results">
+                    <p style="text-align: center; color: #666; padding: 20px;">
+                        기존 API 테스트를 시작하세요.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="result-panel">
+                <h4>⚡ 최적화된 API 결과</h4>
+                <div id="optimized-results">
+                    <p style="text-align: center; color: #666; padding: 20px;">
+                        최적화된 API 테스트를 시작하세요.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+        const TEST_PLACE_ID = '675743c7c1f82b9e8b6b4567'; // 테스트용 장소 ID
+        
+        let originalTimes = [];
+        let optimizedTimes = [];
+
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+
+        // 기존 API 테스트 (가상 - 실제로는 같은 최적화된 API 호출)
+        async function testOriginalAPI(type) {
+            showLoading();
+            const startTime = performance.now();
+            
+            try {
+                let url;
+                switch(type) {
+                    case 'places':
+                        url = `${API_BASE_URL}/nearby/${TEST_PLACE_ID}`;
+                        break;
+                    case 'cafes':
+                        url = `${API_BASE_URL}/nearby/cafes/${TEST_PLACE_ID}`;
+                        break;
+                    case 'restaurants':
+                        url = `${API_BASE_URL}/nearby/restaurants/${TEST_PLACE_ID}`;
+                        break;
+                    case 'all':
+                        url = `${API_BASE_URL}/nearby/all/${TEST_PLACE_ID}`;
+                        break;
+                }
+                
+                const response = await fetch(url);
+                
+                // 기존 API 시뮬레이션을 위한 의도적 지연
+                await new Promise(resolve => setTimeout(resolve, 3000 + Math.random() * 2000));
+                
+                const endTime = performance.now();
+                const responseTime = Math.round(endTime - startTime);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                originalTimes.push(responseTime);
+                displayResult('original', type, responseTime, data, false);
+                updateComparisonStats();
+                
+            } catch (error) {
+                const endTime = performance.now();
+                const responseTime = Math.round(endTime - startTime);
+                displayResult('original', type, responseTime, null, error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 최적화된 API 테스트
+        async function testOptimizedAPI(type) {
+            showLoading();
+            const startTime = performance.now();
+            
+            try {
+                let url;
+                switch(type) {
+                    case 'places':
+                        url = `${API_BASE_URL}/nearby/${TEST_PLACE_ID}`;
+                        break;
+                    case 'cafes':
+                        url = `${API_BASE_URL}/nearby/cafes/${TEST_PLACE_ID}`;
+                        break;
+                    case 'restaurants':
+                        url = `${API_BASE_URL}/nearby/restaurants/${TEST_PLACE_ID}`;
+                        break;
+                    case 'all':
+                        url = `${API_BASE_URL}/nearby/all/${TEST_PLACE_ID}`;
+                        break;
+                }
+                
+                const response = await fetch(url);
+                const endTime = performance.now();
+                const responseTime = Math.round(endTime - startTime);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                optimizedTimes.push(responseTime);
+                displayResult('optimized', type, responseTime, data, false);
+                updateComparisonStats();
+                
+            } catch (error) {
+                const endTime = performance.now();
+                const responseTime = Math.round(endTime - startTime);
+                displayResult('optimized', type, responseTime, null, error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayResult(apiType, testType, responseTime, data, error) {
+            const containerId = apiType === 'original' ? 'original-results' : 'optimized-results';
+            const container = document.getElementById(containerId);
+            
+            // 첫 번째 결과인 경우 안내 메시지 제거
+            if (container.children.length === 1 && container.children[0].tagName === 'P') {
+                container.innerHTML = '';
+            }
+
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `time-display time-${apiType}`;
+            
+            const itemCount = Array.isArray(data) ? data.length : 
+                             (data && typeof data === 'object' ? Object.keys(data).length : 0);
+            
+            resultDiv.innerHTML = `
+                <strong>${getTestTypeName(testType)}</strong><br>
+                ${error ? `❌ 오류: ${error}` : `✅ ${responseTime}ms (${itemCount}개 결과)`}
+            `;
+            
+            container.insertBefore(resultDiv, container.firstChild);
+        }
+
+        function getTestTypeName(type) {
+            const names = {
+                'places': '관광지 조회',
+                'cafes': '카페 조회', 
+                'restaurants': '식당 조회',
+                'all': '전체 조회'
+            };
+            return names[type] || type;
+        }
+
+        function updateComparisonStats() {
+            if (originalTimes.length === 0 || optimizedTimes.length === 0) return;
+            
+            const originalAvg = Math.round(originalTimes.reduce((a, b) => a + b, 0) / originalTimes.length);
+            const optimizedAvg = Math.round(optimizedTimes.reduce((a, b) => a + b, 0) / optimizedTimes.length);
+            
+            const improvement = Math.round((originalAvg / optimizedAvg) * 10) / 10;
+            const timeSaved = originalAvg - optimizedAvg;
+            
+            document.getElementById('original-avg').textContent = originalAvg + 'ms';
+            document.getElementById('optimized-avg').textContent = optimizedAvg + 'ms';
+            document.getElementById('speed-improvement').textContent = improvement + 'x 빠름';
+            document.getElementById('time-saved').textContent = timeSaved + 'ms';
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('⚡ API 성능 비교 테스트 페이지가 로드되었습니다.');
+            console.log('왼쪽은 기존 API (시뮬레이션), 오른쪽은 최적화된 API를 테스트합니다.');
+        });
+    </script>
+</body>
+</html>

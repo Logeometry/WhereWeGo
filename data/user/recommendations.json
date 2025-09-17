@@ -1,0 +1,725 @@
+{
+  "user_id": "user123",
+  "recommendations": [
+    {
+      "place_id": "Haeundae-gu Spot 1",
+      "coords": [
+        35.155395,
+        129.149362
+      ],
+      "rec_score": 0.84,
+      "category": "Landmark"
+    },
+    {
+      "place_id": "Haeundae-gu Spot 2",
+      "coords": [
+        35.143059,
+        129.151441
+      ],
+      "rec_score": 0.94,
+      "category": "Nature"
+    },
+    {
+      "place_id": "Haeundae-gu Spot 3",
+      "coords": [
+        35.148202,
+        129.178963
+      ],
+      "rec_score": 0.89,
+      "category": "Park"
+    },
+    {
+      "place_id": "Haeundae-gu Spot 4",
+      "coords": [
+        35.178006,
+        129.178963
+      ],
+      "rec_score": 0.79,
+      "category": "Beach"
+    },
+    {
+      "place_id": "Haeundae-gu Spot 5",
+      "coords": [
+        35.139495,
+        129.150998
+      ],
+      "rec_score": 0.71,
+      "category": "Beach"
+    },
+    {
+      "place_id": "Suyeong-gu Spot 1",
+      "coords": [
+        35.165501,
+        129.10099
+      ],
+      "rec_score": 0.77,
+      "category": "Beach"
+    },
+    {
+      "place_id": "Suyeong-gu Spot 2",
+      "coords": [
+        35.156065,
+        129.131729
+      ],
+      "rec_score": 0.86,
+      "category": "Beach"
+    },
+    {
+      "place_id": "Suyeong-gu Spot 3",
+      "coords": [
+        35.159393,
+        129.115712
+      ],
+      "rec_score": 0.9,
+      "category": "Urban"
+    },
+    {
+      "place_id": "Suyeong-gu Spot 4",
+      "coords": [
+        35.146242,
+        129.138552
+      ],
+      "rec_score": 0.8,
+      "category": "Park"
+    },
+    {
+      "place_id": "Suyeong-gu Spot 5",
+      "coords": [
+        35.140161,
+        129.123398
+      ],
+      "rec_score": 0.94,
+      "category": "Scenic"
+    },
+    {
+      "place_id": "Jung-gu Spot 1",
+      "coords": [
+        35.102894,
+        129.015229
+      ],
+      "rec_score": 0.8,
+      "category": "Urban"
+    },
+    {
+      "place_id": "Jung-gu Spot 2",
+      "coords": [
+        35.1184,
+        129.017925
+      ],
+      "rec_score": 0.9,
+      "category": "Urban"
+    },
+    {
+      "place_id": "Jung-gu Spot 3",
+      "coords": [
+        35.093021,
+        129.011708
+      ],
+      "rec_score": 0.85,
+      "category": "Beach"
+    },
+    {
+      "place_id": "Jung-gu Spot 4",
+      "coords": [
+        35.08301,
+        129.040249
+      ],
+      "rec_score": 0.75,
+      "category": "Park"
+    },
+    {
+      "place_id": "Jung-gu Spot 5",
+      "coords": [
+        35.095409,
+        129.015661
+      ],
+      "rec_score": 0.94,
+      "category": "Urban"
+    },
+    {
+      "place_id": "Dong-gu Spot 1",
+      "coords": [
+        35.093161,
+        129.043031
+      ],
+      "rec_score": 0.76,
+      "category": "Market"
+    },
+    {
+      "place_id": "Dong-gu Spot 2",
+      "coords": [
+        35.122845,
+        129.039464
+      ],
+      "rec_score": 0.88,
+      "category": "Landmark"
+    },
+    {
+      "place_id": "Dong-gu Spot 3",
+      "coords": [
+        35.113114,
+        129.043552
+      ],
+      "rec_score": 0.85,
+      "category": "Landmark"
+    },
+    {
+      "place_id": "Dong-gu Spot 4",
+      "coords": [
+        35.108946,
+        129.027091
+      ],
+      "rec_score": 0.75,
+      "category": "Park"
+    },
+    {
+      "place_id": "Dong-gu Spot 5",
+      "coords": [
+        35.093747,
+        129.03099
+      ],
+      "rec_score": 0.91,
+      "category": "Urban"
+    },
+    {
+      "place_id": "Seo-gu Spot 1",
+      "coords": [
+        35.093181,
+        128.955045
+      ],
+      "rec_score": 0.75,
+      "category": "Beach"
+    },
+    {
+      "place_id": "Seo-gu Spot 2",
+      "coords": [
+        35.113499,
+        128.974158
+      ],
+      "rec_score": 0.77,
+      "category": "Urban"
+    },
+    {
+      "place_id": "Seo-gu Spot 3",
+      "coords": [
+        35.079957,
+        128.963441
+      ],
+      "rec_score": 0.81,
+      "category": "Beach"
+    },
+    {
+      "place_id": "Seo-gu Spot 4",
+      "coords": [
+        35.106006,
+        128.955477
+      ],
+      "rec_score": 0.71,
+      "category": "Market"
+    },
+    {
+      "place_id": "Seo-gu Spot 5",
+      "coords": [
+        35.111655,
+        128.967873
+      ],
+      "rec_score": 0.89,
+      "category": "Nature"
+    },
+    {
+      "place_id": "Saha-gu Spot 1",
+      "coords": [
+        35.072583,
+        128.968262
+      ],
+      "rec_score": 0.82,
+      "category": "Market"
+    },
+    {
+      "place_id": "Saha-gu Spot 2",
+      "coords": [
+        35.106616,
+        128.974214
+      ],
+      "rec_score": 0.76,
+      "category": "Beach"
+    },
+    {
+      "place_id": "Saha-gu Spot 3",
+      "coords": [
+        35.104868,
+        128.957324
+      ],
+      "rec_score": 0.94,
+      "category": "Scenic"
+    },
+    {
+      "place_id": "Saha-gu Spot 4",
+      "coords": [
+        35.103386,
+        128.98605
+      ],
+      "rec_score": 0.87,
+      "category": "Landmark"
+    },
+    {
+      "place_id": "Saha-gu Spot 5",
+      "coords": [
+        35.078696,
+        128.98419
+      ],
+      "rec_score": 0.88,
+      "category": "Landmark"
+    },
+    {
+      "place_id": "Gangseo-gu Spot 1",
+      "coords": [
+        35.108943,
+        128.996811
+      ],
+      "rec_score": 0.81,
+      "category": "Scenic"
+    },
+    {
+      "place_id": "Gangseo-gu Spot 2",
+      "coords": [
+        35.121667,
+        128.992324
+      ],
+      "rec_score": 0.86,
+      "category": "Scenic"
+    },
+    {
+      "place_id": "Gangseo-gu Spot 3",
+      "coords": [
+        35.100926,
+        128.973262
+      ],
+      "rec_score": 0.76,
+      "category": "Scenic"
+    },
+    {
+      "place_id": "Gangseo-gu Spot 4",
+      "coords": [
+        35.103998,
+        128.988654
+      ],
+      "rec_score": 0.89,
+      "category": "Beach"
+    },
+    {
+      "place_id": "Gangseo-gu Spot 5",
+      "coords": [
+        35.114017,
+        128.984289
+      ],
+      "rec_score": 0.7,
+      "category": "Park"
+    },
+    {
+      "place_id": "Buk-gu Spot 1",
+      "coords": [
+        35.211743,
+        129.029718
+      ],
+      "rec_score": 0.85,
+      "category": "Nature"
+    },
+    {
+      "place_id": "Buk-gu Spot 2",
+      "coords": [
+        35.219618,
+        129.006234
+      ],
+      "rec_score": 0.8,
+      "category": "Landmark"
+    },
+    {
+      "place_id": "Buk-gu Spot 3",
+      "coords": [
+        35.187018,
+        129.034614
+      ],
+      "rec_score": 0.87,
+      "category": "Landmark"
+    },
+    {
+      "place_id": "Buk-gu Spot 4",
+      "coords": [
+        35.200183,
+        129.023614
+      ],
+      "rec_score": 0.72,
+      "category": "Park"
+    },
+    {
+      "place_id": "Buk-gu Spot 5",
+      "coords": [
+        35.197633,
+        129.014187
+      ],
+      "rec_score": 0.72,
+      "category": "Market"
+    },
+    {
+      "place_id": "Dongnae-gu Spot 1",
+      "coords": [
+        35.227023,
+        129.067659
+      ],
+      "rec_score": 0.72,
+      "category": "Urban"
+    },
+    {
+      "place_id": "Dongnae-gu Spot 2",
+      "coords": [
+        35.202141,
+        129.060095
+      ],
+      "rec_score": 0.81,
+      "category": "Beach"
+    },
+    {
+      "place_id": "Dongnae-gu Spot 3",
+      "coords": [
+        35.220949,
+        129.069377
+      ],
+      "rec_score": 0.74,
+      "category": "Scenic"
+    },
+    {
+      "place_id": "Dongnae-gu Spot 4",
+      "coords": [
+        35.221078,
+        129.074586
+      ],
+      "rec_score": 0.92,
+      "category": "Market"
+    },
+    {
+      "place_id": "Dongnae-gu Spot 5",
+      "coords": [
+        35.221445,
+        129.054173
+      ],
+      "rec_score": 0.8,
+      "category": "Scenic"
+    },
+    {
+      "place_id": "Nam-gu Spot 1",
+      "coords": [
+        35.056413,
+        129.050868
+      ],
+      "rec_score": 0.87,
+      "category": "Scenic"
+    },
+    {
+      "place_id": "Nam-gu Spot 2",
+      "coords": [
+        35.085511,
+        129.05305
+      ],
+      "rec_score": 0.77,
+      "category": "Market"
+    },
+    {
+      "place_id": "Nam-gu Spot 3",
+      "coords": [
+        35.082373,
+        129.020039
+      ],
+      "rec_score": 0.94,
+      "category": "Nature"
+    },
+    {
+      "place_id": "Nam-gu Spot 4",
+      "coords": [
+        35.06633,
+        129.03627
+      ],
+      "rec_score": 0.75,
+      "category": "Park"
+    },
+    {
+      "place_id": "Nam-gu Spot 5",
+      "coords": [
+        35.083343,
+        129.036795
+      ],
+      "rec_score": 0.8,
+      "category": "Cultural"
+    },
+    {
+      "place_id": "Yeonje-gu Spot 1",
+      "coords": [
+        35.167529,
+        129.070845
+      ],
+      "rec_score": 0.85,
+      "category": "Scenic"
+    },
+    {
+      "place_id": "Yeonje-gu Spot 2",
+      "coords": [
+        35.176033,
+        129.076702
+      ],
+      "rec_score": 0.78,
+      "category": "Cultural"
+    },
+    {
+      "place_id": "Yeonje-gu Spot 3",
+      "coords": [
+        35.146329,
+        129.07121
+      ],
+      "rec_score": 0.92,
+      "category": "Market"
+    },
+    {
+      "place_id": "Yeonje-gu Spot 4",
+      "coords": [
+        35.171158,
+        129.054956
+      ],
+      "rec_score": 0.94,
+      "category": "Nature"
+    },
+    {
+      "place_id": "Yeonje-gu Spot 5",
+      "coords": [
+        35.138465,
+        129.084311
+      ],
+      "rec_score": 0.83,
+      "category": "Landmark"
+    },
+    {
+      "place_id": "Geumjeong-gu Spot 1",
+      "coords": [
+        35.244065,
+        129.082596
+      ],
+      "rec_score": 0.91,
+      "category": "Urban"
+    },
+    {
+      "place_id": "Geumjeong-gu Spot 2",
+      "coords": [
+        35.216097,
+        129.087175
+      ],
+      "rec_score": 0.94,
+      "category": "Nature"
+    },
+    {
+      "place_id": "Geumjeong-gu Spot 3",
+      "coords": [
+        35.215853,
+        129.075465
+      ],
+      "rec_score": 0.86,
+      "category": "Nature"
+    },
+    {
+      "place_id": "Geumjeong-gu Spot 4",
+      "coords": [
+        35.238394,
+        129.097787
+      ],
+      "rec_score": 0.9,
+      "category": "Park"
+    },
+    {
+      "place_id": "Geumjeong-gu Spot 5",
+      "coords": [
+        35.252235,
+        129.101655
+      ],
+      "rec_score": 0.76,
+      "category": "Scenic"
+    },
+    {
+      "place_id": "Yeongdo-gu Spot 1",
+      "coords": [
+        35.097849,
+        129.065355
+      ],
+      "rec_score": 0.94,
+      "category": "Nature"
+    },
+    {
+      "place_id": "Yeongdo-gu Spot 2",
+      "coords": [
+        35.081825,
+        129.049908
+      ],
+      "rec_score": 0.76,
+      "category": "Beach"
+    },
+    {
+      "place_id": "Yeongdo-gu Spot 3",
+      "coords": [
+        35.066092,
+        129.044485
+      ],
+      "rec_score": 0.83,
+      "category": "Urban"
+    },
+    {
+      "place_id": "Yeongdo-gu Spot 4",
+      "coords": [
+        35.067779,
+        129.062332
+      ],
+      "rec_score": 0.88,
+      "category": "Beach"
+    },
+    {
+      "place_id": "Yeongdo-gu Spot 5",
+      "coords": [
+        35.082972,
+        129.068584
+      ],
+      "rec_score": 0.77,
+      "category": "Cultural"
+    },
+    {
+      "place_id": "Sasang-gu Spot 1",
+      "coords": [
+        35.114531,
+        128.999449
+      ],
+      "rec_score": 0.81,
+      "category": "Market"
+    },
+    {
+      "place_id": "Sasang-gu Spot 2",
+      "coords": [
+        35.128928,
+        129.023895
+      ],
+      "rec_score": 0.84,
+      "category": "Urban"
+    },
+    {
+      "place_id": "Sasang-gu Spot 3",
+      "coords": [
+        35.113855,
+        129.004101
+      ],
+      "rec_score": 0.84,
+      "category": "Landmark"
+    },
+    {
+      "place_id": "Sasang-gu Spot 4",
+      "coords": [
+        35.114613,
+        128.998502
+      ],
+      "rec_score": 0.92,
+      "category": "Market"
+    },
+    {
+      "place_id": "Sasang-gu Spot 5",
+      "coords": [
+        35.12543,
+        129.02204
+      ],
+      "rec_score": 0.79,
+      "category": "Cultural"
+    },
+    {
+      "place_id": "Gijang-gun Spot 1",
+      "coords": [
+        35.335388,
+        129.20102
+      ],
+      "rec_score": 0.74,
+      "category": "Park"
+    },
+    {
+      "place_id": "Gijang-gun Spot 2",
+      "coords": [
+        35.315149,
+        129.192429
+      ],
+      "rec_score": 0.7,
+      "category": "Landmark"
+    },
+    {
+      "place_id": "Gijang-gun Spot 3",
+      "coords": [
+        35.30223,
+        129.188076
+      ],
+      "rec_score": 0.89,
+      "category": "Urban"
+    },
+    {
+      "place_id": "Gijang-gun Spot 4",
+      "coords": [
+        35.302508,
+        129.202609
+      ],
+      "rec_score": 0.72,
+      "category": "Market"
+    },
+    {
+      "place_id": "Gijang-gun Spot 5",
+      "coords": [
+        35.31808,
+        129.194594
+      ],
+      "rec_score": 0.74,
+      "category": "Landmark"
+    },
+    {
+      "place_id": "Busanjin-gu Spot 1",
+      "coords": [
+        35.157816,
+        129.075072
+      ],
+      "rec_score": 0.7,
+      "category": "Cultural"
+    },
+    {
+      "place_id": "Busanjin-gu Spot 2",
+      "coords": [
+        35.163504,
+        129.057819
+      ],
+      "rec_score": 0.78,
+      "category": "Scenic"
+    },
+    {
+      "place_id": "Busanjin-gu Spot 3",
+      "coords": [
+        35.159385,
+        129.040298
+      ],
+      "rec_score": 0.72,
+      "category": "Beach"
+    },
+    {
+      "place_id": "Busanjin-gu Spot 4",
+      "coords": [
+        35.18576,
+        129.049059
+      ],
+      "rec_score": 0.73,
+      "category": "Cultural"
+    },
+    {
+      "place_id": "Busanjin-gu Spot 5",
+      "coords": [
+        35.168758,
+        129.054577
+      ],
+      "rec_score": 0.71,
+      "category": "Market"
+    }
+  ]
+}
