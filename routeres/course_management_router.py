@@ -7,7 +7,6 @@ from schemas import (
     RemovePlaceFromCourseRequest,
     CourseResponse
 )
-from services.data_converter import data_converter
 from services.course_service import course_service
 
 router = APIRouter()
@@ -67,60 +66,27 @@ async def remove_place_from_course(request: RemovePlaceFromCourseRequest = Body(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"장소 제거 중 오류가 발생했습니다: {str(e)}")
 
-@router.get("/courses/{course_id}")
-async def get_course(course_id: str, format: str = "backend"):
+@router.get("/courses/{course_id}", response_model=CourseResponse)
+async def get_course(course_id: str):
     """
     코스 ID로 코스를 조회합니다.
     
     - **course_id**: 조회할 코스 ID
-    - **format**: 응답 형식 ("backend" 또는 "frontend")
     """
     try:
-        course_response = await course_service.get_course_by_id(course_id)
-        
-        if format == "frontend":
-            # CourseResponse를 dict로 변환 후 프론트엔드 형식으로 변환
-            course_dict = course_response.dict()
-            frontend_data = data_converter.convert_backend_to_frontend({
-                "itinerary": {
-                    "days": [
-                        {
-                            "day": i + 1,
-                            "date": day.date,
-                            "places": [
-                                {
-                                    "place_id": place.place_id,
-                                    "name": place.name,
-                                    "time": f"{place.start_time}~{place.end_time}"
-                                }
-                                for place in day.places
-                            ]
-                        }
-                        for i, day in enumerate(course_dict["dailySchedule"])
-                    ]
-                }
-            })
-            
-            return {
-                "success": True,
-                "course": course_dict,
-                "itinerary": frontend_data
-            }
-        else:
-            return course_response
+        return await course_service.get_course_by_id(course_id)
     except HTTPException as e:
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"코스 조회 중 오류가 발생했습니다: {str(e)}")
 
 @router.get("/courses/{course_id}/places")
-async def get_course_places(course_id: str, day: int = None, format: str = "backend"):
+async def get_course_places(course_id: str, day: int = None):
     """
     코스의 장소 목록을 조회합니다.
     
     - **course_id**: 코스 ID
     - **day**: 특정 날짜 (선택사항, 지정하지 않으면 전체 날짜)
-    - **format**: 응답 형식 ("backend" 또는 "frontend")
     """
     try:
         course = await course_service.get_course_by_id(course_id)
@@ -131,62 +97,18 @@ async def get_course_places(course_id: str, day: int = None, format: str = "back
                 raise HTTPException(status_code=400, detail=f"요청된 날짜({day})가 코스 기간({len(course.dailySchedule)})을 초과합니다.")
             
             day_schedule = course.dailySchedule[day - 1]
-            
-            if format == "frontend":
-                # 프론트엔드 형식으로 변환
-                frontend_data = data_converter.convert_backend_to_frontend({
-                    "itinerary": {
-                        "days": [{
-                            "day": day,
-                            "date": day_schedule.date,
-                            "places": [
-                                {
-                                    "place_id": place.place_id,
-                                    "name": place.name,
-                                    "time": f"{place.start_time}~{place.end_time}"
-                                }
-                                for place in day_schedule.places
-                            ]
-                        }]
-                    }
-                })
-                return frontend_data[0]  # 첫 번째 날만 반환
-            else:
-                return {
-                    "course_id": course_id,
-                    "day": day,
-                    "date": day_schedule.date,
-                    "places": day_schedule.places
-                }
+            return {
+                "course_id": course_id,
+                "day": day,
+                "date": day_schedule.date,
+                "places": day_schedule.places
+            }
         else:
             # 전체 코스의 장소 반환
-            if format == "frontend":
-                # 프론트엔드 형식으로 변환
-                frontend_data = data_converter.convert_backend_to_frontend({
-                    "itinerary": {
-                        "days": [
-                            {
-                                "day": i + 1,
-                                "date": day.date,
-                                "places": [
-                                    {
-                                        "place_id": place.place_id,
-                                        "name": place.name,
-                                        "time": f"{place.start_time}~{place.end_time}"
-                                    }
-                                    for place in day.places
-                                ]
-                            }
-                            for i, day in enumerate(course.dailySchedule)
-                        ]
-                    }
-                })
-                return frontend_data
-            else:
-                return {
-                    "course_id": course_id,
-                    "dailySchedule": course.dailySchedule
-                }
+            return {
+                "course_id": course_id,
+                "dailySchedule": course.dailySchedule
+            }
             
     except HTTPException as e:
         raise e

@@ -120,19 +120,30 @@ def google_callback(request: Request):
         SECRET_KEY,
         algorithm="HS256"
     )
-     # 현재는 테스틑를 위해 /login 페이지, 홈페이지로 바꿀 예정 => 변경 완료
-    homepage_url = f"{FRONTEND_URL.rstrip('/')}/"
-
-    # 로그인 후 홈페이지로 리디렉션
-    response = RedirectResponse(url=homepage_url)
     
+    # 디버깅: 토큰 생성 확인
+    print(f"[DEBUG] Generated JWT token: {token[:50]}...")
+    print(f"[DEBUG] User ID: {user['user_id']}")
+    print(f"[DEBUG] User data: {user}")
+    
+    # 로그인 후 설문조사 페이지로 리디렉션
+    survey_url = "http://localhost:8000/api/v1/survey"
+
+    # 로그인 후 설문조사 페이지로 리디렉션
+    response = RedirectResponse(url=survey_url)
+
     response.set_cookie(
         key="access_token",
         value=token,
         httponly=True,
-        max_age=7200, 
+        max_age=7200,
         samesite="lax",
-        secure=False, # HTTPS 배포 시 True로 바꿔야함
+        secure=False,  # HTTPS 배포 시 True로 바꿔야함
         path="/"
     )
+    
+    # 디버깅: 쿠키 설정 확인
+    print(f"[DEBUG] Cookie set: access_token={token[:20]}...")
+    print(f"[DEBUG] Redirecting to: {survey_url}")
+    
     return response

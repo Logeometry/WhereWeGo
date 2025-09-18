@@ -19,7 +19,7 @@ load_dotenv()
 
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 SECRET_KEY = os.getenv("SECRET_KEY")
-KAKAO_REST_API_KEY = os.getenv("KAKAKO_REST_API_KEY")  # REST API 키로 통일
+KAKAO_REST_API_KEY = os.getenv("KAKAO_REST_API_KEY")  # REST API 키로 통일
 KAKAO_REDIRECT_URI = "http://localhost:8000/api/v1/auth/kakao/callback"
 KAKAO_AUTH_BASE = "https://kauth.kakao.com/oauth/authorize"
 
@@ -142,24 +142,25 @@ def kakao_callback(request: Request):
     print(f"[DEBUG] User ID: {user['user_id']}")
     print(f"[DEBUG] User data: {user}")
     
-    # 테스트 페이지로 리디렉션 (개발 중)
-    homepage_url = f"{FRONTEND_URL.rstrip('/')}/"
+    # 로그인 후 설문조사 페이지로 리디렉션
+    survey_url = "http://localhost:8000/api/v1/survey"
 
-    # 로그인 후 홈페이지로 리디렉션
-    response = RedirectResponse(url=homepage_url)
+    # 로그인 후 설문조사 페이지로 리디렉션
+    response = RedirectResponse(url=survey_url)
     
     response.set_cookie(
         key="access_token",
         value=token,
         httponly=True,
         max_age=7200,
-        samesite="lax",
+        samesite="none",
         secure=False,  # HTTPS 배포 시 True로 바꿔야함
-        path="/"
+        path="/",
+        domain=None  # 도메인을 명시적으로 None으로 설정
     )
     
     # 디버깅: 쿠키 설정 확인
     print(f"[DEBUG] Cookie set: access_token={token[:20]}...")
-    print(f"[DEBUG] Redirecting to: {homepage_url}")
+    print(f"[DEBUG] Redirecting to: {survey_url}")
     
     return response
