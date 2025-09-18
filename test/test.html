@@ -187,6 +187,86 @@
             transform: scale(0.98);
         }
 
+        /* ML 추천 버튼 스타일 */
+        .ml-recommendation-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .ml-recommendation-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .ml-recommendation-btn:active {
+            transform: translateY(0);
+        }
+
+        /* ML 추천 결과 스타일 */
+        #ml-recommendation-result {
+            margin-top: 30px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+        }
+
+        .ml-recommendation-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .ml-recommendation-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .ml-score {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .ml-summary {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .recommendation-card.selecting .info-label,
+        .recommendation-card.selecting .info-value,
+        .recommendation-card.selecting .place-name {
+            color: white;
+        }
+
+        .recommendation-card.selecting .recommendation-header {
+            color: white;
+        }
+
+        .recommendation-card.selecting .recommendation-reason {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
         .recommendation-header {
             color: #667eea;
             font-size: 1.2rem;
@@ -373,18 +453,46 @@
                     🎉 모든 라운드가 완료되었습니다!
                 </div>
 
+
+                <!-- 교집합 기반 맞춤 추천 시스템 설명 -->
+                <div style="background: #e8f5e8; border-radius: 15px; padding: 20px; margin: 20px 0; border-left: 4px solid #28a745;">
+                    <h4 style="color: #28a745; margin-bottom: 15px;">🎯 교집합 기반 맞춤 추천</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 0.9rem;">
+                        <div><strong>활동성 선호:</strong> 카테고리 × 활동성 교집합</div>
+                        <div><strong>시간대 선호:</strong> 카테고리 × 시간대 교집합</div>
+                        <div><strong>정확한 필터링:</strong> 교집합 키워드만 추천</div>
+                        <div><strong>순수 매칭:</strong> 조건에 맞는 관광지만 표시</div>
+                    </div>
+                    <p style="margin-top: 15px; color: #666; font-size: 0.85rem;">
+                        <strong>교집합 추천 시스템:</strong> 사용자가 선택한 선호도(활동성/시간대)에 따라 카테고리와의 교집합을 계산합니다.
+                        활동성을 선호하면 카테고리와 활동성 레벨의 교집합, 시간대를 선호하면 카테고리와 시간대의 교집합에 해당하는
+                        키워드가 포함된 관광지만 정확히 필터링하여 추천합니다.
+                    </p>
+                </div>
                 <div id="selected-places" style="margin: 20px 0;">
                     <!-- 선택된 관광지들이 여기에 표시됩니다 -->
                 </div>
 
                 <div style="margin: 30px 0;">
-                    <button class="selection-btn" onclick="getMlRecommendations()">
+                    <button class="ml-recommendation-btn" onclick="getMlRecommendations()">
                         🤖 AI 개인화 추천 받기
                     </button>
                     <button class="reset-btn" onclick="resetSelections()">
                         다시 시작하기
                     </button>
                 </div>
+            </div>
+
+            <!-- ML 추천 결과 섹션 -->
+            <div id="ml-recommendation-result" class="hidden">
+                <div class="step-title">🤖 AI 개인화 추천 결과</div>
+                <div id="ml-loading" class="loading-spinner"></div>
+                <div id="ml-recommendations-list" class="hidden">
+                    <!-- ML 추천 결과가 여기에 표시됩니다 -->
+                </div>
+                <button class="reset-btn" onclick="hideMlRecommendations()" style="margin-top: 20px;">
+                    결과 닫기
+                </button>
             </div>
         </div>
 
@@ -489,8 +597,17 @@
                 <p style="text-align: center; margin-top: 20px;">맞춤형 관광지를 찾고 있습니다...</p>
             `;
 
-            // 추천 API 호출
-            fetch('/api/v1/survey/recommendations')
+            // 먼저 서버 상태 확인
+            fetch('/health')
+            .then(response => response.json())
+            .then(healthData => {
+                console.log('서버 상태:', healthData);
+                if (healthData.status === 'error') {
+                    throw new Error('서버 상태 오류: ' + healthData.error);
+                }
+                // 서버가 정상이면 추천 API 호출
+                return fetch('/recommendations');
+            })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -513,9 +630,17 @@
                     <div style="text-align: center; color: #dc3545; padding: 20px;">
                         <h3>오류 발생</h3>
                         <p>추천 서비스에 문제가 발생했습니다.</p>
-                        <button class="reset-btn" onclick="resetSelections()" style="margin-top: 15px;">
-                            다시 시작하기
-                        </button>
+                        <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+                            서버가 실행 중인지 확인해주세요. (http://127.0.0.1:8000)
+                        </p>
+                        <div style="margin-top: 20px;">
+                            <button class="reset-btn" onclick="resetSelections()" style="margin-right: 10px;">
+                                다시 시작하기
+                            </button>
+                            <button class="reset-btn" onclick="location.reload()" style="background-color: #6c757d;">
+                                페이지 새로고침
+                            </button>
+                        </div>
                     </div>
                 `;
             });
@@ -598,6 +723,11 @@
                             <span class="info-label">지역:</span>
                             <span class="info-value">${optionA.item.region || '정보 없음'}</span>
                         </div>
+                        <!-- final_score 제거 -->
+                        <div class="info-item">
+                            <span class="info-label">활동성/시간대 점수:</span>
+                            <span class="info-value" style="color: #28a745; font-weight: bold;">${(optionA.weighted_score || 0).toFixed(2)}점</span>
+                        </div>
                         <div class="info-item">
                             <span class="info-label">방문자 수:</span>
                             <span class="info-value">${(optionA.item.visitors_count || 0).toLocaleString()}명</span>
@@ -624,6 +754,11 @@
                         <div class="info-item">
                             <span class="info-label">지역:</span>
                             <span class="info-value">${optionB.item.region || '정보 없음'}</span>
+                        </div>
+                        <!-- final_score 제거 -->
+                        <div class="info-item">
+                            <span class="info-label">활동성/시간대 점수:</span>
+                            <span class="info-value" style="color: #28a745; font-weight: bold;">${(optionB.weighted_score || 0).toFixed(2)}점</span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">방문자 수:</span>
@@ -682,7 +817,7 @@
                     round_number: currentRound,
                     choice: choice,
                     item_name: selectedItem.name,
-                    item_index: selectedItem.index
+                    item_index: selectedItem.index  // 아이템 인덱스 추가
                 })
             })
             .then(response => response.json())
@@ -732,12 +867,35 @@
                                 <span class="info-label">지역:</span>
                                 <span class="info-value">${item.region || '정보 없음'}</span>
                             </div>
+                            <!-- final_score 제거 -->
                         </div>
                     </div>
                 `;
             });
 
             document.getElementById('selected-places').innerHTML = resultsHtml;
+            
+            // 데이터 조회 버튼 추가
+            const dataButtonHtml = `
+                <div style="text-align: center; margin-top: 30px;">
+                    <button onclick="viewUserData()" style="
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 25px;
+                        font-size: 16px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                        transition: all 0.3s ease;
+                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.4)'" 
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.3)'">
+                        📊 내 데이터 보기 (UUID 기반)
+                    </button>
+                </div>
+            `;
+            document.getElementById('selected-places').innerHTML += dataButtonHtml;
         }
 
         function resetSelections() {
@@ -769,6 +927,7 @@
             document.getElementById('recommendations-container').style.display = 'block';
             document.getElementById('vote-section').classList.add('hidden');
             document.getElementById('final-result').classList.add('hidden');
+            document.getElementById('ml-recommendation-result').classList.add('hidden');
             document.getElementById('progress-fill').style.width = '20%';
 
             // 첫 번째 단계 표시
@@ -789,49 +948,336 @@
 
         // ML 추천 관련 함수들
         function getMlRecommendations() {
-            // ML 추천 API 호출
-            fetch('/api/v1/survey/ml-recommendations?k=10')
+            // ML 추천 결과 섹션 표시
+            document.getElementById('ml-recommendation-result').classList.remove('hidden');
+
+            // 로딩 스피너 표시
+            document.getElementById('ml-loading').style.display = 'block';
+            document.getElementById('ml-recommendations-list').classList.add('hidden');
+
+            // ML 추천 API 호출 (10개 추천)
+            fetch('/ml-recommendations?k=10')
             .then(response => response.json())
             .then(data => {
+                // 로딩 스피너 숨기기
+                document.getElementById('ml-loading').style.display = 'none';
+
                 if (data.status === 'success') {
                     displayMlRecommendations(data);
                 } else {
-                    alert('ML 추천을 가져오는데 실패했습니다: ' + data.message);
+                    displayMlError(data.message || '추천을 가져오는데 실패했습니다.');
                 }
             })
             .catch(error => {
                 console.error('ML 추천 오류:', error);
-                alert('네트워크 오류가 발생했습니다.');
+                document.getElementById('ml-loading').style.display = 'none';
+                displayMlError('네트워크 오류가 발생했습니다.');
             });
         }
 
         function displayMlRecommendations(data) {
+            // 1.localserver.py의 응답 구조에 맞게 수정
             const recommendations = data.ml_recommendations.recommendations;
-            
-            let html = '<h3 style="text-align: center; margin-bottom: 20px; color: #667eea;">🤖 AI 개인화 추천 결과</h3>';
-            
-            recommendations.forEach((item, index) => {
-                html += `
-                    <div class="recommendation-card" style="margin: 10px 0;">
-                        <div class="recommendation-header">${index + 1}. ${item.item_name}</div>
-                        <div class="place-info">
-                            <div class="info-item">
+            const userInfo = data.base_user_info;
+            const modelInfo = data.personalization_info;
+            const userPreferences = data.user_preferences;
+
+            let html = '';
+
+            // AI 개인화 분석 정보 표시
+            html += `
+                <div class="ml-summary" style="background: #e8f5e8; border-left: 4px solid #28a745;">
+                    <h4 style="color: #28a745; margin-bottom: 15px;">🧠 AI 개인화 분석</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                        <div><strong>분석된 스키마:</strong> ${userPreferences.schemas_used}개</div>
+                        <div><strong>선택된 아이템:</strong> ${userPreferences.selected_items.length}개</div>
+                        <div><strong>추론 모드:</strong> 추론 전용</div>
+                        <div><strong>모델 타입:</strong> ${modelInfo.model_type}</div>
+                    </div>
+                    <p style="margin-top: 15px; color: #666; font-size: 0.9rem;">
+                        사전 훈련된 AI 모델이 사용자의 선택 패턴을 분석하여 개인화된 추천을 제공합니다.
+                    </p>
+                </div>
+            `;
+
+            // 사용자 정보 요약
+            html += `
+                <div class="ml-summary">
+                    <h4 style="color: #1976d2; margin-bottom: 15px;">🎯 개인화 추천 기준</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                        <div><strong>선호 활동:</strong> ${userInfo.preferred_category}</div>
+                        <div><strong>활동성:</strong> ${userInfo.activity_level}</div>
+                        <div><strong>선호 시간:</strong> ${userInfo.preferred_time}</div>
+                        <div><strong>선호 계절:</strong> ${userInfo.preferred_season}</div>
+                        <div><strong>중요 요소:</strong> ${userInfo.preference_type}</div>
+                    </div>
+                    <p style="margin-top: 15px; color: #666; font-size: 0.9rem;">
+                        ${modelInfo.model_type} 모델이 ${data.vote_summary.total_votes}번의 선택 패턴을 분석하여
+                        ${recommendations.length}개의 맞춤형 관광지를 추천해드립니다.
+                    </p>
+                </div>
+            `;
+
+            // 카테고리별로 분류
+            const top3Items = recommendations.filter(item => item.category_type === 'top_3');
+            const mlHighItems = recommendations.filter(item => item.category_type === 'ml_high');
+            const developerItems = recommendations.filter(item => item.category_type === 'developer');
+
+            // 1. 상위 3개 추천 (그대로 유지)
+            if (top3Items.length > 0) {
+                html += `<div style="margin-top: 30px;">`;
+                top3Items.forEach((item, index) => {
+                    html += `
+                        <div class="ml-recommendation-item" style="border-left: 4px solid #ff6b35;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h4 style="color: #333; margin: 0;">${index + 1}. ${item.item_name}</h4>
+                                <span class="ml-score" style="background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);">AI 점수: ${(item.score * 100).toFixed(1)}%</span>
+                            </div>
+                            <div class="info-item" style="margin: 5px 0;">
                                 <span class="info-label">카테고리:</span>
                                 <span class="info-value">${item.category}</span>
                             </div>
-                            <div class="info-item">
-                                <span class="info-label">AI 점수:</span>
-                                <span class="info-value">${(item.score * 100).toFixed(1)}%</span>
+                            <div style="margin-top: 10px; color: #666; font-size: 0.9rem;">
+                                ${item.reason}
                             </div>
                         </div>
-                        <div class="recommendation-reason">
-                            ${item.reason}
-                        </div>
-                    </div>
-                `;
-            });
+                    `;
+                });
+                html += '</div>';
+            }
 
-            document.getElementById('selected-places').innerHTML = html;
+            // 2. 나머지 7개 아이템을 셔플해서 표시
+            const remainingItems = [...mlHighItems, ...developerItems];
+            
+            // Fisher-Yates 셔플 알고리즘
+            function shuffleArray(array) {
+                const shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+            
+            const shuffledItems = shuffleArray(remainingItems);
+            
+            if (shuffledItems.length > 0) {
+                html += `<div style="margin-top: 20px;">`;
+                shuffledItems.forEach((item, index) => {
+                    // 카테고리 타입에 따라 다른 스타일 적용
+                    let borderColor = '#667eea';
+                    let scoreStyle = 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);';
+                    let scoreText = `AI 점수: ${(item.score * 100).toFixed(1)}%`;
+                    
+                    if (item.category_type === 'developer') {
+                        borderColor = '#28a745';
+                        scoreStyle = 'background: linear-gradient(135deg, #28a745 0%, #20c997 100%);';
+                        scoreText = '개발자 추천';
+                    }
+                    
+                    html += `
+                        <div class="ml-recommendation-item" style="border-left: 4px solid ${borderColor};">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h4 style="color: #333; margin: 0;">${index + 4}. ${item.item_name}</h4>
+                                <span class="ml-score" style="${scoreStyle}">${scoreText}</span>
+                            </div>
+                            <div class="info-item" style="margin: 5px 0;">
+                                <span class="info-label">카테고리:</span>
+                                <span class="info-value">${item.category}</span>
+                            </div>
+                            <div style="margin-top: 10px; color: #666; font-size: 0.9rem;">
+                                ${item.reason}
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            // 추천 요약 정보
+            html += `
+                <div style="margin-top: 30px; background: #f8f9fa; border-radius: 15px; padding: 20px; text-align: center;">
+                    <h4 style="color: #495057; margin-bottom: 15px;">📊 추천 요약</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div style="color: #495057; font-weight: bold; font-size: 1.1rem;">📈 총 추천: ${recommendations.length}개</div>
+                        <div style="color: #666; font-size: 0.9rem;">상위 3개는 설문조사 조건 매칭, 나머지는 AI와 개발자 추천이 랜덤하게 섞여 표시됩니다</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('ml-recommendations-list').innerHTML = html;
+            document.getElementById('ml-recommendations-list').classList.remove('hidden');
+        }
+
+        function displayMlError(message) {
+            const html = `
+                <div style="text-align: center; padding: 40px; color: #dc3545;">
+                    <h4>❌ 추천 오류</h4>
+                    <p style="margin-top: 15px;">${message}</p>
+                    <p style="margin-top: 10px; font-size: 0.9rem; color: #666;">
+                        모델 파일이 없거나 서버 오류가 발생했을 수 있습니다.
+                    </p>
+                </div>
+            `;
+            document.getElementById('ml-recommendations-list').innerHTML = html;
+            document.getElementById('ml-recommendations-list').classList.remove('hidden');
+        }
+
+        function hideMlRecommendations() {
+            document.getElementById('ml-recommendation-result').classList.add('hidden');
+        }
+
+        function viewUserData() {
+            // /data 엔드포인트 호출
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'complete') {
+                        // 새 창에서 데이터 표시
+                        const newWindow = window.open('', '_blank', 'width=1200,height=800,scrollbars=yes');
+                        newWindow.document.write(`
+                            <!DOCTYPE html>
+                            <html lang="ko">
+                            <head>
+                                <meta charset="UTF-8">
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                <title>사용자 데이터 (UUID 기반)</title>
+                                <style>
+                                    body {
+                                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                                        margin: 0;
+                                        padding: 20px;
+                                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                        min-height: 100vh;
+                                    }
+                                    .container {
+                                        max-width: 1000px;
+                                        margin: 0 auto;
+                                        background: white;
+                                        border-radius: 15px;
+                                        padding: 30px;
+                                        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                                    }
+                                    h1 {
+                                        text-align: center;
+                                        color: #333;
+                                        margin-bottom: 30px;
+                                        border-bottom: 3px solid #667eea;
+                                        padding-bottom: 10px;
+                                    }
+                                    .section {
+                                        margin: 20px 0;
+                                        padding: 20px;
+                                        border: 1px solid #e0e0e0;
+                                        border-radius: 10px;
+                                        background: #f9f9f9;
+                                    }
+                                    .section h2 {
+                                        color: #667eea;
+                                        margin-top: 0;
+                                    }
+                                    .schema-item {
+                                        background: white;
+                                        margin: 10px 0;
+                                        padding: 15px;
+                                        border-radius: 8px;
+                                        border-left: 4px solid #667eea;
+                                        font-family: monospace;
+                                        font-size: 14px;
+                                    }
+                                    .highlight {
+                                        background: #fff3cd;
+                                        padding: 2px 4px;
+                                        border-radius: 3px;
+                                        font-weight: bold;
+                                    }
+                                    .json-data {
+                                        background: #f8f9fa;
+                                        border: 1px solid #e9ecef;
+                                        border-radius: 5px;
+                                        padding: 15px;
+                                        margin: 10px 0;
+                                        overflow-x: auto;
+                                        font-family: monospace;
+                                        font-size: 12px;
+                                        white-space: pre-wrap;
+                                    }
+                                    .status-complete {
+                                        color: #28a745;
+                                        font-weight: bold;
+                                    }
+                                    .status-incomplete {
+                                        color: #ffc107;
+                                        font-weight: bold;
+                                    }
+                                    .status-error {
+                                        color: #dc3545;
+                                        font-weight: bold;
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="container">
+                                    <h1>📊 사용자 데이터 조회 결과 (UUID 기반)</h1>
+                                    
+                                    <div class="section">
+                                        <h2>📋 상태 정보</h2>
+                                        <p><strong>상태:</strong> <span class="status-${data.status}">${data.status}</span></p>
+                                        <p><strong>총 투표 수:</strong> ${data.total_votes}</p>
+                                        <p><strong>스키마 수:</strong> ${data.vote_schemas ? data.vote_schemas.length : 0}</p>
+                                    </div>
+
+                                    <div class="section">
+                                        <h2>🎯 기본 사용자 스키마</h2>
+                                        <div class="schema-item">
+                                            <strong>형식:</strong> [user_id, category_group, activity_level_idx, time_period, season, preference]<br>
+                                            <strong>데이터:</strong> [${data.base_schema.join(', ')}]
+                                        </div>
+                                        <div class="json-data">${JSON.stringify(data.base_schema, null, 2)}</div>
+                                    </div>
+
+                                    ${data.vote_schemas ? `
+                                    <div class="section">
+                                        <h2>🗳️ 투표 스키마 (${data.vote_schemas.length}개)</h2>
+                                        <p><strong>설명:</strong> 각 라운드마다 5개의 스키마 생성 (원본 1개 + 랜덤 4개)</p>
+                                        ${data.vote_schemas.slice(0, 10).map((schema, index) => `
+                                            <div class="schema-item">
+                                                <strong>스키마 ${index + 1}:</strong> [${schema.join(', ')}]
+                                            </div>
+                                        `).join('')}
+                                        ${data.vote_schemas.length > 10 ? `<p><em>... 및 ${data.vote_schemas.length - 10}개 더</em></p>` : ''}
+                                    </div>
+                                    ` : ''}
+
+                                    <div class="section">
+                                        <h2>📝 원본 선택 데이터</h2>
+                                        <div class="json-data">${JSON.stringify(data.raw_selections, null, 2)}</div>
+                                    </div>
+
+                                    <div class="section">
+                                        <h2>🗳️ 원본 투표 데이터</h2>
+                                        <div class="json-data">${JSON.stringify(data.raw_votes, null, 2)}</div>
+                                    </div>
+
+                                    <div class="section">
+                                        <h2>📚 스키마 설명</h2>
+                                        <div class="json-data">${JSON.stringify(data.schema_explanation, null, 2)}</div>
+                                    </div>
+                                </div>
+                            </body>
+                            </html>
+                        `);
+                        newWindow.document.close();
+                    } else if (data.status === 'incomplete') {
+                        alert('모든 선택을 완료해주세요.\\n\\n누락된 필드: ' + data.missing_fields.join(', '));
+                    } else {
+                        alert('데이터 조회 중 오류가 발생했습니다: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('데이터 조회 실패:', error);
+                    alert('데이터 조회에 실패했습니다.');
+                });
         }
     </script>
 </body>

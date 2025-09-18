@@ -261,9 +261,8 @@ async def recommend_nearby_restaurants(
         if dist_km <= max_distance:
             # 거리 정보를 식당 데이터에 추가
             restaurant_data = doc.copy()
+            restaurant_data["_id"] = str(restaurant_data["_id"])  # ObjectId를 문자열로 변환
             restaurant_data["distance"] = round(dist_km, 2)
-            # ObjectId를 문자열로 변환
-            restaurant_data["_id"] = str(restaurant_data["_id"])
             nearby_restaurants_with_dist.append((restaurant_data, dist_km))
 
     # 3) 거리 기준 오름차순 정렬
