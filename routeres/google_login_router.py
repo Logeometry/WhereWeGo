@@ -129,7 +129,7 @@ def google_callback(request: Request):
         SECRET_KEY,
         algorithm="HS256"
     )
-<<<<<<< HEAD
+
      # 현재는 테스틑를 위해 /login 페이지, 홈페이지로 바꿀 예정 => 변경 완료
     homepage_url = f"{FRONTEND_URL.rstrip('/')}/"
 
