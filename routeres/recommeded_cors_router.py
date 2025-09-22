@@ -17,11 +17,19 @@ from schemas import ItineraryRequest, ItineraryResponse, FrontendItineraryRespon
 from services.db_handler import get_random_places, tourism_collection, starting_point_collection
 from services.data_converter import data_converter
 
-# MongoDB 클라이언트 설정 (코스 저장용)
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
-client = MongoClient(MONGO_URI)
-db = client["wherewego"]
-courses_collection = db["courses"]
+# MongoDB 클라이언트 설정 (코스 저장용) - 안전하게 처리
+MONGO_URI = os.getenv("MONGO_URI") or os.getenv("MONGO_ATLAS_URI", "mongodb://localhost:27017/")
+
+try:
+    client = MongoClient(MONGO_URI)
+    db = client["wherewego"]
+    courses_collection = db["courses"]
+    print("✅ 코스 저장용 MongoDB 연결 성공")
+except Exception as e:
+    print(f"❌ 코스 저장용 MongoDB 연결 실패: {e}")
+    client = None
+    db = None
+    courses_collection = None
 
 # .env 파일에서 환경 변수 로드
 load_dotenv()
@@ -220,6 +228,13 @@ async def generate_itinerary(request: ItineraryRequest = Body(...)):
     """
     사용자 설문조사 결과를 바탕으로 Gemini API를 호출하여 여행 코스를 생성합니다.
     """
+    # MongoDB와 Gemini API 연결 상태 확인
+    if tourism_collection is None:
+        raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다. 관리자에게 문의하세요.")
+    
+    if gemini_model is None:
+        raise HTTPException(status_code=503, detail="AI 모델이 설정되지 않았습니다. 관리자에게 문의하세요.")
+    
     try:
         # 1. 사용자가 선택한 장소 ID 리스트를 사용합니다.
         selected_place_ids = [ObjectId(pid) for pid in request.selected_places]
@@ -335,6 +350,10 @@ async def save_course(request_data: Union[List[dict], dict] = Body(...)):
     생성된 여행 코스를 DB에 저장합니다.
     프론트엔드 형식과 백엔드 형식을 모두 자동으로 지원합니다.
     """
+    # MongoDB 연결 상태 확인
+    if courses_collection is None:
+        raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다. 관리자에게 문의하세요.")
+    
     try:
         # 데이터 변환 서비스 사용
         from services.data_converter import data_converter

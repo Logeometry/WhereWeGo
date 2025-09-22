@@ -21,7 +21,16 @@ FRONTEND_URL = os.getenv("FRONTEND_URL")
 SECRET_KEY = os.getenv("SECRET_KEY")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-REDIRECT_URI = "http://localhost:8000/api/v1/auth/google/callback"
+
+# Google OAuth 설정 확인
+if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+    print("⚠️ Google OAuth 환경변수가 설정되지 않았습니다.")
+    print("⚠️ Google 로그인 기능이 제한됩니다.")
+    GOOGLE_OAUTH_AVAILABLE = False
+else:
+    GOOGLE_OAUTH_AVAILABLE = True
+    print("✅ Google OAuth 설정 완료")
+REDIRECT_URI = "https://wherewego-backend-production.up.railway.app/api/v1/auth/google/callback"
 SCOPE = "openid email profile"  # 기본 ID, email, profile 정보 요청
 GOOGLE_AUTH_BASE = "https://accounts.google.com/o/oauth2/v2/auth"
 
@@ -123,16 +132,21 @@ def google_callback(request: Request):
      # 현재는 테스틑를 위해 /login 페이지, 홈페이지로 바꿀 예정 => 변경 완료
     homepage_url = f"{FRONTEND_URL.rstrip('/')}/"
 
-    # 로그인 후 홈페이지로 리디렉션
-    response = RedirectResponse(url=homepage_url)
+    # 로그인 후 홈페이지로 리디렉션 (토큰을 URL 파라미터로 전달)
+    # 보안상 더 안전한 방법: 프론트엔드에서 토큰을 받아서 localStorage에 저장
+    homepage_url_with_token = f"{FRONTEND_URL.rstrip('/')}/?token={token}"
     
+    response = RedirectResponse(url=homepage_url_with_token)
+    
+    # 백업용으로 쿠키도 설정 (프론트엔드에서 토큰 추출 실패 시)
     response.set_cookie(
         key="access_token",
         value=token,
         httponly=True,
         max_age=7200, 
-        samesite="lax",
-        secure=False, # HTTPS 배포 시 True로 바꿔야함
-        path="/"
+        samesite="none",  # 크로스 도메인 허용
+        secure=True,      # HTTPS 필수
+        path="/",
+        domain=None       # 쿠키를 현재 도메인에만 설정
     )
     return response

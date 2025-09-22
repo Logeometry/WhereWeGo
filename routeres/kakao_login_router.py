@@ -19,8 +19,8 @@ load_dotenv()
 
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 SECRET_KEY = os.getenv("SECRET_KEY")
-KAKAO_REST_API_KEY = os.getenv("KAKAKO_REST_API_KEY")  # REST API 키로 통일
-KAKAO_REDIRECT_URI = "http://localhost:8000/api/v1/auth/kakao/callback"
+KAKAO_REST_API_KEY = os.getenv("KAKAO_REST_API_KEY")  # REST API 키로 통일
+KAKAO_REDIRECT_URI = "https://wherewego-backend-production.up.railway.app/api/v1/auth/kakao/callback"
 KAKAO_AUTH_BASE = "https://kauth.kakao.com/oauth/authorize"
 
 # 디버깅: 환경변수 확인
@@ -48,9 +48,21 @@ def login_with_kakao():
 # 로그인 콜백 라우터
 @router.get("/auth/kakao/callback")
 def kakao_callback(request: Request):
+    print(f"[DEBUG] Kakao callback called with URL: {request.url}")
+    
+    if not KAKAO_OAUTH_AVAILABLE:
+        raise HTTPException(
+            status_code=503, 
+            detail="카카오 로그인 서비스가 설정되지 않았습니다. 관리자에게 문의하세요."
+        )
+    
     code = request.query_params.get("code")
     error = request.query_params.get("error")
     error_description = request.query_params.get("error_description")
+    
+    print(f"[DEBUG] Code: {code[:20] if code else 'None'}...")
+    print(f"[DEBUG] Error: {error}")
+    print(f"[DEBUG] Error description: {error_description}")
     
     # 오류가 있는 경우 상세 정보 출력
     if error:
@@ -59,7 +71,8 @@ def kakao_callback(request: Request):
         raise HTTPException(status_code=400, detail=f"Kakao OAuth error: {error} - {error_description}")
     
     if not code:
-        raise HTTPException(status_code=400)
+        print("[KAKAO ERROR] No authorization code received")
+        raise HTTPException(status_code=400, detail="No authorization code received")
     
     # 카카오에 access_token 요청하기
     token_resp = requests.post("https://kauth.kakao.com/oauth/token", data={
@@ -142,20 +155,22 @@ def kakao_callback(request: Request):
     print(f"[DEBUG] User ID: {user['user_id']}")
     print(f"[DEBUG] User data: {user}")
     
-    # 테스트 페이지로 리디렉션 (개발 중)
-    homepage_url = f"{FRONTEND_URL.rstrip('/')}/"
+    # 로그인 후 홈페이지로 리디렉션 (토큰을 URL 파라미터로 전달)
+    # 보안상 더 안전한 방법: 프론트엔드에서 토큰을 받아서 localStorage에 저장
+    homepage_url_with_token = f"{FRONTEND_URL.rstrip('/')}/?token={token}"
 
-    # 로그인 후 홈페이지로 리디렉션
-    response = RedirectResponse(url=homepage_url)
+    response = RedirectResponse(url=homepage_url_with_token)
     
+    # 백업용으로 쿠키도 설정 (프론트엔드에서 토큰 추출 실패 시)
     response.set_cookie(
         key="access_token",
         value=token,
         httponly=True,
         max_age=7200,
-        samesite="lax",
-        secure=False,  # HTTPS 배포 시 True로 바꿔야함
-        path="/"
+        samesite="none",  # 크로스 도메인 허용
+        secure=True,      # HTTPS 필수
+        path="/",
+        domain=None       # 쿠키를 현재 도메인에만 설정
     )
     
     # 디버깅: 쿠키 설정 확인
