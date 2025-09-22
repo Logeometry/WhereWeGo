@@ -6,7 +6,7 @@ import httpx
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
-router = APIRouter(prefix="/weather", tags=["weather"])
+router = APIRouter(prefix="/weather")
 SERVICE_KEY = "pFhO7c0hyxvss8UdPm2CVpsS9kTrr813vQyjbEYg8xx8kQEqFjxGqL3CFlHks2VrGrsjgSKlB7Y5l1ZM9B6lbw%3D%3D"
 REGION_INFO = {
     "강서구":   {"nx": 95,  "ny": 76},

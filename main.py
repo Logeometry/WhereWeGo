@@ -87,7 +87,7 @@ app.add_middleware(
 
 # API 라우터 등록
 app.include_router(category_router, prefix="/api", tags=["카테고리"])
-app.include_router(survey_router, prefix="/api/v1/survey", tags=["설문조사"], include_in_schema=False)
+app.include_router(survey_router, prefix="/api/v1/survey", tags=["설문조사"])
 app.include_router(google_login_router, prefix="/api/v1", tags=["인증"])
 app.include_router(kakao_login_router, prefix="/api/v1", tags=["인증"])
 app.include_router(refresh_token_router, prefix="/api/v1", tags=["인증"])
@@ -133,49 +133,54 @@ app.mount(
     name="test_static"
 )
 
-
-@app.get("/favicon.ico")
-async def favicon():
-    return Response(status_code=204)
-
-
 @app.get("/")
 async def root():
-    """루트 경로에서 Google 로그인으로 리다이렉트"""
-    from fastapi.responses import RedirectResponse
-    return RedirectResponse(url="http://localhost:8000/api/v1/auth/google/login", status_code=302)
+    return {"message": "Hello World"}
 
 
-@app.get("/attractions")
-async def show_attractions():
-    file_path = os.path.join(BASE_DIR, "google_maps_tourist.html")
-    if os.path.exists(file_path):
-        return FileResponse(file_path)
-    return {"error": "File not found"}
+# @app.get 전부 닫
+
+# @app.get("/favicon.ico")
+# async def favicon():
+#     return Response(status_code=204)
+
+# @app.get("/")
+# async def root():
+#     """루트 경로에서 Google 로그인으로 리다이렉트"""
+#     from fastapi.responses import RedirectResponse
+#     return RedirectResponse(url="http://localhost:8000/api/v1/auth/google/login", status_code=302)
 
 
-@app.get("/login")
-def serve_test_page():
-    file_path = get_safe_file_path("login_test.html")
-    return FileResponse(file_path)
+# @app.get("/attractions")
+# async def show_attractions():
+#     file_path = os.path.join(BASE_DIR, "google_maps_tourist.html")
+#     if os.path.exists(file_path):
+#         return FileResponse(file_path)
+#     return {"error": "File not found"}
 
 
-@app.get("/course-builder")
-def serve_course_builder():
-    file_path = get_safe_file_path("integrated_course_builder.html")
-    return FileResponse(file_path)
+# @app.get("/login")
+# def serve_test_page():
+#     file_path = get_safe_file_path("login_test.html")
+#     return FileResponse(file_path)
 
 
-@app.get("/survey")
-def serve_survey_template():
-    file_path = get_safe_file_path("survey_original_template.html")
-    return FileResponse(file_path)
+# @app.get("/course-builder")
+# def serve_course_builder():
+#     file_path = get_safe_file_path("integrated_course_builder.html")
+#     return FileResponse(file_path)
 
 
-@app.get("/survey-complete")
-def serve_complete_survey():
-    file_path = get_safe_file_path("complete_survey_test.html")
-    return FileResponse(file_path)
+# @app.get("/survey")
+# def serve_survey_template():
+#     file_path = get_safe_file_path("survey_original_template.html")
+#     return FileResponse(file_path)
+
+
+# @app.get("/survey-complete")
+# def serve_complete_survey():
+#     file_path = get_safe_file_path("complete_survey_test.html")
+#     return FileResponse(file_path)
 
 
 # survey_router가 이제 모든 설문조사 관련 엔드포인트를 처리합니다.

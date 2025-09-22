@@ -2415,7 +2415,7 @@ async def get_base_schemas(request: Request, user_id: str = Depends(get_current_
 
 
 @router.get("/ml-recommendations")
-async def get_ml_recommendations(k: int = 10, user_id: str = Depends(get_current_user)):
+async def get_ml_recommendations(k: int = 20, user_id: str = Depends(get_current_user)):
     """ML 모델을 사용한 추론 전용 개인화된 추천 - 10개 추천"""
     # 5라운드 투표가 완료되었는지 확인
     if len(user_votes) < 5:
@@ -2439,7 +2439,7 @@ async def get_ml_recommendations(k: int = 10, user_id: str = Depends(get_current
     # 사용자 선호도 패턴 추출
     user_preferences = extract_user_preferences_from_votes(vote_schemas)
 
-    # ML 모델을 사용한 추론 수행 (10개 추천)
+    # ML 모델을 사용한 추론 수행 (20개 추천)
     ml_result = get_ml_recommendations_for_user(vote_schemas, top_k=k)
 
     if "error" in ml_result:

@@ -5,7 +5,7 @@ from schemas import WishItem
 from services.data_loader import load_location_data_from_db
 from typing import List
 
-router = APIRouter(prefix="/wishlist", tags=["WishList"])
+router = APIRouter(prefix="/wishlist")
 
 @router.get("/{user_id}")
 async def get_wishlist(user_id: str):

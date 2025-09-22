@@ -3,7 +3,7 @@ from fastapi import APIRouter, Query
 from schemas import WishRequest
 from services.wish_service import toggle_wish, delete_wish, is_wished
 
-router = APIRouter(prefix="/wish", tags=["Wish"])
+router = APIRouter(prefix="/wish")
 
 @router.post("")
 async def add_or_toggle_wish(data: WishRequest):
