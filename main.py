@@ -27,6 +27,9 @@ from routeres.wish_router import router as wish_router
 from routeres.wishList_router import router as wishlist_router
 from routeres.crowding_router import router as crowding_router
 from routeres.tmap_crowding_router import router as tmap_crowding_router
+from routeres.recommend_location import router as recommend_router
+from routeres.search_router import router as search_router
+# from routeres.optimized_course_router import router as optimized_course_router  # 파일이 없어서 주석 처리
 
 from dotenv import load_dotenv
 import os
@@ -101,6 +104,9 @@ app.include_router(wish_router, prefix="/api/v1", tags=["찜기능"])
 app.include_router(wishlist_router, prefix="/api/v1", tags=["찜목록"])
 app.include_router(crowding_router, prefix="/api/v1", tags=["혼잡도"])
 app.include_router(tmap_crowding_router, prefix="/api/v1", tags=["티맵 혼잡도"])
+app.include_router(recommend_router, prefix="/api/v1/recommend", tags=["장소추천"])
+app.include_router(search_router, prefix="/api/v1/search", tags=["장소검색"])
+# app.include_router(optimized_course_router, prefix="/api/v1", tags=["Route Matrix 최적화"])  # 파일이 없어서 주석 처리
 app.include_router(auth_router, prefix="/api/v1", tags=["인증"])
 
 app.mount("/test", StaticFiles(directory="test"), name="test")

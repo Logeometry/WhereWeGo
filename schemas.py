@@ -12,9 +12,35 @@ class ItineraryRequest(BaseModel):
     travelStartDate: str = Field(..., description="여행 시작일 (YYYY-MM-DD)")
     selected_places: List[str] = Field(..., description="사용자가 선택한 장소 ID 리스트")
     starting_point: Optional[str] = Field(None, description="부산 내 여행 시작점 장소 ID (선택사항)")
+    transport_mode: Optional[str] = Field("DRIVE", description="교통수단 (DRIVE, TRANSIT, WALK, BICYCLE, TWO_WHEELER)")
     # 아래 필드들은 프롬프트에 활용될 수 있으므로 포함합니다.
     preferences: Optional[Dict[str, bool]] = None
     surveyAttractions: Optional[List[str]] = None
+
+# --- 설문조사 기반 코스 생성 모델 ---
+class SurveyData(BaseModel):
+    """설문조사 결과 데이터"""
+    activity: str = Field(..., description="선택한 활동 카테고리")
+    activity_level: str = Field(..., description="활동성 레벨 (높음/중간/낮음)")
+    time: str = Field(..., description="선호 시간대 (오전/오후/저녁)")
+    season: str = Field(..., description="계절 (봄/여름/가을/겨울)")
+    preference: str = Field(..., description="선호도 (활동성/시간대)")
+
+class MLRecommendation(BaseModel):
+    """ML 모델 추천 결과"""
+    item_id: str = Field(..., description="장소 ID (MongoDB ObjectId)")
+    item_name: str = Field(..., description="장소명")
+    score: float = Field(..., description="ML 추천 점수")
+    reason: str = Field(..., description="추천 이유")
+    category_type: str = Field(..., description="추천 카테고리 (top_3/ml_high/developer)")
+    
+class SurveyBasedCourseRequest(BaseModel):
+    """설문조사 기반 코스 생성 요청"""
+    survey_data: SurveyData = Field(..., description="설문조사 결과")
+    ml_recommendations: List[MLRecommendation] = Field(..., description="ML 추천 결과 리스트")
+    travel_duration: int = Field(..., description="여행 기간 (일)")
+    starting_point: Optional[str] = Field(None, description="시작점 (선택사항)")
+    travel_start_date: Optional[str] = Field(None, description="여행 시작일 (YYYY-MM-DD)")
 
 # --- 출력 모델 (백엔드 -> 프론트) ---
 class PlaceLocation(BaseModel):

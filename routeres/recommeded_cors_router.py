@@ -1,8 +1,10 @@
 import os
 import json
 import uuid
-from datetime import datetime, timedelta
-from typing import Union, List
+import asyncio
+import aiohttp
+from datetime import datetime, timedelta, date, time
+from typing import Union, List, Dict, Tuple, Optional, Any
 
 import google.generativeai as genai
 from bson import ObjectId
@@ -11,9 +13,9 @@ from fastapi import APIRouter, HTTPException, Body
 from pymongo import MongoClient
 
 # Pydantic 모델 import
-from schemas import ItineraryRequest, ItineraryResponse, FrontendItineraryResponse, FrontendDay, FrontendPlace, CourseSaveRequest, CourseItinerary, CourseDay, CoursePlace
+from schemas import ItineraryRequest, ItineraryResponse, FrontendItineraryResponse, FrontendDay, FrontendPlace, CourseSaveRequest, CourseItinerary, CourseDay, CoursePlace, SurveyBasedCourseRequest, SurveyData, MLRecommendation
 
-# MongoDB 핸들러 함수 import (새로 추가)
+# MongoDB 핸들러 함수 import
 from services.db_handler import get_random_places, tourism_collection, starting_point_collection
 from services.data_converter import data_converter
 
@@ -45,141 +47,533 @@ if not GEMINI_API_KEY:
 genai.configure(api_key=GEMINI_API_KEY)
 gemini_model = genai.GenerativeModel('gemini-1.5-flash')
 
+# Google Distance Matrix API 키
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+if not GOOGLE_MAPS_API_KEY:
+    print("⚠️ GOOGLE_MAPS_API_KEY 환경변수가 설정되지 않았습니다. Distance Matrix 기능이 제한됩니다.")
+else:
+    print("✅ Google Maps API 키가 설정되었습니다.")
+
 # --- MongoDB 설정은 db_handler.py로 이동했으므로 여기서는 tourism_collection만 사용 ---
 
-def build_gemini_prompt(request_data: ItineraryRequest, places_info: list, start_place_name: str = None) -> str:
+class OptimizedDistanceMatrixService:
     """
-    Gemini API에 전송할 프롬프트를 생성하는 함수
+    🚀 최적화된 Google Distance Matrix API 서비스
+    - 좌표 리스트 기반 일괄 처리
+    - Transit 모드 전용 (한국 최적화)
+    - 효율적인 매트릭스 데이터 처리
     """
-
-    # 장소 목록 문자열 구성 (ID 포함)
-    place_list_str = "\n".join([
-        f"- ID: {str(place['_id'])}\n"
-        f"  이름: {place['name']}\n"
-        f"  주소: {place['address']}\n"
-        f"  위치: {place['location']['coordinates']}\n"
-        f"  설명: {place.get('description', '관광 명소')}"
-        for place in places_info
-    ])
-
-    # JSON 형식 예시 (실제 ObjectId 스타일)
-    json_format_example = """
-    {
-        "dailySchedule": [
-        {
-            "day": 1,
-            "date": "YYYY-MM-DD",
-            "places": [
-                {
-                    "_id": "681891fa77e67d6ebadae3dd",  // 장소 ID (문자열)
-                    "estimated_duration": 2,
-                    "travel_time_from_previous": 0
-                }
-            ]
+    
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.base_url = "https://maps.googleapis.com/maps/api/distancematrix/json"
+        self.max_elements = 100  # Google API 제한
+    
+    async def get_distance_matrix_for_places(
+        self, 
+        place_coords: List[Tuple[float, float]],
+        departure_time: Optional[int] = None
+    ) -> Dict:
+        """
+        장소들의 좌표로부터 모든 쌍의 거리/시간 매트릭스를 가져옵니다.
+        
+        Args:
+            place_coords: [(위도, 경도)] 형식의 좌표 리스트
+            departure_time: 출발 시간 (Unix timestamp, 선택사항)
+        
+        Returns:
+            Distance Matrix API 응답 데이터
+        """
+        if not self.api_key:
+            raise ValueError("Google Maps API 키가 설정되지 않았습니다.")
+        
+        if len(place_coords) == 0:
+            raise ValueError("좌표 리스트가 비어있습니다.")
+        
+        # 좌표를 "lat,lng" 형식의 문자열로 변환
+        coord_strings = [f"{lat},{lng}" for lat, lng in place_coords]
+        
+        # API 요청 파라미터 구성
+        params = {
+            "origins": "|".join(coord_strings),
+            "destinations": "|".join(coord_strings),  # 모든 장소를 origin과 destination으로 사용
+            "mode": "transit",  # 한국에서는 transit만 정확함
+            "units": "metric",
+            "region": "KR",
+            "key": self.api_key
         }
-        ],
-        "travelTips": "부산 여행을 위한 종합적인 팁입니다..."
-    }
-    """
-
-    # 시작점 정보
-    start_point_info = ""
-    if start_place_name:
-        start_point_info = f"- 부산 내 여행 시작점: {start_place_name}"
-
-    # 전체 프롬프트
-    prompt = f"""
-    당신은 최고의 여행 코스 플래너입니다. 아래 주어진 정보를 바탕으로 최적의 여행 코스를 JSON 형식으로 짜주세요.
-
-    # 여행 기본 정보:
-    - 총 여행 기간: {request_data.travelDuration}일
-    - 여행 시작일: {request_data.travelStartDate}
-    {start_point_info}
-
-    # 방문해야 할 장소 목록 (총 {len(places_info)}곳):
-    {place_list_str}
-
-    # 요구사항:
-    1. 위 목록에 있는 장소들을 포함하여 {request_data.travelDuration}일 동안의 일정을 구성해주세요. 필요시 추가 장소를 추천할 수 있습니다.
-    2. {f"첫째 날 첫 일정은 '{start_place_name}'에서 시작" if start_place_name else "효율적인 동선을 고려하여 시작점을 선택"}해주세요.
-    3. 이동 시간과 각 장소에서의 추천 체류 시간을 고려하여 가장 효율적인 동선으로 일정을 구성해주세요.
-    4. 각 날짜(date)는 'YYYY-MM-DD' 형식으로 정확하게 계산해서 넣어주세요.
-    5. 각 장소별 예상 체류 시간(estimated_duration)은 시간 단위의 정수(예: 2)로, 이전 장소로부터의 이동 시간(travel_time_from_previous)은 분 단위의 정수(예: 30)로 표시해주세요. 첫 장소의 이동 시간은 0입니다.
-    6. 마지막으로 부산 여행을 위한 유용한 종합 팁(travelTips)을 2-3문장으로 작성해주세요.
-    7. 반드시 아래의 JSON 형식과 키 이름을 정확히 지켜서 응답해주세요. 반드시 장소 ID에는 위에 제공된 ID를 그대로 사용해주세요. 이름이 아닙니다. 
-    8. 반드시 JSON만 응답해주세요. 그 외 문장, 주석, 설명은 포함하지 마세요.
-
-    # 출력 JSON 형식 예시:
-    {json_format_example}
-    """
-
-    return prompt.strip()
-
-def convert_to_frontend_format(itinerary_response: ItineraryResponse) -> FrontendItineraryResponse:
-    """
-    백엔드 응답을 프론트엔드가 원하는 형태로 변환하는 함수
-    """
-    frontend_days = []
+        
+        # # # 출발 시간이 지정된 경우 추가 (현재 시간 기본값)
+        # # if departure_time:
+        # #     params["departure_time"] = departure_time
+        # # else:
+        # #     params["departure_time"] = int(datetime.now().timestamp())
+        
+        print(f"🚗 Distance Matrix API 호출: {len(place_coords)}개 장소 매트릭스 조회")
+        
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(self.base_url, params=params) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        if data.get("status") == "OK":
+                            return data
+                        else:
+                            raise HTTPException(
+                                status_code=400, 
+                                detail=f"Distance Matrix API 오류: {data.get('status', 'Unknown error')}"
+                            )
+                    else:
+                        raise HTTPException(
+                            status_code=response.status,
+                            detail=f"API 요청 실패: HTTP {response.status}"
+                        )
+            except aiohttp.ClientError as e:
+                raise HTTPException(status_code=500, detail=f"네트워크 오류: {str(e)}")
     
-    for day_schedule in itinerary_response.dailySchedule:
-        # 날짜 형식 변환: "2026-08-21" -> "2026. 8. 21."
-        date_parts = day_schedule.date.split("-")
-        formatted_date = f"{date_parts[0]}. {int(date_parts[1])}. {int(date_parts[2])}."
+    def parse_matrix_to_dict(self, matrix_data: Dict, place_ids: List[str]) -> Dict[str, Dict[str, Dict]]:
+        """
+        매트릭스 데이터를 딕셔너리 형태로 파싱합니다.
         
-        # Day 이름 생성
-        day_name = f"Day {day_schedule.day}"
+        Returns:
+            {origin_id: {dest_id: {distance_km, duration_minutes, status}}}
+        """
+        result = {}
         
-        # 장소 정보 변환
-        frontend_places = []
-        for i, place in enumerate(day_schedule.places):
-            # 시간 계산 (첫 장소는 14:00부터 시작, 이후 장소는 이전 장소 + 체류시간 + 이동시간)
-            if i == 0:
-                start_hour = 14
-                start_minute = 0
-            else:
-                # 이전 장소의 체류시간과 이동시간을 고려하여 시간 계산
-                prev_place = day_schedule.places[i-1]
-                travel_time_minutes = prev_place.travel_time_from_previous
-                duration_hours = prev_place.estimated_duration
-                
-                # 간단한 시간 계산 (실제로는 더 정교한 로직 필요)
-                total_minutes = travel_time_minutes + (duration_hours * 60)
-                start_hour = 14 + (total_minutes // 60)
-                start_minute = total_minutes % 60
+        for i, origin_id in enumerate(place_ids):
+            result[origin_id] = {}
             
-            time_str = f"{start_hour:02d}:{start_minute:02d}"
-            
-            # 아이콘 타입 결정 (카테고리 기반)
-            icon_type = "MuseumIcon"  # 기본값
-            if hasattr(place, 'category'):
-                if '해수욕장' in place.name or '해변' in place.name:
-                    icon_type = "BeachAccessIcon"
-                elif '시장' in place.name or '상가' in place.name:
-                    icon_type = "ShoppingCartIcon"
-                elif '식당' in place.name or '맛집' in place.name:
-                    icon_type = "RestaurantIcon"
-                elif '케이블카' in place.name or '공원' in place.name:
-                    icon_type = "FlightTakeoffIcon"
-            
-            frontend_place = FrontendPlace(
-                id=str(i + 1),  # 프론트엔드에서 사용하는 순서 ID
-                name=place.name,
-                placeId=place.id,
-                time=time_str,
-                icon=icon_type
-            )
-            frontend_places.append(frontend_place)
+            for j, dest_id in enumerate(place_ids):
+                if i == j:
+                    # 같은 장소는 거리 0
+                    result[origin_id][dest_id] = {
+                        "distance_km": 0,
+                        "duration_minutes": 0,
+                        "status": "OK"
+                    }
+                else:
+                    try:
+                        element = matrix_data["rows"][i]["elements"][j]
+                        
+                        if element["status"] == "OK":
+                            duration_seconds = element["duration"]["value"]
+                            distance_meters = element["distance"]["value"]
+                            
+                            result[origin_id][dest_id] = {
+                                # 🔢 계산용 숫자 데이터
+                                "distance_km": distance_meters / 1000,
+                                "duration_minutes": duration_seconds / 60,
+                                "duration_seconds": duration_seconds,
+                                
+                                # 📝 한국어 표시용 텍스트 (Google API 제공)
+                                "distance_text": element["distance"]["text"],    # "136 km"
+                                "duration_text": element["duration"]["text"],    # "1시간 38분" 또는 "1 hour 38 mins"
+                                
+                                # ✅ 실제 사용 가능한 정보만 저장
+                                
+                                "status": "OK"
+                            }
+                        else:
+                            result[origin_id][dest_id] = {
+                                "distance_km": float('inf'),  # 갈 수 없는 경우
+                                "duration_minutes": float('inf'),
+                                "status": element["status"]
+                            }
+                    except (KeyError, IndexError):
+                        result[origin_id][dest_id] = {
+                            "distance_km": float('inf'),
+                            "duration_minutes": float('inf'),
+                            "status": "ERROR"
+                        }
         
-        frontend_day = FrontendDay(
-            date=formatted_date,
-            dayName=day_name,
-            places=frontend_places
+        return result
+    
+
+class SmartCourseGenerator:
+    """
+    🧠 스마트 여행 코스 생성기
+    - Distance Matrix API 기반 정확한 이동 시간 계산
+    - TSP 알고리즘 변형을 통한 최적 경로 탐색
+    - 한국 관광지 특성을 반영한 추천 시스템
+    """
+    
+    def __init__(self, distance_service: OptimizedDistanceMatrixService):
+        self.distance_service = distance_service
+    
+    async def generate_course_db_format(
+        self,
+        places_data: List[Dict],
+        start_place_id: str,
+        travel_duration: int,
+        request: ItineraryRequest
+    ) -> Dict[str, Any]:
+        """
+        🎯 DB 저장 형태로 바로 여행 코스를 생성합니다.
+        data_converter가 바로 처리할 수 있는 형태로 직접 생성합니다.
+        """
+        if not places_data:
+            raise ValueError("장소 목록이 비어있습니다.")
+        
+        # 1. 좌표와 장소 정보 추출
+        valid_places = []
+        place_coords = []
+        place_ids = []
+        
+        for place in places_data:
+            coords = self._extract_coordinates(place)
+            if coords:
+                valid_places.append(place)
+                place_coords.append(coords)
+                place_ids.append(str(place['_id']))
+        
+        if len(valid_places) < 2:
+            raise ValueError("좌표 정보가 있는 장소가 2개 미만입니다.")
+        
+        # 2. Distance Matrix API 호출
+        matrix_data = await self.distance_service.get_distance_matrix_for_places(place_coords)
+        distance_dict = self.distance_service.parse_matrix_to_dict(matrix_data, place_ids)
+        
+        # 3. 시작점 찾기
+        start_idx = self._find_start_place_index(valid_places, start_place_id)
+        
+        # 4. DB 형태로 바로 일별 일정 생성
+        return self._generate_db_format_schedules(
+            valid_places,
+            distance_dict,
+            start_idx,
+            travel_duration,
+            request
         )
-        frontend_days.append(frontend_day)
     
-    return FrontendItineraryResponse(
-        itinerary=frontend_days
-    )
+    def _extract_coordinates(self, place: Dict) -> Optional[Tuple[float, float]]:
+        """장소 데이터에서 좌표를 추출합니다."""
+        if 'location' in place and 'coordinates' in place['location']:
+            # MongoDB GeoJSON 형식: [경도, 위도] -> (위도, 경도) 변환
+            lon, lat = place['location']['coordinates']
+            return (lat, lon)
+        elif 'map_x' in place and 'map_y' in place:
+            return (place['map_y'], place['map_x'])  # (위도, 경도)
+        else:
+            return None
+    
+    def _find_start_place_index(self, places: List[Dict], start_place_id: str) -> int:
+        """시작 장소의 인덱스를 찾습니다."""
+        for i, place in enumerate(places):
+            if str(place['_id']) == start_place_id:
+                return i
+        return 0  # 찾지 못하면 첫 번째 장소
+
+   # 프로트에서 ml 모델 점수 제공 받기기 
+    def _get_place_score(self, place: Dict) -> float:
+        """
+        장소의 추천 점수를 가져옵니다.
+        프론트엔드에서 ML 모델 점수를 전달받아 사용합니다.
+        """
+        # 🤖 ML 모델에서 계산된 추천 점수 사용
+        ml_score = place.get('recommendation_score', place.get('score', 0.5))
+        
+        # 0-1 범위로 정규화
+        return min(1.0, max(0.0, float(ml_score)))
+    
+    def _generate_db_format_schedules(
+        self,
+        places: List[Dict],
+        distance_dict: Dict[str, Dict[str, Dict]],
+        start_idx: int,
+        travel_duration: int,
+        request: ItineraryRequest
+    ) -> Dict[str, Any]:
+        """일별 최적화된 일정을 생성합니다."""
+        itinerary = []
+        place_ids = [str(place['_id']) for place in places]
+        unvisited = set(range(len(places))) - {start_idx}
+        
+        # 각 장소의 ML 모델 추천 점수 가져오기
+        place_scores = {i: self._get_place_score(places[i]) for i in range(len(places))}
+        
+        # 시작 날짜 계산 (여행 시작일 기준)
+        from datetime import datetime, timedelta
+        start_date_str = request.travelStartDate
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+        except:
+            start_date = datetime.now()
+        
+        for day in range(travel_duration):
+            current_date = start_date + timedelta(days=day)
+            day_schedule = {
+                "day": day + 1,
+                "date": current_date.strftime("%Y-%m-%d"),  # data_converter가 기대하는 형식
+                "places": [],
+                "total_distance": 0,
+                "total_duration": 0
+            }
+            
+            current_idx = start_idx if day == 0 else None
+            places_visited_today = 0
+            max_places_per_day = 3
+            daily_time_budget = 8 * 60  # 8시간 (분 단위)
+            
+            # 첫째 날 첫 장소는 시작점
+            if day == 0:
+                place_data = places[current_idx]
+                day_schedule["places"].append({
+                    "place_id": str(place_data['_id']),
+                    "name": place_data.get('name', 'Unknown Place'),
+                    "time": "09:00"
+                })
+                places_visited_today += 1
+                daily_time_budget -= 120  # 첫 장소 체류 시간 차감
+            
+            # 나머지 장소 선택
+            while unvisited and places_visited_today < max_places_per_day and daily_time_budget > 60:
+                best_next_idx = self._select_next_best_place(
+                    current_idx,
+                    unvisited,
+                    place_ids,
+                    distance_dict,
+                    place_scores,
+                    daily_time_budget,
+                    places_visited_today == 0  # 첫 번째 선택인지
+                )
+                
+                if best_next_idx is None:
+                    break
+                
+                # 이동 정보 가져오기
+                if current_idx is not None:
+                    travel_info = distance_dict[place_ids[current_idx]][place_ids[best_next_idx]]
+                    travel_time = travel_info.get("duration_minutes", 30)
+                    distance = travel_info.get("distance_km", 0)
+                else:
+                    travel_time = 0
+                    distance = 0
+                
+                # 시간 예산 확인
+                required_time = travel_time + 120  # 이동시간 + 체류시간
+                if required_time > daily_time_budget:
+                    break
+                
+                # 도착 시간 계산
+                base_hour = 9 + (places_visited_today * 3)
+                arrival_time = f"{base_hour:02d}:00"
+                
+                # 이동 정보 상세화
+                if current_idx is not None:
+                    travel_info_detail = distance_dict[place_ids[current_idx]][place_ids[best_next_idx]]
+                else:
+                    travel_info_detail = {
+                        "distance_km": 0,
+                        "duration_minutes": 0,
+                        "duration_seconds": 0,
+                        "distance_text": "시작점",
+                        "duration_text": "시작점",
+                        "status": "OK"
+                    }
+                
+                # 일정에 추가 (data_converter 호환 형식)
+                place_data = places[best_next_idx]
+                day_schedule["places"].append({
+                    "place_id": str(place_data['_id']),
+                    "name": place_data.get('name', 'Unknown Place'),
+                    "time": arrival_time
+                })
+                
+                # 상태 업데이트
+                day_schedule["total_distance"] += distance
+                day_schedule["total_duration"] += travel_time
+                daily_time_budget -= required_time
+                
+                unvisited.remove(best_next_idx)
+                current_idx = best_next_idx
+                places_visited_today += 1
+            
+            itinerary.append(day_schedule)
+        
+        # data_converter가 기대하는 형식으로 반환
+        return {
+            "user_id": "survey_user",
+            "course_name": "AI 추천 여행",
+            "itinerary": {
+                "days": itinerary
+            }
+        }
+    
+    async def generate_course_for_db(
+        self,
+        places_data: List[Dict],
+        start_place_id: str,
+        travel_duration: int,
+        request: ItineraryRequest
+    ) -> Dict[str, Any]:
+        """
+        🎯 코스를 생성합니다.
+        data_converter가 처리할 수 있는 형태로 직접 생성합니다.
+        """
+        if not places_data:
+            raise ValueError("장소 목록이 비어있습니다.")
+        
+        # 1. 좌표와 장소 정보 추출
+        valid_places = []
+        place_coords = []
+        place_ids = []
+        
+        for place in places_data:
+            coords = self._extract_coordinates(place)
+            if coords:
+                valid_places.append(place)
+                place_coords.append(coords)
+                place_ids.append(str(place['_id']))
+        
+        if len(valid_places) < 2:
+            raise ValueError("좌표 정보가 있는 장소가 2개 미만입니다.")
+        
+        # 2. Distance Matrix API 호출
+        matrix_data = await self.distance_service.get_distance_matrix_for_places(place_coords)
+        distance_dict = self.distance_service.parse_matrix_to_dict(matrix_data, place_ids)
+        
+        # 3. 시작점 찾기
+        start_idx = self._find_start_place_index(valid_places, start_place_id)
+        
+        # 4. 일별 일정 생성 (DB 형태로 바로)
+        course_days = []
+        start_date = datetime.strptime(request.travelStartDate, "%Y-%m-%d")
+        unvisited = set(range(len(valid_places))) - {start_idx}
+        
+        # 각 장소의 ML 추천 점수 가져오기
+        place_scores = {i: self._get_place_score(valid_places[i]) for i in range(len(valid_places))}
+        
+        for day in range(travel_duration):
+            day_number = day + 1
+            current_date = start_date + timedelta(days=day)
+            
+            current_idx = start_idx if day == 0 else None
+            places_visited_today = 0
+            max_places_per_day = 3
+            daily_time_budget = 8 * 60  # 8시간 (분 단위)
+            
+            day_places = []
+            
+            # 첫째 날 첫 장소는 시작점
+            if day == 0:
+                day_places.append({
+                    "place_id": str(valid_places[current_idx]['_id']),
+                    "name": valid_places[current_idx]['name'],
+                    "time": "09:00"
+                })
+                places_visited_today += 1
+                daily_time_budget -= 120  # 첫 장소 체류시간 차감
+            
+            # 나머지 장소 선택
+            while unvisited and places_visited_today < max_places_per_day and daily_time_budget > 60:
+                best_next_idx = self._select_next_best_place(
+                    current_idx,
+                    unvisited,
+                    place_ids,
+                    distance_dict,
+                    place_scores,
+                    daily_time_budget,
+                    places_visited_today == 0
+                )
+                
+                if best_next_idx is None:
+                    break
+                
+                # 이동 정보 계산
+                if current_idx is not None:
+                    travel_info = distance_dict[place_ids[current_idx]][place_ids[best_next_idx]]
+                    travel_time = travel_info.get("duration_minutes", 30)
+                else:
+                    travel_time = 0
+                
+                # 시간 예산 확인
+                required_time = travel_time + 120
+                if required_time > daily_time_budget:
+                    break
+                
+                # 도착 시간 계산
+                base_hour = 9 + (places_visited_today * 3)
+                arrival_time = f"{base_hour:02d}:00"
+                
+                # DB 형태로 장소 추가
+                day_places.append({
+                    "place_id": str(valid_places[best_next_idx]['_id']),
+                    "name": valid_places[best_next_idx]['name'],
+                    "time": arrival_time
+                })
+                
+                # 상태 업데이트
+                daily_time_budget -= required_time
+                unvisited.remove(best_next_idx)
+                current_idx = best_next_idx
+                places_visited_today += 1
+            
+            # DB 형태의 일일 일정 추가
+            course_days.append({
+                "day": day_number,
+                "date": current_date.strftime("%Y-%m-%d"),
+                "places": day_places
+            })
+        
+        # 5. DB 저장 형태로 반환
+        return {
+            "user_id": "demo_user",  # 실제로는 인증된 사용자 ID
+            "course_name": f"ML 추천 부산 여행 {travel_duration}일",
+            "itinerary": {
+                "days": course_days
+            }
+        }
+    
+    def _select_next_best_place(
+        self,
+        current_idx: Optional[int],
+        unvisited: set,
+        place_ids: List[str],
+        distance_dict: Dict[str, Dict[str, Dict]],
+        place_scores: Dict[int, float],
+        time_budget: int,
+        is_first_selection: bool
+    ) -> Optional[int]:
+        """다음 방문할 최적의 장소를 선택합니다."""
+        best_idx = None
+        best_score = -1
+        
+        for next_idx in unvisited:
+            if current_idx is not None:
+                travel_info = distance_dict[place_ids[current_idx]][place_ids[next_idx]]
+                
+                if travel_info["status"] != "OK":
+                    continue
+                
+                travel_time = travel_info.get("duration_minutes", 30)
+                distance_km = travel_info.get("distance_km", 0)
+                
+                # 시간 예산 확인
+                if travel_time + 120 > time_budget:  # 이동시간 + 체류시간
+                    continue
+                
+                # 거리 점수 (가까울수록 높음)
+                distance_score = max(0, 1 - (distance_km / 50))
+            else:
+                distance_score = 1.0  # 첫 번째 선택시
+            
+            # 추천 점수
+            recommendation_score = place_scores.get(next_idx, 0.5)
+            
+            # 가중치 적용
+            if is_first_selection:
+                # 첫 번째 선택: 추천점수 우선
+                combined_score = (distance_score * 0.3) + (recommendation_score * 0.7)
+            else:
+                # 나머지 선택: 이동 효율성 우선
+                combined_score = (distance_score * 0.6) + (recommendation_score * 0.4)
+            
+            if combined_score > best_score:
+                best_score = combined_score
+                best_idx = next_idx
+        
+        return best_idx
+
 
 def convert_frontend_to_save_format(frontend_response: FrontendItineraryResponse, user_id: str, course_name: str) -> CourseSaveRequest:
     """
@@ -226,122 +620,99 @@ def convert_frontend_to_save_format(frontend_response: FrontendItineraryResponse
 @router.post("/generate", response_model=FrontendItineraryResponse)
 async def generate_itinerary(request: ItineraryRequest = Body(...)):
     """
-    사용자 설문조사 결과를 바탕으로 Gemini API를 호출하여 여행 코스를 생성합니다.
-    """
-    # MongoDB와 Gemini API 연결 상태 확인
-    if tourism_collection is None:
-        raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다. 관리자에게 문의하세요.")
+    🎯 ML 추천점수 + Distance Matrix 기반 여행 코스 생성
     
-    if gemini_model is None:
-        raise HTTPException(status_code=503, detail="AI 모델이 설정되지 않았습니다. 관리자에게 문의하세요.")
+    ✨ 핵심 특징:
+    - ML 모델 추천점수 활용 (프론트엔드에서 제공)
+    - Google Distance Matrix API로 정확한 이동시간 계산
+    - data_converter를 통한 깔끔한 데이터 변환
+    
+    🔄 처리 흐름:
+    1. 프론트엔드에서 ML 점수가 포함된 장소 리스트 수신
+    2. Distance Matrix API로 실제 이동시간 계산
+    3. 추천점수 + 이동효율성 기반 최적 경로 생성
+    4. DB 저장 형태로 구성 후 data_converter로 프론트엔드 형식 변환
+    """
+    # 연결 상태 확인
+    if tourism_collection is None:
+        raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다.")
+    
+    if not GOOGLE_MAPS_API_KEY:
+        raise HTTPException(status_code=503, detail="Google Maps API 키가 설정되지 않았습니다.")
     
     try:
-        # 1. 사용자가 선택한 장소 ID 리스트를 사용합니다.
+        # 1. 입력 데이터 검증
         selected_place_ids = [ObjectId(pid) for pid in request.selected_places]
         
         if not selected_place_ids:
-            raise HTTPException(status_code=400, detail="선택된 장소가 없습니다. 최소 1개 이상의 장소를 선택해주세요.")
+            raise HTTPException(status_code=400, detail="선택된 장소가 없습니다.")
         
-        # 2. MongoDB에서 선택된 장소들의 상세 정보를 조회합니다.
+        print(f"🎯 ML 추천점수 기반 코스 생성 시작...")
+        print(f"   📍 선택된 장소: {len(selected_place_ids)}곳")
+        print(f"   📅 여행기간: {request.travelDuration}일")
+        
+        # 2. MongoDB에서 장소 정보 조회
         places_cursor = tourism_collection.find({"_id": {"$in": selected_place_ids}})
-        places_details = {str(p['_id']): p async for p in places_cursor}
+        places_data = [place async for place in places_cursor]
 
-        if not places_details:
+        if not places_data:
             raise HTTPException(status_code=404, detail="선택된 장소 정보를 찾을 수 없습니다.")
         
-        # 시작점 설정 (사용자가 선택한 경우 또는 첫 번째 장소)
-        start_place_info = None
-        start_place_name = None
+        # ObjectId를 문자열로 변환
+        for place in places_data:
+            place['_id'] = str(place['_id'])
         
-        if request.starting_point:
-            # 사용자가 시작점을 선택한 경우
-            start_place_id = ObjectId(request.starting_point)
-            if str(start_place_id) in places_details:
-                start_place_info = places_details[str(start_place_id)]
-                start_place_name = start_place_info['name']
-            else:
-                # 시작점이 선택된 장소에 없는 경우, 별도로 조회
-                start_place_cursor = tourism_collection.find_one({"_id": start_place_id})
-                if start_place_cursor:
-                    start_place_info = start_place_cursor
-                    start_place_name = start_place_info['name']
-                else:
-                    raise HTTPException(status_code=404, detail="선택한 시작점 장소를 찾을 수 없습니다.")
-        else:
-            # 시작점을 선택하지 않은 경우, 첫 번째 장소를 시작점으로 설정
-            first_place_id = list(places_details.keys())[0]
-            start_place_info = places_details[first_place_id]
-            start_place_name = start_place_info['name']
+        # 3. 시작점 설정
+        start_place_id = request.starting_point or places_data[0]['_id']
         
-        if len(places_details) < len(selected_place_ids):
-            # 일부 ID가 DB에 없는 경우를 대비
-            found_ids = set(places_details.keys())
-            missing_ids = [str(oid) for oid in selected_place_ids if str(oid) not in found_ids]
-            print(f"DB에서 찾지 못한 ID: {missing_ids}")
-            raise HTTPException(status_code=404, detail=f"일부 장소 정보를 DB에서 찾을 수 없습니다: {missing_ids}")
-
-        # 선택된 장소들을 모두 코스에 포함시킵니다 (시작점 제외하지 않음)
-        selected_places_info = list(places_details.values())
-
-        # 3. Gemini API에 보낼 프롬프트를 생성합니다.
-        prompt = build_gemini_prompt(request, selected_places_info, start_place_name)
-
-        # 4. Gemini API 호출
-        response = gemini_model.generate_content(prompt)
-        cleaned_response_text = response.text.strip().replace("```json", "").replace("```", "").strip()
+        # 4. 스마트 코스 생성 서비스 초기화
+        distance_service = OptimizedDistanceMatrixService(GOOGLE_MAPS_API_KEY)
+        course_generator = SmartCourseGenerator(distance_service)
         
-        print("==== Gemini 응답 원문 ====")
-        print(response.text)
-
-        # 5. Gemini 응답(JSON)을 파싱합니다.
-        try:
-            gemini_result = json.loads(cleaned_response_text)
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=500, detail="Gemini API로부터 유효한 JSON 응답을 받지 못했습니다.")
-
-        # 6. 파싱된 결과를 프론트엔드 응답 형식(ItineraryResponse)에 맞게 가공합니다.
-        final_schedule = []
-        start_date = datetime.strptime(request.travelStartDate, "%Y-%m-%d")
-
-        for daily_plan in gemini_result.get("dailySchedule", []):
-            day_number = daily_plan.get("day")
-            if not day_number: continue
-            
-            current_date = start_date + timedelta(days=day_number - 1)
-            
-            day_places = []
-            for place_info in daily_plan.get("places", []):
-                place_id_str = place_info.get("_id")
-                if place_id_str in places_details:
-                    db_place_detail = places_details[place_id_str].copy()
-                    db_place_detail['_id'] = str(db_place_detail['_id'])
-                    
-                    place_data = {
-                        **db_place_detail,
-                        "estimated_duration": place_info.get("estimated_duration", 2),
-                        "travel_time_from_previous": place_info.get("travel_time_from_previous", 20),
-                    }
-                    day_places.append(place_data)
-
-            final_schedule.append({
-                "day": day_number,
-                "date": current_date.strftime("%Y-%m-%d"), # 프론트와 형식을 맞춤
-                "places": day_places,
-            })
-        
-        # 백엔드 형태로 응답 생성
-        backend_response = ItineraryResponse(
-            dailySchedule=final_schedule,
-            travelTips=gemini_result.get("travelTips", "즐거운 부산 여행 되세요!")
+        # 5. DB 저장 형태로 바로 생성 (중간 변환 과정 제거)
+        backend_course_data = await course_generator.generate_course_db_format(
+            places_data=places_data,
+            start_place_id=start_place_id,
+            travel_duration=request.travelDuration,
+            request=request
         )
         
-        # 프론트엔드 형태로 변환하여 반환
-        return convert_to_frontend_format(backend_response)
-
+        # 7. data_converter를 사용해 프론트엔드 형식으로 변환
+        from services.data_converter import data_converter
+        frontend_response_data = data_converter.convert_backend_to_frontend(backend_course_data)
+        
+        # 8. 최종 응답 형식으로 변환
+        frontend_response = FrontendItineraryResponse(itinerary=[
+            FrontendDay(
+                date=day["date"],
+                dayName=day["dayName"], 
+                places=[
+                    FrontendPlace(
+                        id=place["id"],
+                        name=place["name"],
+                        placeId=place["placeId"],
+                        time=place["time"],
+                        icon="MuseumIcon"  # 프론트엔드에서 설정
+                    ) for place in day["places"]
+                ]
+            ) for day in frontend_response_data
+        ])
+        
+        # 9. 결과 로그
+        total_places = sum(len(day.get('places', [])) for day in backend_course_data.get('itinerary', {}).get('days', []))
+        print(f"✅ ML 추천점수 기반 코스 생성 완료!")
+        print(f"   🏛️ 총 방문 장소: {total_places}곳")
+        print(f"   🔄 data_converter 활용한 형식 변환 완료")
+        print(f"   🤖 ML 추천점수 + Distance Matrix 조합")
+        
+        return frontend_response
+        
     except HTTPException as e:
         raise e
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print(f"❌ 코스 생성 중 오류: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
 
 @router.post("/save")
@@ -484,4 +855,266 @@ async def get_course_for_frontend(course_id: str):
         raise e
     except Exception as e:
         print(f"프론트엔드용 코스 조회 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
+
+
+def convert_smart_result_to_frontend(
+    smart_result: List[Dict], 
+    request: ItineraryRequest
+) -> FrontendItineraryResponse:
+    """
+    🎨 스마트 코스 생성 결과를 프론트엔드 형식으로 변환합니다.
+    """
+    frontend_days = []
+    start_date = datetime.strptime(request.travelStartDate, "%Y-%m-%d")
+    
+    for day_idx, day_data in enumerate(smart_result):
+        day_number = day_data.get("day", day_idx + 1)
+        current_date = start_date + timedelta(days=day_idx)
+        
+        # 날짜 형식 변환
+        formatted_date = f"{current_date.year}. {current_date.month}. {current_date.day}."
+        day_name = f"Day {day_number}"
+        
+        frontend_places = []
+        
+        for place_idx, place_item in enumerate(day_data.get('places', [])):
+            place_data = place_item.get('place_data', {})
+            
+            # 장소 정보 추출
+            place_name = place_data.get('name', '알 수 없는 장소')
+            place_id = str(place_data.get('_id', f'place_{place_idx}'))
+            arrival_time = place_item.get('arrival_time', '09:00')
+            
+            # 🕐 시간 정보 보강
+            travel_info = place_item.get('travel_info', {})
+            duration_korean = travel_info.get('duration_korean', '')
+            distance_korean = travel_info.get('distance_korean', '')
+            
+            # 프론트엔드에서 활용할 수 있도록 추가 정보 포함
+            frontend_place = FrontendPlace(
+                id=str(place_idx + 1),
+                name=place_name,
+                placeId=place_id,
+                time=arrival_time,
+                icon="MuseumIcon"  # 기본값, 프론트엔드에서 실제 결정
+            )
+            
+            # 🚇 실제 사용 가능한 이동 정보만 프론트엔드에 전달
+            if travel_info and (duration_korean or distance_korean):
+                frontend_place.__dict__['travel_info'] = {
+                    # 📝 Google API 한국어 텍스트 (바로 표시 가능)
+                    'duration_text': duration_korean,           # "1시간 38분"
+                    'distance_text': distance_korean,           # "136 km"
+                    
+                    # 🔢 프론트엔드에서 계산 가능한 숫자 값
+                    'duration_seconds': travel_info.get('raw_seconds', 0),    # 5902
+                    'distance_meters': place_item.get('distance_from_previous', 0) * 1000  # 136268
+                }
+            frontend_places.append(frontend_place)
+        
+        frontend_day = FrontendDay(
+            date=formatted_date,
+            dayName=day_name,
+            places=frontend_places
+        )
+        frontend_days.append(frontend_day)
+    
+    return FrontendItineraryResponse(itinerary=frontend_days)
+
+
+# ===== 설문조사 기반 코스 생성 통합 엔드포인트 =====
+
+@router.post("/generate-from-survey", response_model=FrontendItineraryResponse)
+async def generate_course_from_survey(request: SurveyBasedCourseRequest = Body(...)):
+    """
+    🎯 설문조사 기반 여행 코스 생성
+    
+    ✨ 통합 플로우:
+    1. 설문조사 결과 분석
+    2. ML 모델로 개인화 추천
+    3. Distance Matrix API로 최적 경로 계산
+    4. 여행 일수에 맞는 코스 생성
+    
+    🔄 처리 과정:
+    사용자 설문 → ML 추천 → 장소 선택 → 코스 생성
+    """
+    # 연결 상태 확인
+    if tourism_collection is None:
+        raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다.")
+    
+    if not GOOGLE_MAPS_API_KEY:
+        raise HTTPException(status_code=503, detail="Google Maps API 키가 설정되지 않았습니다.")
+    
+    try:
+        print(f"🎯 설문조사 기반 코스 생성 시작...")
+        print(f"   📋 설문 결과: {request.survey_data}")
+        print(f"   🤖 ML 추천: {len(request.ml_recommendations)}개 장소")
+        print(f"   📅 여행 기간: {request.travel_duration}일")
+        
+        # 1. ML 추천 결과에서 실제 선택된 장소들 확인
+        selected_place_ids = []
+        print(f"   🔍 ML 추천 항목들:")
+        for rec in request.ml_recommendations:
+            print(f"      - {rec.item_name}: {rec.item_id}")
+            # ML 추천에서 item_id는 실제 MongoDB ObjectId
+            if rec.item_id:
+                try:
+                    place_oid = ObjectId(rec.item_id)
+                    selected_place_ids.append(place_oid)
+                    print(f"        ✅ ObjectId 변환 성공: {place_oid}")
+                except Exception as e:
+                    print(f"        ❌ ObjectId 변환 실패: {rec.item_id} - {e}")
+                    continue
+        
+        if not selected_place_ids:
+            raise HTTPException(status_code=400, detail="선택된 장소가 없습니다.")
+        
+        print(f"   📍 선택된 장소 ID: {selected_place_ids}")
+        
+        # 2. MongoDB에서 장소 정보 조회
+        print(f"   🔍 MongoDB에서 장소 조회 중...")
+        print(f"   🔍 사용 중인 DB: {tourism_collection.database.name}")
+        print(f"   🔍 사용 중인 컬렉션: {tourism_collection.name}")
+        print(f"   🔍 조회할 ObjectId 목록: {selected_place_ids}")
+        
+        # 먼저 하나씩 테스트해보기
+        for oid in selected_place_ids[:2]:  # 처음 2개만 테스트
+            test_result = await tourism_collection.find_one({"_id": oid})
+            print(f"      테스트 조회 {oid}: {'존재함' if test_result else '없음'}")
+            if test_result:
+                print(f"        실제 데이터: {test_result.get('name', 'Unknown')}")
+        
+        places_cursor = tourism_collection.find({"_id": {"$in": selected_place_ids}})
+        places_data = [place async for place in places_cursor]
+        print(f"   📊 조회된 장소 수: {len(places_data)}")
+
+        if not places_data:
+            print(f"   ❌ ML 모델의 db_id로 조회 실패 - 장소 이름으로 재검색 시도")
+            
+            # 장소 이름으로 MongoDB에서 검색
+            places_data = []
+            for rec in request.ml_recommendations:
+                print(f"   🔍 '{rec.item_name}' 이름으로 검색 중...")
+                
+                # 이름으로 검색 (대소문자 구분 없이)
+                name_result = await tourism_collection.find_one({
+                    "name": {"$regex": f"^{rec.item_name}$", "$options": "i"}
+                })
+                
+                if name_result:
+                    # ObjectId를 문자열로 변환
+                    name_result['_id'] = str(name_result['_id'])
+                    name_result['recommendation_score'] = rec.score
+                    name_result['ml_reason'] = rec.reason
+                    places_data.append(name_result)
+                    print(f"      ✅ 이름으로 찾음: {name_result['name']} -> {name_result['_id']}")
+                else:
+                    print(f"      ❌ 이름으로도 찾을 수 없음: {rec.item_name}")
+            
+            if not places_data:
+                print(f"   ❌ 장소 이름으로도 조회 실패")
+                
+                # 샘플 데이터 출력 (디버깅용)
+                sample_places = [place async for place in tourism_collection.find().limit(3)]
+                print(f"   🔍 DB 샘플 데이터:")
+                for place in sample_places:
+                    print(f"      - {place.get('name', 'Unknown')}: {place.get('_id')}")
+                
+                raise HTTPException(
+                    status_code=404, 
+                    detail="ML 추천 장소들을 tourism 컬렉션에서 찾을 수 없습니다."
+                )
+            else:
+                print(f"   ✅ 이름으로 {len(places_data)}개 장소 찾음!")
+        
+        # ObjectId를 문자열로 변환 & ML 점수 추가
+        for place in places_data:
+            place['_id'] = str(place['_id'])
+            # ML 추천에서 해당 장소의 점수 찾기
+            for rec in request.ml_recommendations:
+                if rec.item_id == place['_id']:
+                    place['recommendation_score'] = rec.score
+                    place['ml_reason'] = rec.reason
+                    break
+            else:
+                place['recommendation_score'] = 0.5  # 기본값
+        
+        print(f"   ✅ 장소 데이터 조회 완료: {len(places_data)}곳")
+        for place in places_data:
+            print(f"      - {place.get('name', 'Unknown')}: {place.get('recommendation_score', 0.5)}")
+        
+        # 3. 시작점 설정 (첫 번째 장소 또는 사용자 지정)
+        start_place_id = request.starting_point or places_data[0]['_id']
+        
+        # 4. 코스 생성 서비스 초기화
+        print(f"   ⚙️ 코스 생성 서비스 초기화 중...")
+        distance_service = OptimizedDistanceMatrixService(GOOGLE_MAPS_API_KEY)
+        course_generator = SmartCourseGenerator(distance_service)
+        
+        # 5. ML 점수 기반 코스 생성
+        # ItineraryRequest 객체 생성 (기존 메서드와 호환성을 위해)
+        from datetime import datetime
+        itinerary_request = ItineraryRequest(
+            travelDuration=request.travel_duration,
+            travelStartDate=request.travel_start_date or datetime.now().strftime("%Y-%m-%d"),
+            selected_places=[place['_id'] for place in places_data],
+            starting_point=start_place_id
+        )
+        
+        print(f"🔄 코스 생성 시작...")
+        print(f"   🚀 코스 생성 시작...")
+        backend_course_data = await course_generator.generate_course_db_format(
+            places_data=places_data,
+            start_place_id=start_place_id,
+            travel_duration=request.travel_duration,
+            request=itinerary_request  # ItineraryRequest 객체 전달
+        )
+        print(f"   ✅ 코스 생성 완료, data_converter로 변환 시작...")
+        print(f"🔄 코스 생성 완료, 변환 시작...")
+        
+        # 6. data_converter를 사용해 프론트엔드 형식으로 변환
+        print(f"   🔄 data_converter로 변환 중...")
+        from services.data_converter import data_converter
+        frontend_response_data = data_converter.convert_backend_to_frontend(backend_course_data)
+        print(f"   ✅ 변환 완료, 응답 객체 생성 중...")
+        
+        # 7. 최종 응답 형식으로 변환
+        print(f"   🏗️ FrontendItineraryResponse 객체 생성 중...")
+        try:
+            frontend_response = FrontendItineraryResponse(itinerary=[
+                FrontendDay(
+                    date=day["date"],
+                    dayName=day["dayName"], 
+                    places=[
+                        FrontendPlace(
+                            id=place["id"],
+                            name=place["name"],
+                            placeId=place["placeId"],
+                            time=place["time"],
+                            icon="MuseumIcon"  # 프론트엔드에서 설정
+                        ) for place in day["places"]
+                    ]
+                ) for day in frontend_response_data
+            ])
+            print(f"   ✅ 응답 객체 생성 완료!")
+        except Exception as e:
+            print(f"   ❌ 응답 객체 생성 실패: {e}")
+            raise
+        
+        # 8. 결과 로그
+        total_places = sum(len(day.get('places', [])) for day in backend_course_data.get('itinerary', {}).get('days', []))
+        print(f"✅ 설문조사 기반 코스 생성 완료!")
+        print(f"   🏛️ 총 방문 장소: {total_places}곳")
+        print(f"   🤖 ML 점수 기반 최적화")
+        print(f"   📋 설문 조건 반영")
+        
+        return frontend_response
+        
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"❌ 설문조사 기반 코스 생성 중 오류: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")

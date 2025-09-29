@@ -16,7 +16,6 @@ from schemas import (
     Place
 )
 from services.db_handler import tourism_collection
-from services.data_converter import data_converter
 
 class CourseService:
     def __init__(self):
