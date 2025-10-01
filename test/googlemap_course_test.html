@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🗺️ Google Maps 코스 테스트 - 부산 여행</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 0;
+            min-height: 700px;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            padding: 30px;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+            max-height: 700px;
+        }
+
+        .map-container {
+            position: relative;
+            background: #e9ecef;
+        }
+
+        #map {
+            width: 100%;
+            height: 700px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .place-item {
+            background: white;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .place-item:hover {
+            transform: translateX(5px);
+            border-color: #4285f4;
+            box-shadow: 0 2px 8px rgba(66, 133, 244, 0.2);
+        }
+
+        .place-item.selected {
+            background: #4285f4;
+            color: white;
+            border-color: #4285f4;
+        }
+
+        .place-item .icon {
+            font-size: 1.5em;
+        }
+
+        .place-item .info {
+            flex: 1;
+        }
+
+        .place-item .name {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .place-item .category {
+            font-size: 0.85em;
+            opacity: 0.7;
+        }
+
+        .selected-places {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            min-height: 100px;
+        }
+
+        .selected-place-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #4285f4;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9em;
+        }
+
+        .selected-place-tag .remove {
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .travel-mode-selector {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .travel-mode-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .travel-mode-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 1em;
+            background: white;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(66, 133, 244, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .route-info {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .route-segment {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            background: #f8f9fa;
+            border-left: 5px solid #4285f4;
+        }
+
+        .route-segment .route-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .route-segment .route-details {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            text-align: center;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4285f4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .preset-course {
+            background: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid #dee2e6;
+            transition: all 0.2s;
+        }
+
+        .preset-course:hover {
+            border-color: #4285f4;
+            transform: translateX(5px);
+        }
+
+        .preset-course .title {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .preset-course .places {
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ 부산 여행 코스 - Google Maps</h1>
+            <p>Google Maps Directions API로 실제 경로를 확인해보세요!</p>
+        </div>
+
+        <div class="content">
+            <!-- 사이드바 -->
+            <div class="sidebar">
+                <div class="alert alert-warning">
+                    ⚠️ <strong>한국 제한사항:</strong> DRIVING 모드는 한국에서 지원되지 않습니다.<br>
+                    TRANSIT(대중교통), WALKING(도보), BICYCLING(자전거) 모드를 사용하세요!
+                </div>
+
+                <!-- 이동 수단 선택 -->
+                <div class="travel-mode-selector">
+                    <label for="travel-mode">🚗 이동 수단 선택</label>
+                    <select id="travel-mode">
+                        <option value="TRANSIT">🚇 대중교통 (추천)</option>
+                        <option value="WALKING">🚶 도보</option>
+                        <option value="BICYCLING">🚴 자전거</option>
+                        <option value="DRIVING">🚗 자동차 (한국 미지원)</option>
+                    </select>
+                </div>
+
+                <!-- 추천 코스 -->
+                <div class="section">
+                    <h3>⭐ 추천 코스 (클릭하면 자동 선택)</h3>
+                    <div class="preset-course" onclick="loadPresetCourse('classic')">
+                        <div class="title">🏖️ 클래식 부산 1일 코스</div>
+                        <div class="places">해운대 → 광안리 → 감천문화마을</div>
+                    </div>
+                    <div class="preset-course" onclick="loadPresetCourse('history')">
+                        <div class="title">🏛️ 역사 문화 코스</div>
+                        <div class="places">용두산공원 → 자갈치시장 → 태종대</div>
+                    </div>
+                    <div class="preset-course" onclick="loadPresetCourse('walking')">
+                        <div class="title">🚶 도보 여행 코스</div>
+                        <div class="places">해운대 → 동백섬 → 달맞이길</div>
+                    </div>
+                </div>
+
+                <!-- 선택된 장소 -->
+                <div class="section">
+                    <h3>📍 선택된 장소 (<span id="selected-count">0</span>개)</h3>
+                    <div class="alert alert-info">
+                        💡 최소 2개 이상의 장소를 선택해주세요
+                    </div>
+                    <div id="selected-places" class="selected-places">
+                        <p style="color: #999; text-align: center;">장소를 선택해주세요</p>
+                    </div>
+                </div>
+
+                <!-- 장소 목록 -->
+                <div class="section">
+                    <h3>🏛️ 부산 주요 관광지</h3>
+                    <div id="place-list">
+                        <!-- JavaScript로 동적 생성 -->
+                    </div>
+                </div>
+
+                <!-- 버튼 -->
+                <button class="btn btn-primary" onclick="generateRoute()" id="generate-btn" disabled>
+                    🗺️ 경로 생성하기
+                </button>
+                <button class="btn btn-secondary" onclick="clearSelection()">
+                    🔄 선택 초기화
+                </button>
+
+                <!-- 경로 정보 -->
+                <div id="route-info" style="display: none;">
+                    <div class="section">
+                        <h3>📊 경로 정보</h3>
+                        <div id="route-segments"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 지도 -->
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <div>Google Maps로 경로를 생성하고 있습니다...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Maps JavaScript API는 동적으로 로드됩니다 -->
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+        
+        // 부산 주요 관광지 목록 (DB에서 동적으로 로드됨)
+        let BUSAN_ATTRACTIONS = [];
+        
+        // 실제 DB에서 가져온 장소 ID 목록 (하드코딩된 샘플)
+        const SAMPLE_PLACE_IDS = [
+            '681891fa77e67d6ebadae358',
+            '681891fa77e67d6ebadae359',
+            '681891fa77e67d6ebadae35a',
+            '681891fa77e67d6ebadae35b',
+            '681891fa77e67d6ebadae35c'
+        ];
+
+        // 추천 코스 데이터 (장소 이름으로 저장됨)
+        let PRESET_COURSES = {
+            classic: [],
+            history: [],
+            walking: []
+        };
+
+        let selectedPlaces = [];
+        let placeIdMap = {}; // 장소명 -> ObjectId 매핑
+        let googleMap = null;
+        let directionsService = null;
+        let directionsRenderers = []; // 여러 경로를 표시하기 위해 배열 사용
+        let markers = [];
+        let isGoogleMapsLoaded = false;
+
+        // Google Maps SDK 동적 로드
+        async function loadGoogleMapsSDK() {
+            try {
+                console.log('🔑 Google Maps API 키 가져오는 중...');
+                const response = await fetch(`${API_BASE_URL}/api/v1/config/maps-api-key`);
+                const data = await response.json();
+                const apiKey = data.api_key;
+                
+                console.log('✅ Google Maps API 키 로드 완료');
+                
+                // 스크립트 동적 로드
+                return new Promise((resolve, reject) => {
+                    window.initMap = function() {
+                        initGoogleMap();
+                        resolve();
+                    };
+                    
+                    const script = document.createElement('script');
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap&libraries=places`;
+                    script.async = true;
+                    script.defer = true;
+                    script.onerror = () => {
+                        console.error('❌ Google Maps SDK 로드 실패');
+                        reject(new Error('Google Maps SDK 로드 실패'));
+                    };
+                    document.head.appendChild(script);
+                });
+            } catch (error) {
+                console.error('❌ Google Maps API 키 가져오기 실패:', error);
+                throw error;
+            }
+        }
+
+        // Google Maps 초기화
+        function initGoogleMap() {
+            try {
+                // 지도 생성
+                googleMap = new google.maps.Map(document.getElementById('map'), {
+                    center: { lat: 35.1796, lng: 129.0756 }, // 부산 중심
+                    zoom: 12,
+                    mapTypeControl: true,
+                    streetViewControl: true,
+                    fullscreenControl: true
+                });
+
+                // DirectionsService 초기화
+                directionsService = new google.maps.DirectionsService();
+                isGoogleMapsLoaded = true;
+
+                console.log('✅ Google Maps 초기화 완료');
+            } catch (error) {
+                console.error('❌ Google Maps 초기화 실패:', error);
+            }
+        }
+
+        // 페이지 로드 시 초기화
+        window.onload = async function() {
+            try {
+                // 1. Google Maps SDK 로드
+                await loadGoogleMapsSDK();
+                
+                // 2. DB에서 장소 로드
+                await loadPlacesFromDB();
+                
+                // 3. 장소 목록 UI 초기화
+                initPlaceList();
+                
+                console.log('✅ Google Maps 코스 테스트 페이지 로드 완료');
+            } catch (error) {
+                console.error('❌ 페이지 초기화 실패:', error);
+                console.warn('⚠️ Fallback 모드로 전환합니다');
+            }
+        };
+
+        // DB에서 실제 장소 데이터 로드
+        async function loadPlacesFromDB() {
+            try {
+                console.log('🔍 DB에서 장소 데이터 로드 중...');
+                const response = await fetch(`${API_BASE_URL}/api/v1/simple_detail`);
+                
+                if (!response.ok) {
+                    throw new Error(`API 오류: ${response.status}`);
+                }
+                
+                const allPlaces = await response.json();
+                console.log(`✅ DB에서 ${allPlaces.length}개 장소 로드 완료`);
+                console.log('📋 첫 번째 장소 샘플:', allPlaces[0]);
+                
+                if (!allPlaces || allPlaces.length === 0) {
+                    throw new Error('DB에 장소 데이터가 없습니다');
+                }
+                
+                // 인기 장소 30개만 선택
+                const popularPlaces = allPlaces.slice(0, 30);
+                
+                BUSAN_ATTRACTIONS = popularPlaces.map(place => ({
+                    id: place.id || place._id,
+                    name: place.name || '이름 없음',
+                    category: place.category_group || place.category || '기타',
+                    icon: getIconForPlace(place),
+                    rating: place.rating || 0
+                }));
+                
+                // ID 매핑도 미리 저장
+                BUSAN_ATTRACTIONS.forEach(place => {
+                    placeIdMap[place.name] = place.id;
+                });
+                
+                // 추천 코스 설정
+                setupPresetCourses(BUSAN_ATTRACTIONS);
+                
+                console.log('✅ 장소 데이터 준비 완료:', BUSAN_ATTRACTIONS.length);
+                console.log('📋 준비된 장소들:', BUSAN_ATTRACTIONS.slice(0, 5).map(p => p.name).join(', ') + '...');
+                
+            } catch (error) {
+                console.error('❌ DB 장소 로드 실패:', error);
+                await loadPlacesBySampleIds();
+            }
+        }
+
+        // Fallback: 샘플 ID로 장소 로드
+        async function loadPlacesBySampleIds() {
+            try {
+                console.log('🔄 Fallback: 샘플 ID로 장소 로드 중...');
+                BUSAN_ATTRACTIONS = [];
+                
+                for (const placeId of SAMPLE_PLACE_IDS) {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/api/v1/simple_detail?query=${placeId}`);
+                        const data = await response.json();
+                        
+                        if (data && data.length > 0) {
+                            const place = data[0];
+                            const id = place.id || place._id;
+                            BUSAN_ATTRACTIONS.push({
+                                id: id,
+                                name: place.name || '장소',
+                                category: place.category_group || '관광지',
+                                icon: getIconForPlace(place)
+                            });
+                            placeIdMap[place.name] = id;
+                        }
+                    } catch (err) {
+                        console.error(`장소 ${placeId} 로드 실패:`, err);
+                    }
+                }
+                
+                console.log(`✅ Fallback으로 ${BUSAN_ATTRACTIONS.length}개 장소 로드 완료`);
+                setupPresetCourses(BUSAN_ATTRACTIONS);
+            } catch (error) {
+                console.error('❌ Fallback도 실패:', error);
+            }
+        }
+
+        // 장소 타입에 따른 아이콘 선택
+        function getIconForPlace(place) {
+            const name = place.name.toLowerCase();
+            const category = (place.category_type || place.category_group || '').toLowerCase();
+            
+            if (name.includes('해수욕장') || name.includes('비치')) return '🏖️';
+            if (name.includes('공원')) return '🌳';
+            if (name.includes('시장')) return '🐟';
+            if (name.includes('사찰') || name.includes('절')) return '⛩️';
+            if (name.includes('타워')) return '🗼';
+            if (name.includes('대교')) return '🌉';
+            if (name.includes('아쿠아리움')) return '🐠';
+            if (name.includes('마을')) return '🎨';
+            
+            if (category.includes('문화')) return '🎨';
+            if (category.includes('자연')) return '🌲';
+            if (category.includes('레포츠')) return '⚽';
+            if (category.includes('쇼핑')) return '🛍️';
+            
+            return '📍';
+        }
+
+        // 추천 코스 설정
+        function setupPresetCourses(places) {
+            if (!places || places.length === 0) {
+                console.warn('⚠️ 장소 데이터가 없어 추천 코스를 설정할 수 없습니다');
+                return;
+            }
+            
+            console.log(`📋 추천 코스 설정 시작: ${places.length}개 장소`);
+            
+            if (places.length >= 3) {
+                PRESET_COURSES.classic = places.slice(0, 3).map(p => p.name);
+                console.log('✅ 클래식 코스:', PRESET_COURSES.classic);
+            }
+            if (places.length >= 6) {
+                PRESET_COURSES.history = places.slice(3, 6).map(p => p.name);
+                console.log('✅ 역사 문화 코스:', PRESET_COURSES.history);
+            }
+            if (places.length >= 9) {
+                PRESET_COURSES.walking = places.slice(6, 9).map(p => p.name);
+                console.log('✅ 도보 코스:', PRESET_COURSES.walking);
+            }
+            
+            console.log('✅ 추천 코스 설정 완료');
+        }
+
+        // 장소 목록 초기화
+        function initPlaceList() {
+            const container = document.getElementById('place-list');
+            container.innerHTML = '';
+
+            if (BUSAN_ATTRACTIONS.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">장소를 불러오는 중...</p>';
+                return;
+            }
+
+            BUSAN_ATTRACTIONS.forEach(place => {
+                const item = document.createElement('div');
+                item.className = 'place-item';
+                item.onclick = () => togglePlace(place.name);
+                item.innerHTML = `
+                    <div class="icon">${place.icon}</div>
+                    <div class="info">
+                        <div class="name">${place.name}</div>
+                        <div class="category">${place.category}</div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // 장소 선택/해제
+        function togglePlace(placeName) {
+            const index = selectedPlaces.indexOf(placeName);
+            if (index === -1) {
+                selectedPlaces.push(placeName);
+            } else {
+                selectedPlaces.splice(index, 1);
+            }
+            updateSelectedPlaces();
+            updatePlaceListUI();
+        }
+
+        // 선택된 장소 UI 업데이트
+        function updateSelectedPlaces() {
+            const container = document.getElementById('selected-places');
+            const count = document.getElementById('selected-count');
+            count.textContent = selectedPlaces.length;
+
+            if (selectedPlaces.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center;">장소를 선택해주세요</p>';
+                document.getElementById('generate-btn').disabled = true;
+            } else {
+                container.innerHTML = '';
+                selectedPlaces.forEach((name, idx) => {
+                    const tag = document.createElement('div');
+                    tag.className = 'selected-place-tag';
+                    tag.innerHTML = `
+                        <span>${idx + 1}. ${name}</span>
+                        <span class="remove" onclick="removePlace('${name}')">✕</span>
+                    `;
+                    container.appendChild(tag);
+                });
+                document.getElementById('generate-btn').disabled = selectedPlaces.length < 2;
+            }
+        }
+
+        // 장소 목록 UI 업데이트
+        function updatePlaceListUI() {
+            const items = document.querySelectorAll('.place-item');
+            items.forEach(item => {
+                const name = item.querySelector('.name').textContent;
+                if (selectedPlaces.includes(name)) {
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        }
+
+        // 장소 제거
+        function removePlace(placeName) {
+            const index = selectedPlaces.indexOf(placeName);
+            if (index !== -1) {
+                selectedPlaces.splice(index, 1);
+                updateSelectedPlaces();
+                updatePlaceListUI();
+            }
+        }
+
+        // 선택 초기화
+        function clearSelection() {
+            selectedPlaces = [];
+            updateSelectedPlaces();
+            updatePlaceListUI();
+            clearMap();
+            document.getElementById('route-info').style.display = 'none';
+        }
+
+        // 추천 코스 로드
+        function loadPresetCourse(courseType) {
+            console.log('📋 추천 코스 로드:', courseType);
+            console.log('📋 PRESET_COURSES:', PRESET_COURSES);
+            
+            const course = PRESET_COURSES[courseType];
+            
+            // 코스가 비어있거나 없으면
+            if (!course || course.length === 0) {
+                console.error('❌ 추천 코스가 비어있습니다');
+                
+                // BUSAN_ATTRACTIONS에서 랜덤으로 선택
+                if (BUSAN_ATTRACTIONS.length >= 3) {
+                    const randomPlaces = BUSAN_ATTRACTIONS
+                        .slice(0, Math.min(10, BUSAN_ATTRACTIONS.length))
+                        .sort(() => Math.random() - 0.5)
+                        .slice(0, 3)
+                        .map(p => p.name);
+                    
+                    selectedPlaces = randomPlaces;
+                    console.log('✅ 랜덤 코스 생성:', selectedPlaces);
+                } else {
+                    alert('아직 장소 데이터가 로드되지 않았습니다. 잠시 후 다시 시도해주세요.');
+                    return;
+                }
+            } else {
+                selectedPlaces = [...course];
+                console.log('✅ 추천 코스 선택:', selectedPlaces);
+            }
+            
+            updateSelectedPlaces();
+            updatePlaceListUI();
+            
+            // 대중교통 모드로 자동 설정
+            document.getElementById('travel-mode').value = 'TRANSIT';
+            
+            // 자동으로 경로 생성
+            setTimeout(() => generateRoute(), 500);
+        }
+
+        // 경로 생성
+        async function generateRoute() {
+            if (selectedPlaces.length < 2) {
+                alert('최소 2개 이상의 장소를 선택해주세요.');
+                return;
+            }
+
+            const travelMode = document.getElementById('travel-mode').value;
+            
+            // DRIVING 모드 경고
+            if (travelMode === 'DRIVING') {
+                if (!confirm('⚠️ 한국에서는 DRIVING 모드가 제한적입니다.\n계속하시겠습니까?')) {
+                    return;
+                }
+            }
+
+            showLoading();
+
+            try {
+                // 1단계: 장소 이름으로 ObjectId 조회
+                console.log('🔍 1단계: 장소 ID 조회 중...');
+                const placeIds = await getPlaceIds(selectedPlaces);
+
+                if (placeIds.length !== selectedPlaces.length) {
+                    throw new Error('일부 장소를 찾을 수 없습니다.');
+                }
+
+                // 2단계: 백엔드에서 경로 데이터 요청
+                console.log('🛣️ 2단계: 경로 데이터 요청 중...');
+                const response = await fetch(`${API_BASE_URL}/api/v1/googlemap/course-route`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        places: placeIds,
+                        travel_mode: travelMode
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `API 오류: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('✅ 경로 데이터 수신:', data);
+
+                // 3단계: Google Maps에 표시
+                displayRouteOnGoogleMap(data, travelMode);
+                displayRouteInfo(data);
+
+            } catch (error) {
+                console.error('❌ 경로 생성 실패:', error);
+                alert(`경로 생성 중 오류가 발생했습니다:\n${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 장소 이름으로 ObjectId 조회
+        async function getPlaceIds(placeNames) {
+            const ids = [];
+            const notFoundPlaces = [];
+            
+            for (const name of placeNames) {
+                // 1. 캐시 확인
+                if (placeIdMap[name]) {
+                    ids.push(placeIdMap[name]);
+                    console.log(`✅ (캐시) ${name} ID: ${placeIdMap[name]}`);
+                    continue;
+                }
+
+                // 2. BUSAN_ATTRACTIONS에서 찾기
+                const attraction = BUSAN_ATTRACTIONS.find(a => a.name === name);
+                if (attraction && attraction.id) {
+                    placeIdMap[name] = attraction.id;
+                    ids.push(attraction.id);
+                    console.log(`✅ (로컬) ${name} ID: ${attraction.id}`);
+                    continue;
+                }
+
+                // 3. API로 검색
+                try {
+                    console.log(`🔍 API 검색: ${name}`);
+                    const response = await fetch(`${API_BASE_URL}/api/v1/simple_detail?query=${encodeURIComponent(name)}`);
+                    
+                    if (!response.ok) {
+                        console.error(`❌ ${name} 검색 API 오류: ${response.status}`);
+                        notFoundPlaces.push(name);
+                        continue;
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (Array.isArray(data) && data.length > 0) {
+                        const placeId = data[0].id || data[0]._id;
+                        
+                        if (!placeId) {
+                            console.error(`❌ ${name} ID 필드를 찾을 수 없음`);
+                            notFoundPlaces.push(name);
+                        } else {
+                            placeIdMap[name] = placeId;
+                            ids.push(placeId);
+                            console.log(`✅ (API) ${name} ID: ${placeId}`);
+                        }
+                    } else {
+                        console.error(`❌ ${name} 검색 결과 없음`);
+                        notFoundPlaces.push(name);
+                    }
+                } catch (error) {
+                    console.error(`❌ ${name} 검색 실패:`, error);
+                    notFoundPlaces.push(name);
+                }
+            }
+
+            if (notFoundPlaces.length > 0) {
+                throw new Error(`다음 장소를 찾을 수 없습니다:\n${notFoundPlaces.join('\n')}`);
+            }
+
+            return ids;
+        }
+
+        // Google Maps에 경로 표시
+        function displayRouteOnGoogleMap(data, travelMode) {
+            // 기존 마커/경로 제거
+            clearMap();
+
+            // 지도 중심 이동
+            googleMap.setCenter(data.center);
+            googleMap.setZoom(data.zoom);
+
+            // 마커 표시
+            data.markers.forEach(markerData => {
+                const marker = new google.maps.Marker({
+                    position: { lat: markerData.lat, lng: markerData.lng },
+                    map: googleMap,
+                    label: markerData.order.toString(),
+                    title: markerData.name
+                });
+
+                // 정보창
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `
+                        <div style="padding: 10px;">
+                            <h3 style="margin: 0 0 5px 0;">${markerData.order}. ${markerData.name}</h3>
+                            <p style="margin: 0; color: #666; font-size: 0.9em;">${markerData.address}</p>
+                        </div>
+                    `
+                });
+
+                marker.addListener('click', () => {
+                    infoWindow.open(googleMap, marker);
+                });
+
+                markers.push({ marker, infoWindow });
+            });
+
+            // Google Directions API로 경로 표시
+            data.segments.forEach((segment, index) => {
+                const directionsRenderer = new google.maps.DirectionsRenderer({
+                    map: googleMap,
+                    suppressMarkers: true, // 우리가 이미 마커를 표시했으므로
+                    preserveViewport: true, // 지도 뷰포트 유지
+                    polylineOptions: {
+                        strokeColor: getColorForSegment(index),
+                        strokeWeight: 5,
+                        strokeOpacity: 0.7
+                    }
+                });
+
+                // DirectionsService로 경로 요청
+                const request = {
+                    origin: segment.from_coords,
+                    destination: segment.to_coords,
+                    travelMode: google.maps.TravelMode[travelMode]
+                };
+
+                directionsService.route(request, (result, status) => {
+                    if (status === 'OK') {
+                        directionsRenderer.setDirections(result);
+                        console.log(`✅ 경로 표시 완료: ${segment.from_place} → ${segment.to_place}`);
+                    } else {
+                        console.error(`❌ 경로 표시 실패: ${status}`);
+                        // Fallback: 직선 표시
+                        drawStraightLine(segment, index);
+                    }
+                });
+
+                directionsRenderers.push(directionsRenderer);
+            });
+        }
+
+        // Fallback: 직선 그리기
+        function drawStraightLine(segment, index) {
+            const line = new google.maps.Polyline({
+                path: [segment.from_coords, segment.to_coords],
+                strokeColor: getColorForSegment(index),
+                strokeWeight: 4,
+                strokeOpacity: 0.5,
+                map: googleMap
+            });
+        }
+
+        // 구간별 색상
+        function getColorForSegment(index) {
+            const colors = [
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+                '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B739', '#52B788'
+            ];
+            return colors[index % colors.length];
+        }
+
+        // 경로 정보 표시
+        function displayRouteInfo(data) {
+            const container = document.getElementById('route-segments');
+            container.innerHTML = '';
+
+            let totalDistance = 0;
+            let totalDuration = 0;
+
+            data.segments.forEach((segment, idx) => {
+                totalDistance += segment.distance_km;
+                totalDuration += segment.duration_minutes;
+
+                const div = document.createElement('div');
+                div.className = 'route-segment';
+                div.innerHTML = `
+                    <div class="route-header">
+                        ${idx + 1}. ${segment.from_place} → ${segment.to_place}
+                    </div>
+                    <div class="route-details">
+                        📏 거리: ${segment.distance_km}km | ⏱️ 시간: ${Math.round(segment.duration_minutes)}분
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            // 총합 표시
+            const summary = document.createElement('div');
+            summary.className = 'alert alert-success';
+            summary.style.marginTop = '10px';
+            summary.innerHTML = `
+                <strong>📊 총 거리:</strong> ${totalDistance.toFixed(1)}km<br>
+                <strong>⏱️ 총 소요시간:</strong> ${Math.round(totalDuration)}분 (약 ${(totalDuration/60).toFixed(1)}시간)
+            `;
+            container.appendChild(summary);
+
+            document.getElementById('route-info').style.display = 'block';
+        }
+
+        // 지도 초기화
+        function clearMap() {
+            markers.forEach(m => m.marker.setMap(null));
+            directionsRenderers.forEach(r => r.setMap(null));
+            markers = [];
+            directionsRenderers = [];
+        }
+
+        // 로딩 표시
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+    </script>
+</body>
+</html>
+
