@@ -90,9 +90,15 @@ base_schema_storage = []
 
 
 def get_current_user(request: Request) -> str:
-    """JWT 토큰에서 사용자 ID 추출"""
+    """JWT 토큰에서 사용자 ID 추출 (쿠키와 Authorization 헤더 모두 지원)"""
+    # 쿠키에서 토큰 확인
     token = request.cookies.get("access_token")
-
+    
+    # Authorization 헤더에서 토큰 확인 (Bearer 토큰)
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+    
     if not token:
         raise HTTPException(status_code=401, detail="로그인이 필요합니다")
 
@@ -1190,7 +1196,7 @@ async def make_selection(selection: SelectionData, request: Request, user_id: st
         return {"next_step": "complete", "selections": user_selections}
 
 
-@router.post("/submit-complete")
+@router.post("/submit")
 async def submit_complete_survey(survey_data: CompleteSurveyData):
     """
     전체 설문조사 데이터를 한 번에 처리 (인증 불필요)
@@ -1435,23 +1441,50 @@ def create_vote_schemas(user_uuid=None):
 
 
 @router.get("/data")
-async def get_data(request: Request, user_id: str = Depends(get_current_user)):
-    """선택된 데이터와 투표 기록을 스키마 형식으로 반환"""
+async def get_user_survey_data(request: Request, user_id: str = Depends(get_current_user)):
+    """DB에서 사용자의 설문조사 데이터 조회"""
     try:
-        print(f"🔍 /data 엔드포인트 호출됨")
-        print(f"📊 현재 user_selections: {user_selections}")
-        print(f"📊 현재 user_votes: {user_votes}")
-
-        # 모든 선택이 완료되었는지 확인
-        if not all(value is not None for value in user_selections.values()):
-            missing_fields = [str(key) for key, value in user_selections.items() if value is None]
-            print(f"⚠️ 선택이 완료되지 않음. 누락된 필드: {missing_fields}")
-            return {
-                "status": "incomplete",
-                "message": "모든 선택을 완료해주세요.",
-                "current_selections": user_selections,
-                "missing_fields": missing_fields
-            }
+        print(f"🔍 /data 엔드포인트 호출됨 - user_id: {user_id}")
+        
+        # MongoDB에서 사용자 데이터 조회
+        if user_interaction_col:
+            try:
+                # 사용자의 설문조사 데이터 조회
+                user_data = user_interaction_col.find_one({"user_id": user_id})
+                print(f"🔍 DB에서 조회된 사용자 데이터: {user_data}")
+                
+                if user_data and user_data.get("user_schema"):
+                    print(f"✅ 기존 설문조사 데이터 발견")
+                    return {
+                        "status": "success",
+                        "user_schema": user_data.get("user_schema", {}),
+                        "message": "기존 설문조사 데이터를 찾았습니다."
+                    }
+                else:
+                    print(f"📝 기존 설문조사 데이터 없음")
+                    return {
+                        "status": "no_data",
+                        "message": "기존 설문조사 데이터가 없습니다.",
+                        "user_schema": {}
+                    }
+            except Exception as e:
+                print(f"❌ DB 조회 오류: {e}")
+                return {
+                    "status": "error",
+                    "message": f"데이터베이스 조회 중 오류가 발생했습니다: {str(e)}"
+                }
+        else:
+            print(f"⚠️ MongoDB 연결 없음 - 메모리 데이터 사용")
+            # MongoDB 연결이 없는 경우 메모리 데이터 사용
+            if not all(value is not None for value in user_selections.values()):
+                missing_fields = [str(key) for key, value in user_selections.items() if value is None]
+                print(f"⚠️ 선택이 완료되지 않음. 누락된 필드: {missing_fields}")
+                return {
+                    "status": "incomplete",
+                    "message": "모든 선택을 완료해주세요.",
+                    "current_selections": user_selections,
+                    "missing_fields": missing_fields
+                }
 
         # 기본 사용자 스키마 생성 (base_schema용으로 UUID 문자열 사용 + 실제 투표 데이터 포함)
         try:
@@ -2187,6 +2220,9 @@ def get_ml_recommendations_for_user(user_vote_schemas, top_k=10):
     """ML 모델을 사용한 추론 전용 추천 시스템 - 10개 추천"""
     global loaded_ncf_model, model_data
 
+    print(f"🚀 get_ml_recommendations_for_user 호출됨 - top_k: {top_k}")
+    print(f"🔍 user_vote_schemas 개수: {len(user_vote_schemas) if user_vote_schemas else 0}")
+
     try:
         if loaded_ncf_model is None:
             print("❌ ML 모델이 로드되지 않았습니다.")
@@ -2213,9 +2249,11 @@ def get_ml_recommendations_for_user(user_vote_schemas, top_k=10):
         print(f"📍 관광지 데이터 로드 완료: {len(tourism_data)}개")
 
         # ML 모델 추론 수행 (10개 추천)
+        print(f"🔍 recommend_with_vote_context 호출 시작 - top_k: {top_k}")
         recommendations = recommend_with_vote_context(
             loaded_ncf_model, user_vote_schemas, model_data, tourism_data, device, top_k
         )
+        print(f"🔍 recommend_with_vote_context 호출 완료 - 결과: {len(recommendations) if recommendations else 0}개")
 
         if recommendations and len(recommendations) >= 5:  # 최소 5개는 있어야 성공으로 간주
             print("✅ ML 모델 추론 성공")
