@@ -1,194 +1,192 @@
 from fastapi import APIRouter, HTTPException, Body
 from typing import List
-
-from schemas import (
-    AddPlaceToCourseRequest,
-    UpdatePlaceInCourseRequest,
-    RemovePlaceFromCourseRequest,
-    CourseResponse
-)
+import os
+from pymongo import MongoClient
 from services.data_converter import data_converter
-from services.course_service import course_service
+
+# MongoDB 연결 (코스 조회용 - recommeded_cors_router와 호환)
+MONGO_URI = os.getenv("MONGO_URI") or os.getenv("MONGO_ATLAS_URI", "mongodb://localhost:27017/")
+try:
+    client = MongoClient(MONGO_URI)
+    db = client["wherewego"]
+    courses_collection = db["courses"]
+    print("✅ 코스 관리용 MongoDB 연결 성공")
+except Exception as e:
+    print(f"❌ 코스 관리용 MongoDB 연결 실패: {e}")
+    courses_collection = None
 
 router = APIRouter()
 
-@router.post("/courses/add-place", response_model=CourseResponse)
-async def add_place_to_course(request: AddPlaceToCourseRequest = Body(...)):
+@router.delete("/courses/{course_id}")
+async def delete_course(course_id: str):
     """
-    코스에 장소를 추가합니다.
+    코스를 삭제합니다.
     
-    - **course_id**: 코스 ID
-    - **place_id**: 추가할 장소 ID
-    - **day**: 추가할 날짜 (1부터 시작)
-    - **position**: 해당 날짜 내에서의 위치 (0부터 시작)
-    - **estimated_duration**: 예상 체류 시간 (시간 단위, 기본값: 2)
-    - **travel_time_from_previous**: 이전 장소로부터의 이동 시간 (분 단위, 기본값: 20)
+    - **course_id**: 삭제할 코스 ID
     """
+    if courses_collection is None:
+        raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다.")
+    
     try:
-        return await course_service.add_place_to_course(request)
+        result = courses_collection.delete_one({"course_id": course_id})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다.")
+        
+        return {
+            "success": True,
+            "message": "코스가 성공적으로 삭제되었습니다."
+        }
+        
     except HTTPException as e:
         raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"장소 추가 중 오류가 발생했습니다: {str(e)}")
+        print(f"코스 삭제 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
 
-@router.put("/courses/update-place", response_model=CourseResponse)
-async def update_place_in_course(request: UpdatePlaceInCourseRequest = Body(...)):
+@router.put("/courses/{course_id}")
+async def overwrite_course(course_id: str, course_data: dict = Body(...)):
     """
-    코스 내 장소 정보를 수정합니다.
+    코스를 완전히 덮어씁니다.
     
-    - **course_id**: 코스 ID
-    - **place_id**: 수정할 장소 ID
-    - **day**: 장소가 있는 날짜
-    - **position**: 해당 날짜 내에서의 위치
-    - **estimated_duration**: 예상 체류 시간 (시간 단위, 선택사항)
-    - **travel_time_from_previous**: 이전 장소로부터의 이동 시간 (분 단위, 선택사항)
+    - **course_id**: 덮어쓸 코스 ID
+    - **course_data**: 새로운 코스 데이터
     """
+    if courses_collection is None:
+        raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다.")
+    
     try:
-        return await course_service.update_place_in_course(request)
+        from datetime import datetime
+        
+        # 기존 코스가 있는지 확인
+        existing_course = courses_collection.find_one({"course_id": course_id})
+        if not existing_course:
+            raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다.")
+        
+        # 새로운 코스 데이터에 메타데이터 추가
+        course_data["course_id"] = course_id
+        course_data["user_id"] = existing_course.get("user_id")  # 기존 사용자 ID 유지
+        course_data["created_at"] = existing_course.get("created_at")  # 생성일 유지
+        course_data["updated_at"] = datetime.utcnow()  # 업데이트 시간 갱신
+        
+        # 코스 덮어쓰기
+        result = courses_collection.replace_one(
+            {"course_id": course_id},
+            course_data
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=500, detail="코스 업데이트에 실패했습니다.")
+        
+        return {
+            "success": True,
+            "message": "코스가 성공적으로 업데이트되었습니다.",
+            "course_id": course_id
+        }
+        
     except HTTPException as e:
         raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"장소 수정 중 오류가 발생했습니다: {str(e)}")
+        print(f"코스 덮어쓰기 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
 
-@router.delete("/courses/remove-place", response_model=CourseResponse)
-async def remove_place_from_course(request: RemovePlaceFromCourseRequest = Body(...)):
+@router.get("/user/{user_id}")
+async def get_user_courses(user_id: str):
     """
-    코스에서 장소를 제거합니다.
+    특정 사용자의 저장된 코스 목록을 조회합니다.
+    """
+    if courses_collection is None:
+        raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다.")
     
-    - **course_id**: 코스 ID
-    - **place_id**: 제거할 장소 ID
-    - **day**: 장소가 있는 날짜
-    - **position**: 해당 날짜 내에서의 위치
-    """
     try:
-        return await course_service.remove_place_from_course(request)
-    except HTTPException as e:
-        raise e
+        # 사용자의 코스 목록 조회 (recommeded_cors_router와 동일한 구조)
+        courses = list(courses_collection.find(
+            {"user_id": user_id},
+            {"course_id": 1, "course_name": 1, "created_at": 1, "updated_at": 1}
+        ).sort("created_at", -1))
+        
+        # ObjectId를 문자열로 변환
+        for course in courses:
+            course["_id"] = str(course["_id"])
+            course["created_at"] = course["created_at"].isoformat()
+            course["updated_at"] = course["updated_at"].isoformat()
+        
+        return {
+            "success": True,
+            "courses": courses
+        }
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"장소 제거 중 오류가 발생했습니다: {str(e)}")
+        print(f"코스 조회 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
 
-@router.get("/courses/{course_id}")
-async def get_course(course_id: str, format: str = "backend"):
+@router.get("/course/{course_id}")
+async def get_course_detail(course_id: str, format: str = "frontend"):
     """
-    코스 ID로 코스를 조회합니다.
+    특정 코스의 상세 정보를 조회합니다.
     
-    - **course_id**: 조회할 코스 ID
-    - **format**: 응답 형식 ("backend" 또는 "frontend")
+    Args:
+        course_id: 코스 ID
+        format: 응답 형식 ("frontend" 또는 "backend", 기본값: "frontend")
     """
+    if courses_collection is None:
+        raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다.")
+    
     try:
-        course_response = await course_service.get_course_by_id(course_id)
+        # 코스 상세 정보 조회 (recommeded_cors_router와 동일한 구조)
+        course = courses_collection.find_one({"course_id": course_id})
+        
+        if not course:
+            raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다.")
+        
+        # ObjectId를 문자열로 변환
+        course["_id"] = str(course["_id"])
+        course["created_at"] = course["created_at"].isoformat()
+        course["updated_at"] = course["updated_at"].isoformat()
         
         if format == "frontend":
-            # CourseResponse를 dict로 변환 후 프론트엔드 형식으로 변환
-            course_dict = course_response.dict()
-            frontend_data = data_converter.convert_backend_to_frontend({
-                "itinerary": {
-                    "days": [
-                        {
-                            "day": i + 1,
-                            "date": day.date,
-                            "places": [
-                                {
-                                    "place_id": place.place_id,
-                                    "name": place.name,
-                                    "time": f"{place.start_time}~{place.end_time}"
-                                }
-                                for place in day.places
-                            ]
-                        }
-                        for i, day in enumerate(course_dict["dailySchedule"])
-                    ]
-                }
-            })
-            
+            # 프론트엔드 형식으로 변환
+            frontend_data = data_converter.convert_backend_to_frontend(course)
             return {
                 "success": True,
-                "course": course_dict,
-                "itinerary": frontend_data
+                "course": course,  # 원본 데이터
+                "itinerary": frontend_data  # 프론트엔드 형식 데이터
             }
         else:
-            return course_response
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"코스 조회 중 오류가 발생했습니다: {str(e)}")
-
-@router.get("/courses/{course_id}/places")
-async def get_course_places(course_id: str, day: int = None, format: str = "backend"):
-    """
-    코스의 장소 목록을 조회합니다.
-    
-    - **course_id**: 코스 ID
-    - **day**: 특정 날짜 (선택사항, 지정하지 않으면 전체 날짜)
-    - **format**: 응답 형식 ("backend" 또는 "frontend")
-    """
-    try:
-        course = await course_service.get_course_by_id(course_id)
+            # 기존 백엔드 형식
+            return {
+                "success": True,
+                "course": course
+            }
         
-        if day is not None:
-            # 특정 날짜의 장소만 반환
-            if day > len(course.dailySchedule):
-                raise HTTPException(status_code=400, detail=f"요청된 날짜({day})가 코스 기간({len(course.dailySchedule)})을 초과합니다.")
-            
-            day_schedule = course.dailySchedule[day - 1]
-            
-            if format == "frontend":
-                # 프론트엔드 형식으로 변환
-                frontend_data = data_converter.convert_backend_to_frontend({
-                    "itinerary": {
-                        "days": [{
-                            "day": day,
-                            "date": day_schedule.date,
-                            "places": [
-                                {
-                                    "place_id": place.place_id,
-                                    "name": place.name,
-                                    "time": f"{place.start_time}~{place.end_time}"
-                                }
-                                for place in day_schedule.places
-                            ]
-                        }]
-                    }
-                })
-                return frontend_data[0]  # 첫 번째 날만 반환
-            else:
-                return {
-                    "course_id": course_id,
-                    "day": day,
-                    "date": day_schedule.date,
-                    "places": day_schedule.places
-                }
-        else:
-            # 전체 코스의 장소 반환
-            if format == "frontend":
-                # 프론트엔드 형식으로 변환
-                frontend_data = data_converter.convert_backend_to_frontend({
-                    "itinerary": {
-                        "days": [
-                            {
-                                "day": i + 1,
-                                "date": day.date,
-                                "places": [
-                                    {
-                                        "place_id": place.place_id,
-                                        "name": place.name,
-                                        "time": f"{place.start_time}~{place.end_time}"
-                                    }
-                                    for place in day.places
-                                ]
-                            }
-                            for i, day in enumerate(course.dailySchedule)
-                        ]
-                    }
-                })
-                return frontend_data
-            else:
-                return {
-                    "course_id": course_id,
-                    "dailySchedule": course.dailySchedule
-                }
-            
     except HTTPException as e:
         raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"코스 장소 조회 중 오류가 발생했습니다: {str(e)}")
+        print(f"코스 상세 조회 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
+
+@router.get("/course/{course_id}/frontend")
+async def get_course_for_frontend(course_id: str):
+    """
+    프론트엔드에서 바로 사용할 수 있는 형식으로 코스를 반환합니다.
+    """
+    if courses_collection is None:
+        raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다.")
+    
+    try:
+        # 코스 상세 정보 조회
+        course = courses_collection.find_one({"course_id": course_id})
+        
+        if not course:
+            raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다.")
+        
+        # 프론트엔드 형식으로 변환
+        frontend_data = data_converter.convert_backend_to_frontend(course)
+        
+        return frontend_data  # 배열 형태로 직접 반환
+        
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"프론트엔드용 코스 조회 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
