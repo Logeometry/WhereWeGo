@@ -30,7 +30,7 @@ if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
 else:
     GOOGLE_OAUTH_AVAILABLE = True
     print("✅ Google OAuth 설정 완료")
-REDIRECT_URI = "https://wherewego-backend-production.up.railway.app/api/v1/auth/google/callback"
+REDIRECT_URI = "http://localhost:8000/api/v1/auth/google/callback"
 SCOPE = "openid email profile"  # 기본 ID, email, profile 정보 요청
 GOOGLE_AUTH_BASE = "https://accounts.google.com/o/oauth2/v2/auth"
 

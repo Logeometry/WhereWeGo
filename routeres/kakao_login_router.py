@@ -20,13 +20,23 @@ load_dotenv()
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 SECRET_KEY = os.getenv("SECRET_KEY")
 KAKAO_REST_API_KEY = os.getenv("KAKAO_REST_API_KEY")  # REST API 키로 통일
-KAKAO_REDIRECT_URI = "https://wherewego-backend-production.up.railway.app/api/v1/auth/kakao/callback"
+KAKAO_REDIRECT_URI = "http://localhost:8000/api/v1/auth/kakao/callback"
 KAKAO_AUTH_BASE = "https://kauth.kakao.com/oauth/authorize"
+
+# 카카오 OAuth 설정 확인
+if not KAKAO_REST_API_KEY:
+    print("⚠️ 카카오 OAuth 환경변수가 설정되지 않았습니다.")
+    print("⚠️ 카카오 로그인 기능이 제한됩니다.")
+    KAKAO_OAUTH_AVAILABLE = False
+else:
+    KAKAO_OAUTH_AVAILABLE = True
+    print("✅ 카카오 OAuth 설정 완료")
 
 # 디버깅: 환경변수 확인
 print(f"KAKAO_REST_API_KEY: {KAKAO_REST_API_KEY}")
 print(f"FRONTEND_URL: {FRONTEND_URL}")
 print(f"SECRET_KEY: {SECRET_KEY}")
+print(f"KAKAO_REDIRECT_URI: {KAKAO_REDIRECT_URI}")
 
 # 카카오 로그인 페이지 연결 라우터
 @router.get("/auth/kakao/login")
@@ -175,6 +185,6 @@ def kakao_callback(request: Request):
     
     # 디버깅: 쿠키 설정 확인
     print(f"[DEBUG] Cookie set: access_token={token[:20]}...")
-    print(f"[DEBUG] Redirecting to: {homepage_url}")
+    print(f"[DEBUG] Redirecting to: {homepage_url_with_token}")
     
     return response
