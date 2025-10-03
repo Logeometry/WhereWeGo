@@ -1599,7 +1599,7 @@ async def get_recommend(request: Request, user_id: str = Depends(get_current_use
     """단수형 경로 '/recommend' 요청을 '/recommendations'로 처리"""
     return await get_recommendations(request, user_id)
 
-@router.get("/recommendations")
+@router.get("/place-recommendations")
 async def get_recommendations(request: Request, user_id: str = Depends(get_current_user)):
     """사용자 선택을 바탕으로 관광지 추천 - 강화된 랜덤성"""
     try:
@@ -2475,7 +2475,7 @@ def save_base_schema_to_user_interaction(user_id: str, base_schemas: List, posit
         return False
 
 
-@router.post("/vote")
+@router.post("/votes")
 async def submit_vote(vote: VoteData, request: Request, user_id: str = Depends(get_current_user)):
     """사용자의 선택 결과 저장 - 로그인 필요"""
     global positive_items, current_user_uuid, base_schema_storage
