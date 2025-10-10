@@ -1140,8 +1140,8 @@ async def read_root(request: Request):
 
     if not token:
         # 로그인되지 않은 경우 즉시 Google 로그인 페이지로 리다이렉트
-        print("🔐 로그인되지 않음 - Google 로그인 페이지로 리다이렉트")
-        return RedirectResponse(url="http://localhost:8000/api/v1/auth/google/login", status_code=302)
+        print("🔐 로그인되지 않음")
+        return # (url="http://localhost:8000/api/v1/auth/google/login", status_code=302)
 
     try:
         # 토큰 검증
@@ -1155,8 +1155,8 @@ async def read_root(request: Request):
 
         if not user_id:
             # 유효하지 않은 토큰인 경우 즉시 Google 로그인 페이지로 리다이렉트
-            print("🔐 유효하지 않은 토큰 - Google 로그인 페이지로 리다이렉트")
-            return RedirectResponse(url="http://localhost:8000/api/v1/auth/google/login", status_code=302)
+            print("🔐 유효하지 않은 토큰")
+            return # RedirectResponse(url="http://localhost:8000/api/v1/auth/google/login", status_code=302)
 
         # 로그인된 사용자 - 설문조사 진행
         print(f"✅ 로그인된 사용자: {user_id} - 설문조사 시작")
@@ -1172,8 +1172,8 @@ async def read_root(request: Request):
 
     except jwt.JWTError as e:
         # 토큰 검증 실패 - 즉시 Google 로그인 페이지로 리다이렉트
-        print(f"🔐 토큰 검증 실패: {e} - Google 로그인 페이지로 리다이렉트")
-        return RedirectResponse(url="http://localhost:8000/api/v1/auth/google/login", status_code=302)
+        print(f"🔐 토큰 검증 실패: {e}")
+        return # RedirectResponse(url="http://localhost:8000/api/v1/auth/google/login", status_code=302)
 
 
 @router.post("/select")
@@ -1221,67 +1221,6 @@ async def submit_complete_survey(survey_data: CompleteSurveyData):
         "selections": user_selections,
         "next_step": "ml_recommendations"
     }
-
-
-@router.post("/generate-dummy-votes")
-async def generate_dummy_votes():
-    """
-    설문조사 결과를 바탕으로 더미 투표 데이터 생성
-    ML 추천을 받기 위해 5라운드 투표가 필요하므로 자동 생성
-    """
-    global user_votes, positive_items
-    
-    if not all(value for value in user_selections.values()):
-        return {
-            "status": "error",
-            "message": "설문조사를 먼저 완료해주세요."
-        }
-    
-    try:
-        # 설문 결과를 바탕으로 추천 받기
-        schema_data = convert_to_schema_format(user_selections)
-        recommendations = find_recommended_items(schema_data)
-        
-        if "error" in recommendations:
-            return {
-                "status": "error", 
-                "message": recommendations["error"]
-            }
-        
-        # 더미 투표 생성 (각 라운드에서 option_a 선택)
-        user_votes.clear()
-        positive_items.clear()
-        
-        for i, round_data in enumerate(recommendations['rounds']):
-            # option_a를 선택한 것으로 가정
-            selected_item = round_data['option_a']['item']
-            
-            vote = {
-                "round": i + 1,
-                "choice": "option_a", 
-                "item_name": selected_item['name'],
-                "item_index": selected_item['index'],
-                "timestamp": datetime.now().isoformat()
-            }
-            
-            user_votes.append(vote)
-            positive_items.append(selected_item['index'])
-        
-        print(f"✅ 더미 투표 생성 완료: {len(user_votes)}개")
-        
-        return {
-            "status": "success",
-            "message": f"더미 투표 {len(user_votes)}개가 생성되었습니다.",
-            "votes_generated": len(user_votes),
-            "ready_for_ml": True
-        }
-        
-    except Exception as e:
-        print(f"❌ 더미 투표 생성 오류: {e}")
-        return {
-            "status": "error",
-            "message": f"더미 투표 생성 중 오류: {str(e)}"
-        }
 
 
 def create_vote_schemas(user_uuid=None):
@@ -1636,11 +1575,15 @@ async def get_recommendations(request: Request, user_id: str = Depends(get_curre
 
         return {
             "status": "success",
-            "recommendations": recommendations,
+            "recommendations": recommendations.get("rounds", []),  # ✅ 배열로 반환
+            "total_rounds": recommendations.get("total_rounds", 5),
+            "total_places": recommendations.get("total_places", 10),
+            "user_preferences": recommendations.get("user_preferences", {}),
             "randomization_info": {
                 "enhanced_randomness": True,
                 "timestamp_seed": int(int(time.time() * 1000) % 1000000),
-                "description": "매번 다른 결과를 위해 시간 기반 랜덤 시드 적용"
+                "description": "매번 다른 결과를 위해 시간 기반 랜덤 시드 적용",
+                **recommendations.get("randomization_info", {})
             }
         }
 
@@ -1659,6 +1602,14 @@ class VoteData(BaseModel):
     choice: str  # "option_a" 또는 "option_b"
     item_name: str  # 선택한 관광지 이름
     item_index: int  # 선택한 관광지 인덱스
+
+class MLRecommendationResponse(BaseModel):
+    """ML 추천 응답"""
+    status: str
+    recommendations: List[Dict]
+    total_count: int
+    model_info: Dict
+    message: str
 
 
 # 사용자 선택 결과 저장
@@ -2550,6 +2501,67 @@ async def submit_vote(vote: VoteData, request: Request, user_id: str = Depends(g
     }
 
 
+@router.get("/status")
+async def get_survey_status(request: Request):
+    """로그인 상태 및 설문조사 상태 확인"""
+    try:
+        # JWT 토큰 확인 (optional)
+        token = request.cookies.get("access_token")
+        
+        # Authorization 헤더에서도 확인
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+        
+        logged_in = False
+        user_id = None
+        
+        if token:
+            try:
+                payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+                user_id = payload.get("sub")
+                if user_id:
+                    logged_in = True
+            except JWTError:
+                logged_in = False
+        
+        # 설문조사 완료 여부 확인
+        has_survey_data = all(value is not None for value in user_selections.values())
+        
+        # 투표 완료 여부 확인 (5개 라운드)
+        has_votes = len(user_votes) >= 5
+        
+        # 전체 상태 결정
+        if logged_in and has_survey_data and has_votes:
+            status = "완료"
+        elif logged_in and has_survey_data:
+            status = "투표 대기"
+        elif logged_in:
+            status = "설문조사 대기"
+        else:
+            status = "로그인 필요"
+        
+        return {
+            "logged_in": logged_in,
+            "user_id": user_id,
+            "has_survey_data": has_survey_data,
+            "has_votes": has_votes,
+            "status": status,
+            "total_votes": len(user_votes),
+            "current_selections": user_selections if has_survey_data else {}
+        }
+    except Exception as e:
+        print(f"❌ /status 엔드포인트 오류: {e}")
+        return {
+            "logged_in": False,
+            "user_id": None,
+            "has_survey_data": False,
+            "has_votes": False,
+            "status": "오류",
+            "error": str(e)
+        }
+
+
 @router.get("/reset")
 async def reset_selections(request: Request, user_id: str = Depends(get_current_user)):
     """선택 초기화 (투표 기록은 유지)"""
@@ -2576,25 +2588,29 @@ async def get_base_schemas(request: Request, user_id: str = Depends(get_current_
     }
 
 
-@router.get("/ml-recommendations")
+@router.get("/ml-recommendations", response_model=MLRecommendationResponse)
 async def get_ml_recommendations(k: int = 20, user_id: str = None):
-    """ML 모델을 사용한 추론 전용 개인화된 추천 - 10개 추천"""
+    """ML 모델을 사용한 추론 전용 개인화된 추천 - 20개 추천"""
     # 5라운드 투표가 완료되었는지 확인
     if len(user_votes) < 5:
-        return {
-            "status": "incomplete",
-            "message": "5라운드 심화 설문조사를 먼저 완료해주세요.",
-            "current_votes": int(len(user_votes)),
-            "required_votes": int(5)
-        }
+        return MLRecommendationResponse(
+            status="incomplete",
+            recommendations=[],
+            total_count=0,
+            model_info={"model_type": "none"},
+            message="5라운드 심화 설문조사를 먼저 완료해주세요."
+        )
 
     # 투표 스키마가 생성되었는지 확인
     vote_schemas = create_vote_schemas(user_id)
     if not vote_schemas:
-        return {
-            "status": "error",
-            "message": "투표 스키마를 생성할 수 없습니다."
-        }
+        return MLRecommendationResponse(
+            status="error",
+            recommendations=[],
+            total_count=0,
+            model_info={"model_type": "none"},
+            message="투표 스키마를 생성할 수 없습니다."
+        )
 
     print(f"🎯 ML 추론 요청 - 사용자 투표: {len(user_votes)}개, 스키마: {len(vote_schemas)}개, 추천 수: {k}개")
 
@@ -2605,61 +2621,40 @@ async def get_ml_recommendations(k: int = 20, user_id: str = None):
     ml_result = get_ml_recommendations_for_user(vote_schemas, top_k=k)
 
     if "error" in ml_result:
-        return {
-            "status": "error",
-            "message": ml_result["error"]
-        }
+        return MLRecommendationResponse(
+            status="error",
+            recommendations=[],
+            total_count=0,
+            model_info={"model_type": "none"},
+            message=ml_result["error"]
+        )
 
+    # ml_result에서 recommendations 추출
+    recommendations = ml_result.get("recommendations", [])
+    method = ml_result.get("method", "Unknown")
+    confidence = ml_result.get("confidence", "medium")
+    
     # 기본 설문조사 정보도 포함 (vote_schema용 - UUID 6자리 랜덤)
     vote_schema = convert_to_schema_format(user_selections)
 
     # base_schema 정보도 별도로 생성 (UUID 문자열 + 실제 투표 데이터)
     base_schema = convert_to_base_schema_format(user_selections, user_id, user_votes)
 
-    return {
-        "status": "success",
-        "ml_recommendations": ml_result,
-        "user_preferences": {
-            "extracted_patterns": user_preferences,
-            "schemas_used": int(len(vote_schemas)),
-            "selected_items": [int(schema[6]) for schema in vote_schemas[:5]],
-            "negative_sampling_method": "완전 랜덤 (각 긍정 아이템당 4개)",
-            "total_schemas_expected": "5라운드 × 5스키마 = 25개"
-        },
-        "base_user_info": {
-            "user_id": str(base_schema[0][0]) if base_schema and len(base_schema) > 0 else "unknown",
-            "preferred_category": str(base_schema[0][1]) if base_schema and len(base_schema) > 0 else "unknown",
-            "activity_level": str(["높음", "중간", "낮음"][base_schema[0][2]]) if base_schema and len(
-                base_schema) > 0 else "unknown",
-            "preferred_time": str(["오전", "오후", "저녁"][base_schema[0][3]]) if base_schema and len(
-                base_schema) > 0 else "unknown",
-            "preferred_season": str(["봄", "여름", "가을", "겨울"][base_schema[0][4]]) if base_schema and len(
-                base_schema) > 0 else "unknown",
-            "preference_type": str(["활동성", "시간대"][base_schema[0][5]]) if base_schema and len(
-                base_schema) > 0 else "unknown",
-            "base_schema_format": "[user_id, category_group, activity_level_idx, time_period, season, preference, pos_item, neg_item] (5개의 개별 스키마 배열)",
-            "base_schema_count": len(base_schema),
-            "actual_vote_data_included": len(base_schema) > 0 and len(base_schema[0]) > 6
-        },
-        "vote_summary": {
-            "total_votes": int(len(user_votes)),
-            "vote_schemas_generated": int(len(vote_schemas)),
-            "selected_items": [int(schema[6]) for schema in vote_schemas[:5]],
-            "negative_sampling_method": "완전 랜덤 (각 긍정 아이템당 4개)",
-            "total_schemas_expected": "5라운드 × 5스키마 = 25개"
-        },
-        "personalization_info": {
-            "model_type": "Neural Collaborative Filtering (NCF) - Inference Only",
+    return MLRecommendationResponse(
+        status="success",
+        recommendations=recommendations,
+        total_count=len(recommendations),
+        model_info={
+            "model_type": "Neural Collaborative Filtering (NCF)",
+            "method": method,
+            "confidence": confidence,
+            "input_type": "survey_data",
+            "recommendation_count": k,
             "training_data": "부산 관광지 사용자 상호작용 데이터",
-            "recommendation_basis": "사용자의 선택 패턴과 유사한 사용자들의 선호도 기반 추론",
-            "recommendation_categories": "상위 3개 + ML 높은 점수 4개 + 개발자 추천 3개 = 총 10개"
+            "recommendation_basis": "사용자의 선택 패턴과 유사한 사용자들의 선호도 기반 추론"
         },
-        "recommendation_pipeline": {
-            "primary_method": "ML 모델 추론 (3가지 카테고리 분류)",
-            "fallback_method": "룰 기반 추천",
-            "pipeline_flow": "사용자 입력 → 전처리 → 모델 추론 → 3가지 카테고리 분류 → 결과 반환 (ML 실패시 룰 기반 fallback)"
-        }
-    }
+        message="ML 모델 기반 추천이 완료되었습니다."
+    )
 
 
 @router.get("/health")
@@ -2736,6 +2731,28 @@ async def load_model_endpoint():
             "status": "error",
             "message": "ML 모델 로딩에 실패했습니다."
         }
+
+
+@router.delete("/reset")
+async def reset_all_data():
+    """모든 데이터 초기화 (DELETE 메서드)"""
+    global user_selections, user_votes, positive_items, base_schema_storage
+    user_selections = {
+        "activity": None,
+        "activity_level": None,
+        "time": None,
+        "season": None,
+        "preference": None
+    }
+    user_votes = []  # 투표 기록도 완전 초기화
+    positive_items = []
+    base_schema_storage = []
+    
+    return {
+        "status": "success",
+        "message": "모든 설문조사 및 투표 데이터가 초기화되었습니다.",
+        "reset_items": ["user_selections", "user_votes", "positive_items", "base_schema_storage"]
+    }
 
 
 @router.get("/reset-all")

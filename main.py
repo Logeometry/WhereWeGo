@@ -29,6 +29,8 @@ from routeres.crowding_router import router as crowding_router
 from routeres.tmap_crowding_router import router as tmap_crowding_router
 from routeres.recommend_location import router as recommend_router
 from routeres.search_router import router as search_router
+from routeres.kakaomap_cors_router import router as kakaomap_router
+from routeres.googlemap_cors_router import router as googlemap_router
 # from routeres.optimized_course_router import router as optimized_course_router  # 파일이 없어서 주석 처리
 
 from dotenv import load_dotenv
@@ -106,6 +108,8 @@ app.include_router(crowding_router, prefix="/api/v1", tags=["혼잡도"])
 app.include_router(tmap_crowding_router, prefix="/api/v1", tags=["티맵 혼잡도"])
 app.include_router(recommend_router, prefix="/api/v1/recommend", tags=["장소추천"])
 app.include_router(search_router, prefix="/api/v1/search", tags=["장소검색"])
+app.include_router(kakaomap_router, prefix="/api/v1/map", tags=["카카오맵"])
+app.include_router(googlemap_router, prefix="/api/v1/googlemap", tags=["구글맵"])
 # app.include_router(optimized_course_router, prefix="/api/v1", tags=["Route Matrix 최적화"])  # 파일이 없어서 주석 처리
 app.include_router(auth_router, prefix="/api/v1", tags=["인증"])
 
@@ -142,6 +146,22 @@ app.mount(
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+@app.get("/api/v1/config/maps-api-key")
+async def get_maps_api_key():
+    """Google Maps API 키를 반환합니다."""
+    google_maps_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    if not google_maps_api_key:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Google Maps API 키가 설정되지 않았습니다.")
+    
+    return {"api_key": google_maps_api_key}
+
+@app.get("/api/v1/config/kakao-javascript-key")
+async def get_kakao_javascript_key():
+    """카카오 JavaScript API 키를 반환합니다."""
+    kakao_js_key = os.getenv("KAKAO_JAVASCRIPT_KEY", "89fc5955b80f4c5ac937b020e1d7855c")
+    return {"api_key": kakao_js_key}
 
 
 # @app.get 전부 닫

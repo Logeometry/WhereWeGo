@@ -1,4 +1,7 @@
 # 지도 범위별로 정보 반환해주는 라우터
+"""
+현재는 사용하지 않는 라우터, 추후 삭제 예정
+"""
 from fastapi import APIRouter, Query
 from typing import List
 from schemas import Tourism

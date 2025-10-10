@@ -277,8 +277,11 @@ class RemovePlaceFromCourseRequest(BaseModel):
 class CoursePlace(BaseModel):
     """코스 내 장소 정보 모델"""
     place_id: str
+    name: str = Field(..., description="장소명")
     estimated_duration: int
     travel_time_from_previous: int
+    start_time: str = Field(..., description="시작 시간 (HH:MM)")
+    end_time: str = Field(..., description="종료 시간 (HH:MM)")
     place_details: Optional[Place] = None
 
 class CourseDay(BaseModel):

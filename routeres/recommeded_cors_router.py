@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, Body
 from pymongo import MongoClient
 
 # Pydantic 모델 import
-from schemas import ItineraryRequest, ItineraryResponse, FrontendItineraryResponse, FrontendDay, FrontendPlace, CourseSaveRequest, CourseItinerary, CourseDay, CoursePlace, SurveyBasedCourseRequest, SurveyData, MLRecommendation
+from schemas import ItineraryRequest, ItineraryResponse, FrontendItineraryResponse, FrontendDay, FrontendPlace, CourseSaveRequest, CourseItinerary, CourseDay, CoursePlace
 
 # MongoDB 핸들러 함수 import
 from services.db_handler import get_random_places, tourism_collection, starting_point_collection
@@ -620,18 +620,18 @@ def convert_frontend_to_save_format(frontend_response: FrontendItineraryResponse
 @router.post("/generate", response_model=FrontendItineraryResponse)
 async def generate_itinerary(request: ItineraryRequest = Body(...)):
     """
-    🎯 ML 추천점수 + Distance Matrix 기반 여행 코스 생성
+    🎯 여행 코스 생성 (통합 엔드포인트)
     
     ✨ 핵심 특징:
-    - ML 모델 추천점수 활용 (프론트엔드에서 제공)
+    - 장소 ID 또는 장소 이름으로 유연한 검색 지원
     - Google Distance Matrix API로 정확한 이동시간 계산
-    - data_converter를 통한 깔끔한 데이터 변환
+    - ML 추천점수 + 이동효율성 기반 최적 경로 생성
     
     🔄 처리 흐름:
-    1. 프론트엔드에서 ML 점수가 포함된 장소 리스트 수신
-    2. Distance Matrix API로 실제 이동시간 계산
-    3. 추천점수 + 이동효율성 기반 최적 경로 생성
-    4. DB 저장 형태로 구성 후 data_converter로 프론트엔드 형식 변환
+    1. 장소 ID로 MongoDB 조회 시도
+    2. 조회 실패 시 장소 이름으로 재검색
+    3. Distance Matrix API로 실제 이동시간 계산
+    4. 추천점수 + 이동효율성 기반 최적 경로 생성
     """
     # 연결 상태 확인
     if tourism_collection is None:
@@ -642,21 +642,79 @@ async def generate_itinerary(request: ItineraryRequest = Body(...)):
     
     try:
         # 1. 입력 데이터 검증
-        selected_place_ids = [ObjectId(pid) for pid in request.selected_places]
-        
-        if not selected_place_ids:
+        if not request.selected_places:
             raise HTTPException(status_code=400, detail="선택된 장소가 없습니다.")
         
-        print(f"🎯 ML 추천점수 기반 코스 생성 시작...")
-        print(f"   📍 선택된 장소: {len(selected_place_ids)}곳")
+        print(f"🎯 여행 코스 생성 시작...")
+        print(f"   📍 선택된 장소: {len(request.selected_places)}곳")
         print(f"   📅 여행기간: {request.travelDuration}일")
         
-        # 2. MongoDB에서 장소 정보 조회
-        places_cursor = tourism_collection.find({"_id": {"$in": selected_place_ids}})
-        places_data = [place async for place in places_cursor]
+        # 2. 장소 ID를 ObjectId로 변환 시도
+        selected_place_ids = []
+        place_names = []
+        
+        for place_identifier in request.selected_places:
+            try:
+                # ObjectId로 변환 시도
+                place_oid = ObjectId(place_identifier)
+                selected_place_ids.append(place_oid)
+            except Exception:
+                # ObjectId 변환 실패 시 장소 이름으로 간주
+                place_names.append(place_identifier)
+                print(f"   📝 장소 이름으로 처리: {place_identifier}")
+        
+        print(f"   🔍 ObjectId로 조회할 장소: {len(selected_place_ids)}개")
+        print(f"   📝 이름으로 조회할 장소: {len(place_names)}개")
+        
+        # 3. MongoDB에서 장소 정보 조회
+        places_data = []
+        
+        # 3-1. ObjectId로 조회
+        if selected_place_ids:
+            places_cursor = tourism_collection.find({"_id": {"$in": selected_place_ids}})
+            id_places = [place async for place in places_cursor]
+            print(f"   ✅ ID로 조회된 장소: {len(id_places)}개")
+            places_data.extend(id_places)
+        
+        # 3-2. 이름으로 조회
+        if place_names:
+            for place_name in place_names:
+                name_result = await tourism_collection.find_one({
+                    "name": {"$regex": f"^{place_name}$", "$options": "i"}
+                })
+                if name_result:
+                    places_data.append(name_result)
+                    print(f"   ✅ 이름으로 찾음: {place_name}")
+                else:
+                    print(f"   ❌ 이름으로도 찾을 수 없음: {place_name}")
+        
+        # 3-3. ID 조회 실패한 것들을 이름으로 재시도
+        if len(places_data) < len(request.selected_places):
+            print(f"   🔄 일부 장소 조회 실패, 이름으로 재검색 시도...")
+            
+            found_ids = {str(place['_id']) for place in places_data}
+            missing_identifiers = [pid for pid in request.selected_places if pid not in found_ids]
+            
+            for missing_id in missing_identifiers:
+                # 먼저 ObjectId인지 확인
+                try:
+                    ObjectId(missing_id)
+                    # ObjectId인데 못 찾은 경우, 다른 방법으로 시도
+                    print(f"   🔍 ObjectId {missing_id}로 재검색 시도...")
+                    continue
+                except:
+                    # ObjectId가 아닌 경우 이름으로 검색
+                    name_result = await tourism_collection.find_one({
+                        "name": {"$regex": f"^{missing_id}$", "$options": "i"}
+                    })
+                    if name_result:
+                        places_data.append(name_result)
+                        print(f"   ✅ 재검색 성공: {missing_id}")
 
         if not places_data:
             raise HTTPException(status_code=404, detail="선택된 장소 정보를 찾을 수 없습니다.")
+        
+        print(f"   📊 최종 조회된 장소: {len(places_data)}개")
         
         # ObjectId를 문자열로 변환
         for place in places_data:
@@ -765,356 +823,43 @@ async def save_course(request_data: Union[List[dict], dict] = Body(...)):
         print(f"코스 저장 중 오류 발생: {e}")
         raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
 
-@router.get("/user/{user_id}")
-async def get_user_courses(user_id: str):
+@router.delete("/course/{course_id}")
+async def delete_course(course_id: str):
     """
-    특정 사용자의 저장된 코스 목록을 조회합니다.
-    """
-    try:
-        # 사용자의 코스 목록 조회
-        courses = list(courses_collection.find(
-            {"user_id": user_id},
-            {"course_id": 1, "course_name": 1, "created_at": 1, "updated_at": 1}
-        ).sort("created_at", -1))
-        
-        # ObjectId를 문자열로 변환
-        for course in courses:
-            course["_id"] = str(course["_id"])
-            course["created_at"] = course["created_at"].isoformat()
-            course["updated_at"] = course["updated_at"].isoformat()
-        
-        return {
-            "success": True,
-            "courses": courses
-        }
-        
-    except Exception as e:
-        print(f"코스 조회 중 오류 발생: {e}")
-        raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
-
-@router.get("/course/{course_id}")
-async def get_course_detail(course_id: str, format: str = "backend"):
-    """
-    특정 코스의 상세 정보를 조회합니다.
+    특정 코스를 삭제합니다.
     
     Args:
-        course_id: 코스 ID
-        format: 응답 형식 ("backend" 또는 "frontend")
+        course_id: 삭제할 코스 ID
     """
-    try:
-        # 코스 상세 정보 조회
-        course = courses_collection.find_one({"course_id": course_id})
-        
-        if not course:
-            raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다.")
-        
-        # ObjectId를 문자열로 변환
-        course["_id"] = str(course["_id"])
-        course["created_at"] = course["created_at"].isoformat()
-        course["updated_at"] = course["updated_at"].isoformat()
-        
-        if format == "frontend":
-            # 프론트엔드 형식으로 변환
-            frontend_data = data_converter.convert_backend_to_frontend(course)
-            return {
-                "success": True,
-                "course": course,  # 원본 데이터
-                "itinerary": frontend_data  # 프론트엔드 형식 데이터
-            }
-        else:
-            # 기존 백엔드 형식
-            return {
-                "success": True,
-                "course": course
-            }
-        
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        print(f"코스 상세 조회 중 오류 발생: {e}")
-        raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
-
-@router.get("/course/{course_id}/frontend")
-async def get_course_for_frontend(course_id: str):
-    """
-    프론트엔드 TravelPlanSamplePage에서 바로 사용할 수 있는 형식으로 코스를 반환합니다.
-    """
-    try:
-        # 코스 상세 정보 조회
-        course = courses_collection.find_one({"course_id": course_id})
-        
-        if not course:
-            raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다.")
-        
-        # 프론트엔드 형식으로 변환
-        frontend_data = data_converter.convert_backend_to_frontend(course)
-        
-        return frontend_data  # 배열 형태로 직접 반환
-        
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        print(f"프론트엔드용 코스 조회 중 오류 발생: {e}")
-        raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
-
-
-def convert_smart_result_to_frontend(
-    smart_result: List[Dict], 
-    request: ItineraryRequest
-) -> FrontendItineraryResponse:
-    """
-    🎨 스마트 코스 생성 결과를 프론트엔드 형식으로 변환합니다.
-    """
-    frontend_days = []
-    start_date = datetime.strptime(request.travelStartDate, "%Y-%m-%d")
-    
-    for day_idx, day_data in enumerate(smart_result):
-        day_number = day_data.get("day", day_idx + 1)
-        current_date = start_date + timedelta(days=day_idx)
-        
-        # 날짜 형식 변환
-        formatted_date = f"{current_date.year}. {current_date.month}. {current_date.day}."
-        day_name = f"Day {day_number}"
-        
-        frontend_places = []
-        
-        for place_idx, place_item in enumerate(day_data.get('places', [])):
-            place_data = place_item.get('place_data', {})
-            
-            # 장소 정보 추출
-            place_name = place_data.get('name', '알 수 없는 장소')
-            place_id = str(place_data.get('_id', f'place_{place_idx}'))
-            arrival_time = place_item.get('arrival_time', '09:00')
-            
-            # 🕐 시간 정보 보강
-            travel_info = place_item.get('travel_info', {})
-            duration_korean = travel_info.get('duration_korean', '')
-            distance_korean = travel_info.get('distance_korean', '')
-            
-            # 프론트엔드에서 활용할 수 있도록 추가 정보 포함
-            frontend_place = FrontendPlace(
-                id=str(place_idx + 1),
-                name=place_name,
-                placeId=place_id,
-                time=arrival_time,
-                icon="MuseumIcon"  # 기본값, 프론트엔드에서 실제 결정
-            )
-            
-            # 🚇 실제 사용 가능한 이동 정보만 프론트엔드에 전달
-            if travel_info and (duration_korean or distance_korean):
-                frontend_place.__dict__['travel_info'] = {
-                    # 📝 Google API 한국어 텍스트 (바로 표시 가능)
-                    'duration_text': duration_korean,           # "1시간 38분"
-                    'distance_text': distance_korean,           # "136 km"
-                    
-                    # 🔢 프론트엔드에서 계산 가능한 숫자 값
-                    'duration_seconds': travel_info.get('raw_seconds', 0),    # 5902
-                    'distance_meters': place_item.get('distance_from_previous', 0) * 1000  # 136268
-                }
-            frontend_places.append(frontend_place)
-        
-        frontend_day = FrontendDay(
-            date=formatted_date,
-            dayName=day_name,
-            places=frontend_places
-        )
-        frontend_days.append(frontend_day)
-    
-    return FrontendItineraryResponse(itinerary=frontend_days)
-
-
-# ===== 설문조사 기반 코스 생성 통합 엔드포인트 =====
-
-@router.post("/generate-from-survey", response_model=FrontendItineraryResponse)
-async def generate_course_from_survey(request: SurveyBasedCourseRequest = Body(...)):
-    """
-    🎯 설문조사 기반 여행 코스 생성
-    
-    ✨ 통합 플로우:
-    1. 설문조사 결과 분석
-    2. ML 모델로 개인화 추천
-    3. Distance Matrix API로 최적 경로 계산
-    4. 여행 일수에 맞는 코스 생성
-    
-    🔄 처리 과정:
-    사용자 설문 → ML 추천 → 장소 선택 → 코스 생성
-    """
-    # 연결 상태 확인
-    if tourism_collection is None:
+    # MongoDB 연결 상태 확인
+    if courses_collection is None:
         raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다.")
     
-    if not GOOGLE_MAPS_API_KEY:
-        raise HTTPException(status_code=503, detail="Google Maps API 키가 설정되지 않았습니다.")
-    
     try:
-        print(f"🎯 설문조사 기반 코스 생성 시작...")
-        print(f"   📋 설문 결과: {request.survey_data}")
-        print(f"   🤖 ML 추천: {len(request.ml_recommendations)}개 장소")
-        print(f"   📅 여행 기간: {request.travel_duration}일")
+        # 코스 존재 확인
+        course = courses_collection.find_one({"course_id": course_id})
+        if not course:
+            raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다.")
         
-        # 1. ML 추천 결과에서 실제 선택된 장소들 확인
-        selected_place_ids = []
-        print(f"   🔍 ML 추천 항목들:")
-        for rec in request.ml_recommendations:
-            print(f"      - {rec.item_name}: {rec.item_id}")
-            # ML 추천에서 item_id는 실제 MongoDB ObjectId
-            if rec.item_id:
-                try:
-                    place_oid = ObjectId(rec.item_id)
-                    selected_place_ids.append(place_oid)
-                    print(f"        ✅ ObjectId 변환 성공: {place_oid}")
-                except Exception as e:
-                    print(f"        ❌ ObjectId 변환 실패: {rec.item_id} - {e}")
-                    continue
+        # 코스 삭제
+        result = courses_collection.delete_one({"course_id": course_id})
         
-        if not selected_place_ids:
-            raise HTTPException(status_code=400, detail="선택된 장소가 없습니다.")
-        
-        print(f"   📍 선택된 장소 ID: {selected_place_ids}")
-        
-        # 2. MongoDB에서 장소 정보 조회
-        print(f"   🔍 MongoDB에서 장소 조회 중...")
-        print(f"   🔍 사용 중인 DB: {tourism_collection.database.name}")
-        print(f"   🔍 사용 중인 컬렉션: {tourism_collection.name}")
-        print(f"   🔍 조회할 ObjectId 목록: {selected_place_ids}")
-        
-        # 먼저 하나씩 테스트해보기
-        for oid in selected_place_ids[:2]:  # 처음 2개만 테스트
-            test_result = await tourism_collection.find_one({"_id": oid})
-            print(f"      테스트 조회 {oid}: {'존재함' if test_result else '없음'}")
-            if test_result:
-                print(f"        실제 데이터: {test_result.get('name', 'Unknown')}")
-        
-        places_cursor = tourism_collection.find({"_id": {"$in": selected_place_ids}})
-        places_data = [place async for place in places_cursor]
-        print(f"   📊 조회된 장소 수: {len(places_data)}")
-
-        if not places_data:
-            print(f"   ❌ ML 모델의 db_id로 조회 실패 - 장소 이름으로 재검색 시도")
+        if result.deleted_count > 0:
+            return {
+                "success": True,
+                "message": "코스가 성공적으로 삭제되었습니다.",
+                "course_id": course_id
+            }
+        else:
+            raise HTTPException(status_code=500, detail="코스 삭제에 실패했습니다.")
             
-            # 장소 이름으로 MongoDB에서 검색
-            places_data = []
-            for rec in request.ml_recommendations:
-                print(f"   🔍 '{rec.item_name}' 이름으로 검색 중...")
-                
-                # 이름으로 검색 (대소문자 구분 없이)
-                name_result = await tourism_collection.find_one({
-                    "name": {"$regex": f"^{rec.item_name}$", "$options": "i"}
-                })
-                
-                if name_result:
-                    # ObjectId를 문자열로 변환
-                    name_result['_id'] = str(name_result['_id'])
-                    name_result['recommendation_score'] = rec.score
-                    name_result['ml_reason'] = rec.reason
-                    places_data.append(name_result)
-                    print(f"      ✅ 이름으로 찾음: {name_result['name']} -> {name_result['_id']}")
-                else:
-                    print(f"      ❌ 이름으로도 찾을 수 없음: {rec.item_name}")
-            
-            if not places_data:
-                print(f"   ❌ 장소 이름으로도 조회 실패")
-                
-                # 샘플 데이터 출력 (디버깅용)
-                sample_places = [place async for place in tourism_collection.find().limit(3)]
-                print(f"   🔍 DB 샘플 데이터:")
-                for place in sample_places:
-                    print(f"      - {place.get('name', 'Unknown')}: {place.get('_id')}")
-                
-                raise HTTPException(
-                    status_code=404, 
-                    detail="ML 추천 장소들을 tourism 컬렉션에서 찾을 수 없습니다."
-                )
-            else:
-                print(f"   ✅ 이름으로 {len(places_data)}개 장소 찾음!")
-        
-        # ObjectId를 문자열로 변환 & ML 점수 추가
-        for place in places_data:
-            place['_id'] = str(place['_id'])
-            # ML 추천에서 해당 장소의 점수 찾기
-            for rec in request.ml_recommendations:
-                if rec.item_id == place['_id']:
-                    place['recommendation_score'] = rec.score
-                    place['ml_reason'] = rec.reason
-                    break
-            else:
-                place['recommendation_score'] = 0.5  # 기본값
-        
-        print(f"   ✅ 장소 데이터 조회 완료: {len(places_data)}곳")
-        for place in places_data:
-            print(f"      - {place.get('name', 'Unknown')}: {place.get('recommendation_score', 0.5)}")
-        
-        # 3. 시작점 설정 (첫 번째 장소 또는 사용자 지정)
-        start_place_id = request.starting_point or places_data[0]['_id']
-        
-        # 4. 코스 생성 서비스 초기화
-        print(f"   ⚙️ 코스 생성 서비스 초기화 중...")
-        distance_service = OptimizedDistanceMatrixService(GOOGLE_MAPS_API_KEY)
-        course_generator = SmartCourseGenerator(distance_service)
-        
-        # 5. ML 점수 기반 코스 생성
-        # ItineraryRequest 객체 생성 (기존 메서드와 호환성을 위해)
-        from datetime import datetime
-        itinerary_request = ItineraryRequest(
-            travelDuration=request.travel_duration,
-            travelStartDate=request.travel_start_date or datetime.now().strftime("%Y-%m-%d"),
-            selected_places=[place['_id'] for place in places_data],
-            starting_point=start_place_id
-        )
-        
-        print(f"🔄 코스 생성 시작...")
-        print(f"   🚀 코스 생성 시작...")
-        backend_course_data = await course_generator.generate_course_db_format(
-            places_data=places_data,
-            start_place_id=start_place_id,
-            travel_duration=request.travel_duration,
-            request=itinerary_request  # ItineraryRequest 객체 전달
-        )
-        print(f"   ✅ 코스 생성 완료, data_converter로 변환 시작...")
-        print(f"🔄 코스 생성 완료, 변환 시작...")
-        
-        # 6. data_converter를 사용해 프론트엔드 형식으로 변환
-        print(f"   🔄 data_converter로 변환 중...")
-        from services.data_converter import data_converter
-        frontend_response_data = data_converter.convert_backend_to_frontend(backend_course_data)
-        print(f"   ✅ 변환 완료, 응답 객체 생성 중...")
-        
-        # 7. 최종 응답 형식으로 변환
-        print(f"   🏗️ FrontendItineraryResponse 객체 생성 중...")
-        try:
-            frontend_response = FrontendItineraryResponse(itinerary=[
-                FrontendDay(
-                    date=day["date"],
-                    dayName=day["dayName"], 
-                    places=[
-                        FrontendPlace(
-                            id=place["id"],
-                            name=place["name"],
-                            placeId=place["placeId"],
-                            time=place["time"],
-                            icon="MuseumIcon"  # 프론트엔드에서 설정
-                        ) for place in day["places"]
-                    ]
-                ) for day in frontend_response_data
-            ])
-            print(f"   ✅ 응답 객체 생성 완료!")
-        except Exception as e:
-            print(f"   ❌ 응답 객체 생성 실패: {e}")
-            raise
-        
-        # 8. 결과 로그
-        total_places = sum(len(day.get('places', [])) for day in backend_course_data.get('itinerary', {}).get('days', []))
-        print(f"✅ 설문조사 기반 코스 생성 완료!")
-        print(f"   🏛️ 총 방문 장소: {total_places}곳")
-        print(f"   🤖 ML 점수 기반 최적화")
-        print(f"   📋 설문 조건 반영")
-        
-        return frontend_response
-        
     except HTTPException as e:
         raise e
     except Exception as e:
-        print(f"❌ 설문조사 기반 코스 생성 중 오류: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"코스 삭제 중 오류 발생: {e}")
         raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
+
+
+
+
+

@@ -4,7 +4,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MONGO_ATLAS_URI: str = os.getenv("MONGO_ATLAS_URI", "")
+MONGO_ATLAS_URI: str = os.getenv("MONGO_ATLAS_URI", "mongodb://localhost:27017")
+
+# MongoDB URI가 비어있는지 확인
+if not MONGO_ATLAS_URI or MONGO_ATLAS_URI.strip() == "":
+    MONGO_ATLAS_URI = "mongodb://localhost:27017"
+    print("Warning: MONGO_ATLAS_URI not set, using default localhost connection")
 
 _client: AsyncIOMotorClient = AsyncIOMotorClient(MONGO_ATLAS_URI)
 
