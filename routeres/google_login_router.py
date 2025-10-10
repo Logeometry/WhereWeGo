@@ -131,13 +131,13 @@ def google_callback(request: Request):
     )
 
      # 현재는 테스틑를 위해 /login 페이지, 홈페이지로 바꿀 예정 => 변경 완료
-    homepage_url = f"{FRONTEND_URL.rstrip('/')}/"
+    homepage_url = "http://localhost:3000/"
 
     # 로그인 후 홈페이지로 리디렉션 (토큰을 URL 파라미터로 전달)
     # 보안상 더 안전한 방법: 프론트엔드에서 토큰을 받아서 localStorage에 저장
-    homepage_url_with_token = f"{FRONTEND_URL.rstrip('/')}/?token={token}"
+    # homepage_url_with_token = f"{FRONTEND_URL.rstrip('/')}/?token={token}"
     
-    response = RedirectResponse(url=homepage_url_with_token)
+    response = RedirectResponse(url=homepage_url)
     
     # 백업용으로 쿠키도 설정 (프론트엔드에서 토큰 추출 실패 시)
     response.set_cookie(

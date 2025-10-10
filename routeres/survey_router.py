@@ -17,6 +17,8 @@ import uuid
 from jose import jwt, JWTError
 from dotenv import load_dotenv
 from pymongo import MongoClient
+from services.data_loader import load_location_data_from_db
+from schemas import Tourism
 
 # 환경변수 로드
 load_dotenv()
@@ -1964,13 +1966,22 @@ def get_developer_recommendations(user_category, tourism_data, selected_items, c
     return selected
 
 
-def recommend_with_vote_context(model, user_vote_schemas, data, tourism_data, device, top_k=10):
+async def recommend_with_vote_context(model, user_vote_schemas, data, tourism_data, device, top_k=10):
     """vote_schema 컨텍스트를 기반으로 한 추천 (3가지 카테고리로 분류) - 10개 추천"""
     # 매번 다른 결과를 위해 현재 시간을 시드로 사용
     import time
     random.seed(int(time.time() * 1000) % 1000000)
 
     print(f"🎯 Vote schema 기반 컨텍스트 추천 시작 (10개 추천, 3가지 카테고리)")
+    
+    # DB에서 Tourism 데이터 로드
+    try:
+        db_tourism_list = await load_location_data_from_db()
+        db_tourism_dict = {place.name: place for place in db_tourism_list}  # 이름으로 매칭
+        print(f"✅ DB에서 {len(db_tourism_dict)}개 Tourism 데이터 로드 완료")
+    except Exception as e:
+        print(f"⚠️ DB Tourism 데이터 로드 실패: {e}, 기본 정보만 사용")
+        db_tourism_dict = {}
 
     # vote_schema에서 사용자 컨텍스트 정보 추출 (첫 번째 스키마 사용)
     if not user_vote_schemas or len(user_vote_schemas[0]) < 6:
@@ -2151,24 +2162,64 @@ def recommend_with_vote_context(model, user_vote_schemas, data, tourism_data, de
             else:  # developer
                 reason = f"👨‍💻 개발자 추천 - 숨겨진 보석 같은 관광지"
 
-            # 디버깅: db_id 값 확인
-            final_item_id = str(db_id) if db_id else str(item_idx)
-            print(f"      🔍 추천 {i+1}: {item_name}")
-            print(f"         - db_id: {db_id}")
-            print(f"         - ml_index: {item_idx}")
-            print(f"         - final_item_id: {final_item_id}")
+            # DB에서 상세 정보 가져오기
+            db_place = db_tourism_dict.get(item_name)
+            
+            if db_place:
+                # DB Tourism 데이터 사용
+                final_item_id = db_place.id
+                address = db_place.address
+                rating = float(db_place.rating)
+                description = db_place.description
+                location_coords = db_place.location.coordinates  # [lng, lat]
+                region = db_place.region
+                category_full = db_place.category
+                review_count = db_place.review_count
+                visitors_count = db_place.visitors_count
+                print(f"      ✅ 추천 {i+1}: {item_name} (DB 데이터 사용)")
+            else:
+                # DB에 없으면 기본값 사용
+                final_item_id = str(db_id) if db_id else str(item_idx)
+                address = item_info.get('address', '') if item_idx in tourism_data else ''
+                rating = 0.0
+                description = ''
+                location_coords = [0.0, 0.0]
+                region = ''
+                category_full = category_info
+                review_count = 0
+                visitors_count = 0
+                print(f"      ⚠️ 추천 {i+1}: {item_name} (DB 데이터 없음, 기본값 사용)")
             
             recommendations.append({
                 'rank': int(i + 1),
-                'item_id': final_item_id,  # 실제 DB ID 사용, 없으면 fallback
-                'ml_index': int(item_idx),  # ML 모델 인덱스는 별도 필드로 보존
-                'content_id': str(content_id) if content_id else '',  # content_id도 포함
-                'item_name': str(item_name),
-                'category': str(category_info),
-                'score': float(score),
+                # 프론트엔드가 기대하는 필드명
+                '_id': str(final_item_id),
+                'id': str(final_item_id),
+                'name': str(item_name),
+                'address': str(address),
+                'rating': float(rating),
+                'description': str(description),
+                'location': {
+                    'type': 'Point',
+                    'coordinates': location_coords  # [lng, lat]
+                },
+                'region': str(region),
+                'category': str(category_full),
+                'category_group': str(item_info.get('category_group', '')) if item_idx in tourism_data else '',
+                'review_count': int(review_count),
+                'visitors_count': int(visitors_count),
+                # ML 관련 필드
+                'ml_score': float(score),
+                'score': float(score),  # 호환성
                 'reason': str(reason),
                 'category_type': str(category_type),
-                'randomized': True
+                # 추가 필드
+                'ml_index': int(item_idx),
+                'content_id': str(content_id) if content_id else '',
+                'photoUrl': '',  # 이미지는 별도 처리 필요
+                'image': '',
+                'randomized': True,
+                'source': 'ml'
             })
 
     print(f"✅ 3가지 카테고리 추천 완료: 총 {len(recommendations)}개 관광지 추천")
@@ -2179,7 +2230,7 @@ def recommend_with_vote_context(model, user_vote_schemas, data, tourism_data, de
     return recommendations
 
 
-def get_ml_recommendations_for_user(user_vote_schemas, top_k=10):
+async def get_ml_recommendations_for_user(user_vote_schemas, top_k=10):
     """ML 모델을 사용한 추론 전용 추천 시스템 - 10개 추천"""
     global loaded_ncf_model, model_data
 
@@ -2213,7 +2264,7 @@ def get_ml_recommendations_for_user(user_vote_schemas, top_k=10):
 
         # ML 모델 추론 수행 (10개 추천)
         print(f"🔍 recommend_with_vote_context 호출 시작 - top_k: {top_k}")
-        recommendations = recommend_with_vote_context(
+        recommendations = await recommend_with_vote_context(
             loaded_ncf_model, user_vote_schemas, model_data, tourism_data, device, top_k
         )
         print(f"🔍 recommend_with_vote_context 호출 완료 - 결과: {len(recommendations) if recommendations else 0}개")
@@ -2681,7 +2732,7 @@ async def get_ml_recommendations(k: int = 20, user_id: str = None):
     user_preferences = extract_user_preferences_from_votes(vote_schemas)
 
     # ML 모델을 사용한 추론 수행 (20개 추천)
-    ml_result = get_ml_recommendations_for_user(vote_schemas, top_k=k)
+    ml_result = await get_ml_recommendations_for_user(vote_schemas, top_k=k)
 
     if "error" in ml_result:
         return MLRecommendationResponse(
