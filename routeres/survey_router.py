@@ -1099,6 +1099,8 @@ def find_recommended_items(user_schema: List) -> Dict:
                 "round_number": round_num + 1,
                 "option_a": option_a,
                 "option_b": option_b,
+                "primary": primary_item,  # 프론트엔드 호환성
+                "alternative": alternative_item,  # 프론트엔드 호환성
                 "randomized": True,
                 "random_seed": int(time.time() * 1000) % 1000000  # 랜덤 시드 기록
             })
@@ -1602,6 +1604,16 @@ class VoteData(BaseModel):
     choice: str  # "option_a" 또는 "option_b"
     item_name: str  # 선택한 관광지 이름
     item_index: int  # 선택한 관광지 인덱스
+
+class SingleVote(BaseModel):
+    """프론트엔드에서 보내는 단일 투표 데이터"""
+    round: int  # 1-5 라운드 번호
+    choice: str  # "option_a" 또는 "option_b"
+    item_name: str  # 선택한 관광지 이름
+
+class VotesSubmission(BaseModel):
+    """프론트엔드에서 보내는 전체 투표 데이터"""
+    votes: List[SingleVote]  # 투표 배열
 
 class MLRecommendationResponse(BaseModel):
     """ML 추천 응답"""
@@ -2426,25 +2438,69 @@ def save_base_schema_to_user_interaction(user_id: str, base_schemas: List, posit
         return False
 
 
+def find_item_index_by_name(item_name: str) -> int:
+    """관광지 이름으로 인덱스 찾기"""
+    try:
+        tourism_data = load_tourism_data()
+        if not tourism_data:
+            print(f"❌ 관광지 데이터 로드 실패")
+            return 0
+        
+        # 모든 그룹에서 아이템 찾기
+        for group in tourism_data.get('groups', []):
+            for item in group.get('items', []):
+                if item.get('name') == item_name:
+                    print(f"✅ 관광지 '{item_name}' 인덱스 찾음: {item['index']}")
+                    return int(item['index'])
+        
+        print(f"⚠️ 관광지 '{item_name}' 인덱스를 찾지 못함")
+        return 0
+    except Exception as e:
+        print(f"❌ 인덱스 찾기 오류: {e}")
+        return 0
+
 @router.post("/votes")
-async def submit_vote(vote: VoteData, request: Request, user_id: str = Depends(get_current_user)):
-    """사용자의 선택 결과 저장 - 로그인 필요"""
-    global positive_items, current_user_uuid, base_schema_storage
-
-    # 긍정 아이템 저장
-    positive_items.append(vote.item_index)
-
-    user_votes.append({
-        "round": vote.round_number,
-        "choice": vote.choice,
-        "item_name": vote.item_name,
-        "item_index": vote.item_index,  # 아이템 인덱스 저장
-        "timestamp": datetime.now().isoformat()
-    })
-
-    # 라운드 5마다 base_schema에 저장
-    if vote.round_number == 5:
-        print(f"🎯 라운드 5 완료 - BASE_SCHEMA 저장 시작")
+async def submit_votes(votes_data: VotesSubmission, request: Request, user_id: str = Depends(get_current_user)):
+    """사용자의 전체 투표 결과 저장 (5라운드 일괄 제출) - 로그인 필요"""
+    global positive_items, current_user_uuid, base_schema_storage, user_votes
+    
+    print(f"📥 투표 제출 받음: {len(votes_data.votes)}개 라운드")
+    
+    # 투표 데이터 초기화 (새로운 제출 시작)
+    user_votes.clear()
+    positive_items.clear()
+    
+    # 각 투표 처리
+    for vote in votes_data.votes:
+        # item_name으로 item_index 찾기
+        item_index = find_item_index_by_name(vote.item_name)
+        
+        # 긍정 아이템 저장
+        positive_items.append(item_index)
+        
+        # 프론트엔드 choice 값을 백엔드 형식으로 변환
+        # "primary" → "option_a", "alternative" → "option_b"
+        choice_mapping = {
+            "primary": "option_a",
+            "alternative": "option_b",
+            "option_a": "option_a",  # 직접 option_a를 보내는 경우도 지원
+            "option_b": "option_b"   # 직접 option_b를 보내는 경우도 지원
+        }
+        backend_choice = choice_mapping.get(vote.choice, vote.choice)
+        
+        # user_votes에 추가
+        user_votes.append({
+            "round": vote.round,
+            "choice": backend_choice,  # 변환된 choice 사용
+            "item_name": vote.item_name,
+            "item_index": item_index,
+            "timestamp": datetime.now().isoformat()
+        })
+        print(f"  ✅ 라운드 {vote.round}: {vote.choice} → {backend_choice} - {vote.item_name} (인덱스: {item_index})")
+    
+    # 5라운드 완료 확인
+    if len(user_votes) >= 5:
+        print(f"🎯 5라운드 완료 - BASE_SCHEMA 저장 시작")
         print(f"📊 current_user_uuid: {current_user_uuid}")
         print(f"📊 user_id: {user_id}")
         print(f"📊 user_selections: {user_selections}")
@@ -2473,7 +2529,7 @@ async def submit_vote(vote: VoteData, request: Request, user_id: str = Depends(g
             save_success = save_base_schema_to_user_interaction(user_uuid_str, base_schemas, positive_items)
 
             if save_success:
-                print(f"🎯 라운드 5 완료 - BASE_SCHEMA 저장: {len(base_schemas)}개")
+                print(f"🎯 5라운드 완료 - BASE_SCHEMA 저장: {len(base_schemas)}개")
                 print(f"📊 저장된 긍정 아이템들: {positive_items}")
                 print(f"💾 MongoDB user_interaction 컬렉션에 BASE_SCHEMA 저장 완료")
                 print(
@@ -2491,13 +2547,20 @@ async def submit_vote(vote: VoteData, request: Request, user_id: str = Depends(g
 
     return {
         "status": "success",
-        "message": f"라운드 {vote.round_number}: {vote.item_name}을(를) 선택했습니다!",
-        "round": int(vote.round_number),  # numpy.int64 → int 변환
-        "choice": str(vote.choice),  # 문자열 보장
-        "total_votes": int(len(user_votes)),  # numpy.int64 → int 변환
+        "message": f"총 {len(user_votes)}개 라운드 투표가 제출되었습니다!",
+        "total_votes": int(len(user_votes)),
         "positive_items_count": len(positive_items),
-        "is_round_5": vote.round_number == 5,
-        "total_base_schemas": len(base_schema_storage)
+        "is_complete": len(user_votes) >= 5,
+        "total_base_schemas": len(base_schema_storage),
+        "votes_details": [
+            {
+                "round": v["round"],
+                "choice": v["choice"],
+                "item_name": v["item_name"],
+                "item_index": v["item_index"]
+            }
+            for v in user_votes
+        ]
     }
 
 
