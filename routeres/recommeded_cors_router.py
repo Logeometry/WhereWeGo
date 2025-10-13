@@ -116,13 +116,16 @@ class OptimizedDistanceMatrixService:
                 async with session.get(self.base_url, params=params) as response:
                     if response.status == 200:
                         data = await response.json()
+                        print(f"📡 Distance Matrix API 응답 status: {data.get('status')}")
                         if data.get("status") == "OK":
                             return data
                         else:
-                            raise HTTPException(
-                                status_code=400, 
-                                detail=f"Distance Matrix API 오류: {data.get('status', 'Unknown error')}"
-                            )
+                            error_msg = f"Distance Matrix API 오류: {data.get('status', 'Unknown error')}"
+                            if 'error_message' in data:
+                                error_msg += f" - {data['error_message']}"
+                            print(f"❌ {error_msg}")
+                            print(f"📋 전체 응답: {data}")
+                            raise HTTPException(status_code=400, detail=error_msg)
                     else:
                         raise HTTPException(
                             status_code=response.status,
@@ -291,13 +294,9 @@ class SmartCourseGenerator:
         # 각 장소의 ML 모델 추천 점수 가져오기
         place_scores = {i: self._get_place_score(places[i]) for i in range(len(places))}
         
-        # 시작 날짜 계산 (여행 시작일 기준)
+        # 시작 날짜 계산 (오늘 날짜 사용)
         from datetime import datetime, timedelta
-        start_date_str = request.travelStartDate
-        try:
-            start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
-        except:
-            start_date = datetime.now()
+        start_date = datetime.now()
         
         for day in range(travel_duration):
             current_date = start_date + timedelta(days=day)
@@ -392,7 +391,7 @@ class SmartCourseGenerator:
         
         # data_converter가 기대하는 형식으로 반환
         return {
-            "user_id": "survey_user",
+            "user_id": request.user_id if hasattr(request, 'user_id') and request.user_id else "guest_user",
             "course_name": "AI 추천 여행",
             "itinerary": {
                 "days": itinerary
@@ -437,7 +436,7 @@ class SmartCourseGenerator:
         
         # 4. 일별 일정 생성 (DB 형태로 바로)
         course_days = []
-        start_date = datetime.strptime(request.travelStartDate, "%Y-%m-%d")
+        start_date = datetime.now()
         unvisited = set(range(len(valid_places))) - {start_idx}
         
         # 각 장소의 ML 추천 점수 가져오기
@@ -456,9 +455,16 @@ class SmartCourseGenerator:
             
             # 첫째 날 첫 장소는 시작점
             if day == 0:
+                place_detail = valid_places[current_idx]
                 day_places.append({
-                    "place_id": str(valid_places[current_idx]['_id']),
-                    "name": valid_places[current_idx]['name'],
+                    "place_id": str(place_detail['_id']),
+                    "_id": str(place_detail['_id']),
+                    "name": place_detail['name'],
+                    "description": place_detail.get('description', ''),
+                    "address": place_detail.get('address', ''),
+                    "location": place_detail.get('location', {"type": "Point", "coordinates": [0, 0]}),
+                    "rating": place_detail.get('rating', 0),
+                    "estimated_duration": 120,
                     "time": "09:00"
                 })
                 places_visited_today += 1
@@ -495,10 +501,17 @@ class SmartCourseGenerator:
                 base_hour = 9 + (places_visited_today * 3)
                 arrival_time = f"{base_hour:02d}:00"
                 
-                # DB 형태로 장소 추가
+                # DB 형태로 장소 추가 (상세 정보 포함)
+                place_detail = valid_places[best_next_idx]
                 day_places.append({
-                    "place_id": str(valid_places[best_next_idx]['_id']),
-                    "name": valid_places[best_next_idx]['name'],
+                    "place_id": str(place_detail['_id']),
+                    "_id": str(place_detail['_id']),
+                    "name": place_detail['name'],
+                    "description": place_detail.get('description', ''),
+                    "address": place_detail.get('address', ''),
+                    "location": place_detail.get('location', {"type": "Point", "coordinates": [0, 0]}),
+                    "rating": place_detail.get('rating', 0),
+                    "estimated_duration": 120,
                     "time": arrival_time
                 })
                 
@@ -517,7 +530,7 @@ class SmartCourseGenerator:
         
         # 5. DB 저장 형태로 반환
         return {
-            "user_id": "demo_user",  # 실제로는 인증된 사용자 ID
+            "user_id": request.user_id if hasattr(request, 'user_id') and request.user_id else "guest_user",
             "course_name": f"ML 추천 부산 여행 {travel_duration}일",
             "itinerary": {
                 "days": course_days
@@ -633,6 +646,12 @@ async def generate_itinerary(request: ItineraryRequest = Body(...)):
     3. Distance Matrix API로 실제 이동시간 계산
     4. 추천점수 + 이동효율성 기반 최적 경로 생성
     """
+    # # 요청 데이터 로깅
+    # print(f"📥 /generate 요청 받음:")
+    # print(f"   - spots: {request.spots}")
+    # print(f"   - user_id: {request.user_id}")
+    # print(f"   - travelDuration: {request.travelDuration}")
+    
     # 연결 상태 확인
     if tourism_collection is None:
         raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다.")
@@ -642,18 +661,24 @@ async def generate_itinerary(request: ItineraryRequest = Body(...)):
     
     try:
         # 1. 입력 데이터 검증
-        if not request.selected_places:
+        if not request.spots:
             raise HTTPException(status_code=400, detail="선택된 장소가 없습니다.")
         
+        # travelDuration 자동 계산 (미입력 시)
+        if request.travelDuration is None or request.travelDuration <= 0:
+            # 장소 3개당 1일로 계산 (최소 1일)
+            request.travelDuration = max(1, (len(request.spots) + 2) // 3)
+            print(f"   📅 여행기간 자동 계산: {request.travelDuration}일 (장소 {len(request.spots)}개 기준)")
+        
         print(f"🎯 여행 코스 생성 시작...")
-        print(f"   📍 선택된 장소: {len(request.selected_places)}곳")
+        print(f"   📍 선택된 장소: {len(request.spots)}곳")
         print(f"   📅 여행기간: {request.travelDuration}일")
         
         # 2. 장소 ID를 ObjectId로 변환 시도
         selected_place_ids = []
         place_names = []
         
-        for place_identifier in request.selected_places:
+        for place_identifier in request.spots:
             try:
                 # ObjectId로 변환 시도
                 place_oid = ObjectId(place_identifier)
@@ -689,11 +714,11 @@ async def generate_itinerary(request: ItineraryRequest = Body(...)):
                     print(f"   ❌ 이름으로도 찾을 수 없음: {place_name}")
         
         # 3-3. ID 조회 실패한 것들을 이름으로 재시도
-        if len(places_data) < len(request.selected_places):
+        if len(places_data) < len(request.spots):
             print(f"   🔄 일부 장소 조회 실패, 이름으로 재검색 시도...")
             
             found_ids = {str(place['_id']) for place in places_data}
-            missing_identifiers = [pid for pid in request.selected_places if pid not in found_ids]
+            missing_identifiers = [pid for pid in request.spots if pid not in found_ids]
             
             for missing_id in missing_identifiers:
                 # 먼저 ObjectId인지 확인
@@ -739,18 +764,22 @@ async def generate_itinerary(request: ItineraryRequest = Body(...)):
         from services.data_converter import data_converter
         frontend_response_data = data_converter.convert_backend_to_frontend(backend_course_data)
         
-        # 8. 최종 응답 형식으로 변환
-        frontend_response = FrontendItineraryResponse(itinerary=[
+        # 8. 최종 응답 형식으로 변환 (dailySchedule 형태)
+        frontend_response = FrontendItineraryResponse(dailySchedule=[
             FrontendDay(
+                day=day["day"],
                 date=day["date"],
-                dayName=day["dayName"], 
                 places=[
                     FrontendPlace(
                         id=place["id"],
+                        _id=place.get("_id"),
                         name=place["name"],
-                        placeId=place["placeId"],
-                        time=place["time"],
-                        icon="MuseumIcon"  # 프론트엔드에서 설정
+                        time=place.get("time", "09:00"),  # ✅ 필수 필드!
+                        description=place.get("description"),
+                        address=place.get("address"),
+                        location=place.get("location"),
+                        rating=place.get("rating"),
+                        estimated_duration=place.get("estimated_duration")
                     ) for place in day["places"]
                 ]
             ) for day in frontend_response_data
@@ -766,6 +795,7 @@ async def generate_itinerary(request: ItineraryRequest = Body(...)):
         return frontend_response
         
     except HTTPException as e:
+        print(f"❌ HTTP 예외 발생: {e.status_code} - {e.detail}")
         raise e
     except Exception as e:
         print(f"❌ 코스 생성 중 오류: {e}")

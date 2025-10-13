@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🗺️ 카카오맵 코스 테스트 - 부산 여행</title>
-    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=89fc5955b80f4c5ac937b020e1d7855c"></script>
+    <!-- 카카오맵 API 키는 JavaScript에서 동적으로 로드됩니다 -->
     <style>
         * {
             margin: 0;
@@ -427,19 +427,22 @@
         // 페이지 로드 시 초기화
         window.onload = async function() {
             try {
-                // 1. 먼저 DB에서 장소 로드
+                // 1. 먼저 API 키 로드
+                await loadKakaoAPIKey();
+                
+                // 2. DB에서 장소 로드
                 await loadPlacesFromDB();
                 
-                // 2. 장소 목록 UI 초기화
-            initPlaceList();
+                // 3. 장소 목록 UI 초기화
+                initPlaceList();
                 
-                // 3. 카카오맵 초기화 (SDK 로드 대기)
+                // 4. 카카오맵 초기화 (SDK 로드 대기)
                 let retryCount = 0;
                 const maxRetries = 10;
                 
                 const initMap = () => {
                     if (typeof kakao !== 'undefined' && kakao.maps) {
-            initKakaoMap();
+                        initKakaoMap();
                         console.log('✅ 카카오맵 초기화 완료');
                     } else if (retryCount < maxRetries) {
                         retryCount++;
@@ -452,12 +455,53 @@
                 
                 initMap();
                 
-            console.log('✅ 카카오맵 코스 테스트 페이지 로드 완료');
+                console.log('✅ 카카오맵 코스 테스트 페이지 로드 완료');
             } catch (error) {
                 console.error('❌ 페이지 초기화 실패:', error);
                 console.warn('⚠️ Fallback 모드로 전환합니다');
             }
         };
+
+        // 카카오맵 API 키 동적 로드
+        async function loadKakaoAPIKey() {
+            try {
+                console.log('🔑 카카오맵 API 키 로드 중...');
+                const response = await fetch(`${API_BASE_URL}/api/v1/config/kakao-javascript-key`);
+                
+                if (!response.ok) {
+                    throw new Error(`API 키 로드 실패: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const apiKey = data.api_key;
+                
+                if (!apiKey) {
+                    throw new Error('API 키가 비어있습니다');
+                }
+                
+                console.log('✅ 카카오맵 API 키 로드 완료');
+                
+                // 동적으로 스크립트 태그 생성하여 카카오맵 SDK 로드
+                const script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}`;
+                script.async = true;
+                
+                script.onload = function() {
+                    console.log('✅ 카카오맵 SDK 로드 완료');
+                };
+                
+                script.onerror = function() {
+                    console.error('❌ 카카오맵 SDK 로드 실패');
+                };
+                
+                document.head.appendChild(script);
+                
+            } catch (error) {
+                console.error('❌ 카카오맵 API 키 로드 실패:', error);
+                throw error;
+            }
+        }
 
         // DB에서 실제 장소 데이터 로드
         async function loadPlacesFromDB() {

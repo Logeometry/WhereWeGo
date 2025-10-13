@@ -8,14 +8,17 @@ from typing import List, Optional, Dict
 # --- 입력 모델 (프론트 -> 백엔드) ---
 class ItineraryRequest(BaseModel):
     """프론트엔드에서 여행 코스 생성을 위해 보내는 데이터 모델"""
-    travelDuration: int = Field(..., description="여행 기간 (일)")
-    travelStartDate: str = Field(..., description="여행 시작일 (YYYY-MM-DD)")
-    selected_places: List[str] = Field(..., description="사용자가 선택한 장소 ID 리스트")
+    spots: List[str] = Field(..., description="사용자가 선택한 장소 ID 리스트")
+    user_id: Optional[str] = Field(None, description="사용자 ID (로그인한 경우)")
+    travelDuration: Optional[int] = Field(None, description="여행 기간 (일) - 미입력 시 자동 계산")
     starting_point: Optional[str] = Field(None, description="부산 내 여행 시작점 장소 ID (선택사항)")
     transport_mode: Optional[str] = Field("DRIVE", description="교통수단 (DRIVE, TRANSIT, WALK, BICYCLE, TWO_WHEELER)")
     # 아래 필드들은 프롬프트에 활용될 수 있으므로 포함합니다.
     preferences: Optional[Dict[str, bool]] = None
     surveyAttractions: Optional[List[str]] = None
+    
+    class Config:
+        populate_by_name = True  # spots와 selected_places 둘 다 허용
 
 # --- 설문조사 기반 코스 생성 모델 ---
 class SurveyData(BaseModel):
@@ -412,18 +415,24 @@ class FrontendPlace(BaseModel):
     id: str
     name: str
     placeId: Optional[str] = None
+    _id: Optional[str] = None
     time: str
     icon: Optional[str] = None
+    description: Optional[str] = None
+    address: Optional[str] = None
+    location: Optional[Dict] = None
+    rating: Optional[float] = None
+    estimated_duration: Optional[int] = None
 
 class FrontendDay(BaseModel):
     """프론트엔드 일별 스케줄 모델"""
+    day: int
     date: str
-    dayName: str
     places: List[FrontendPlace]
 
 class FrontendItineraryResponse(BaseModel):
     """프론트엔드 여행 일정 응답 모델"""
-    itinerary: List[FrontendDay]
+    dailySchedule: List[FrontendDay]
 
 # 코스 저장 관련 모델들
 class CourseItinerary(BaseModel):

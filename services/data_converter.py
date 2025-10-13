@@ -77,13 +77,13 @@ class DataConverter:
     @staticmethod
     def convert_backend_to_frontend(backend_data: Dict[str, Any]) -> List[Dict]:
         """
-        백엔드 형식을 프론트엔드 형식으로 변환
+        백엔드 형식을 프론트엔드 형식으로 변환 (상세 정보 포함)
         
         Args:
             backend_data: CourseSaveRequest 형태의 데이터
             
         Returns:
-            TravelPlanSamplePage 형태의 일정 데이터
+            dailySchedule 형태의 일정 데이터 (상세 정보 포함)
         """
         frontend_data = []
         
@@ -91,24 +91,35 @@ class DataConverter:
         days = itinerary.get("days", [])
         
         for day in days:
-            # "2026-08-21" -> "2026. 8. 21." 변환
-            date_parts = day["date"].split("-")
-            formatted_date = f"{date_parts[0]}. {int(date_parts[1])}. {int(date_parts[2])}."
+            # 날짜는 ISO 형식 유지 ("2026-08-21")
             
-            # 장소 데이터 변환
+            # 장소 데이터 변환 (상세 정보 포함)
             places = []
             for place in day.get("places", []):
-                places.append({
-                    "id": place.get("place_id") or place.get("id", "unknown"),
-                    "placeId": place.get("place_id"),
+                place_obj = {
+                    "id": place.get("place_id") or place.get("_id") or place.get("id", "unknown"),
+                    "_id": place.get("place_id") or place.get("_id") or place.get("id", "unknown"),
                     "name": place["name"],
-                    "time": place["time"],
-                    "icon": None  # 프론트엔드에서 별도로 설정
-                })
+                    "time": place.get("time", "09:00"),  # ✅ 필수 필드!
+                }
+                
+                # 상세 정보 추가 (있는 경우)
+                if "description" in place:
+                    place_obj["description"] = place["description"]
+                if "address" in place:
+                    place_obj["address"] = place["address"]
+                if "location" in place:
+                    place_obj["location"] = place["location"]
+                if "rating" in place:
+                    place_obj["rating"] = place["rating"]
+                if "estimated_duration" in place:
+                    place_obj["estimated_duration"] = place["estimated_duration"]
+                
+                places.append(place_obj)
             
             frontend_data.append({
-                "date": formatted_date,
-                "dayName": f"Day {day['day']}",
+                "day": day['day'],        # 숫자형
+                "date": day["date"],      # ISO 형식 유지
                 "places": places
             })
         

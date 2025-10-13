@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# 가상환경
+venv/
+env/
+ENV/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 테스트
+test/
+tests/
+*.test.py
+
+# ML 모델 체크포인트 (매우 큼!)
+checkpoints/
+*.pth
+*.pt
+*.ckpt
+*.h5
+*.pkl
+
+# 데이터 파일 (큼!)
+data/
+*.csv
+*.json
+*.jsonl
+BPR/
+
+# 로그
+*.log
+log/
+logs/
+
+# 임시 파일
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# 환경 변수 (보안!)
+.env
+.env.local
+.env.*.local
+
+# 문서
+*.md
+README.md
+docs/
+
+# 기타
+*.bak
+*.swp
+.cache/
+

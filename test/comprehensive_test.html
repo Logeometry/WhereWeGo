@@ -1,0 +1,2596 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhereWeGo 통합 테스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .step-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .step-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .step-title {
+            font-size: 1.5rem;
+            color: #4a5568;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step-number {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #48bb78, #38a169);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #f56565, #e53e3e);
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #ed8936, #dd6b20);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .voting-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .voting-item {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .voting-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .place-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .voting-item h4 {
+            margin: 10px 0 5px 0;
+            color: #2d3748;
+            font-size: 1.2rem;
+        }
+
+        .voting-item .category {
+            color: #718096;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .vote-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .vote-options label {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .vote-options label:hover {
+            background-color: #f7fafc;
+            border-color: #667eea;
+        }
+
+        .vote-options input[type="radio"] {
+            margin-right: 8px;
+        }
+
+        .vote-options input[type="radio"]:checked + label,
+        .vote-options label:has(input[type="radio"]:checked) {
+            background-color: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .voting-round {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            margin: 30px 0;
+        }
+
+        .voting-option {
+            flex: 1;
+            max-width: 300px;
+            border: 3px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 20px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .voting-option:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        }
+
+        .voting-option:active {
+            transform: translateY(-2px);
+        }
+
+        .vs {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            min-width: 60px;
+        }
+
+        .voting-info {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .voting-options {
+            margin: 20px 0;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .button-group .btn {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #ed8936, #dd6b20);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(237, 137, 54, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #718096, #4a5568);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(113, 128, 150, 0.3);
+        }
+
+        .score {
+            color: #48bb78;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin: 5px 0;
+        }
+
+        .reason {
+            color: #718096;
+            font-size: 0.8rem;
+            font-style: italic;
+            margin: 5px 0;
+            line-height: 1.4;
+        }
+
+        .existing-survey {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .survey-info {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .survey-info h4 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .survey-info ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .survey-info li {
+            padding: 5px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .survey-info li:last-child {
+            border-bottom: none;
+        }
+
+        .recommendations-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .recommendations-header h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        /* step4의 recommendationsContainer를 위한 추가 스타일 */
+        #step4 #recommendationsContainer {
+            margin: 20px 0;
+        }
+
+        #step4 .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        #step4 .recommendation-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+
+        #step4 .recommendation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        #step4 .card-image {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        #step4 .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #step4 .card-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        #step4 .card-content {
+            padding: 20px;
+        }
+
+        #step4 .card-content h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 18px;
+        }
+
+        #step4 .card-content .category {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        #step4 .card-content .reason {
+            color: #888;
+            font-size: 13px;
+            margin: 10px 0;
+            line-height: 1.4;
+        }
+
+        #step4 .card-actions {
+            margin-top: 15px;
+        }
+
+        #step4 .recommendations-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        #step4 .recommendations-header h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        #step4 .recommendations-footer {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .recommendation-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-image {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        .card-content h4 {
+            margin: 0 0 10px 0;
+            color: #2d3748;
+            font-size: 1.2rem;
+        }
+
+        .card-content .category {
+            color: #718096;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .card-content .reason {
+            color: #4a5568;
+            font-size: 0.9rem;
+            font-style: italic;
+            margin-bottom: 15px;
+        }
+
+        .card-actions {
+            text-align: center;
+        }
+
+        .recommendations-footer {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .no-recommendations {
+            text-align: center;
+            padding: 40px 20px;
+            background: #f7fafc;
+            border-radius: 12px;
+            border: 2px dashed #e2e8f0;
+        }
+
+        .no-recommendations h3 {
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+
+        .no-recommendations p {
+            color: #718096;
+            margin-bottom: 20px;
+        }
+
+        .selected-places-list {
+            margin-top: 15px;
+        }
+
+        .selected-place-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: #f7fafc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .place-order {
+            background: #667eea;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .place-name {
+            flex: 1;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .survey-entry-options {
+            text-align: center;
+            padding: 30px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .survey-entry-options h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .survey-entry-options p {
+            color: #4a5568;
+            margin-bottom: 20px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .button-group .btn {
+            min-width: 150px;
+        }
+
+        .map-container {
+            height: 500px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #feb2b2;
+        }
+
+        .status.info {
+            background: #bee3f8;
+            color: #2a4365;
+            border: 1px solid #90cdf4;
+        }
+
+        .place-card {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .place-card:hover {
+            background: #edf2f7;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .place-card.selected {
+            background: #e6fffa;
+            border-color: #38b2ac;
+            box-shadow: 0 0 0 2px #38b2ac;
+        }
+
+        .place-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .place-category {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .place-score {
+            color: #38b2ac;
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .course-day {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .day-header {
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+
+        .place-item {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 3px solid #38b2ac;
+        }
+
+        .nearby-section {
+            background: #f0fff4;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .search-results {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ WhereWeGo 통합 테스트</h1>
+            <p>로그인 → 설문조사 → 장소 추천 → 코스 생성 → 지도 표시 → 근처 장소 검색</p>
+        </div>
+
+        <!-- 진행률 표시 -->
+        <div class="step-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div id="progressText">테스트 시작</div>
+        </div>
+
+        <!-- 1단계: 로그인 -->
+        <div class="step-container" id="step1">
+            <div class="step-title">
+                <div class="step-number">1</div>
+                Google 로그인
+            </div>
+            <div id="loginStatus" class="status info">로그인이 필요합니다.</div>
+            <button class="btn" onclick="loginWithGoogle()">Google로 로그인</button>
+            <button class="btn btn-danger" onclick="logout()" style="display: none;">로그아웃</button>
+        </div>
+
+        <!-- 2단계: 설문조사 -->
+        <div class="step-container hidden" id="step2">
+            <div class="step-title">
+                <div class="step-number">2</div>
+                설문조사
+            </div>
+            <form id="surveyForm">
+                <div class="grid">
+                    <div class="form-group">
+                        <label>활동 유형</label>
+                        <select id="activity" required>
+                            <option value="">선택하세요</option>
+                            <option value="관광">관광</option>
+                            <option value="휴양">휴양</option>
+                            <option value="문화">문화</option>
+                            <option value="액티비티">액티비티</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>활동 수준</label>
+                        <select id="activityLevel" required>
+                            <option value="">선택하세요</option>
+                            <option value="낮음">낮음</option>
+                            <option value="보통">보통</option>
+                            <option value="높음">높음</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>여행 시간</label>
+                        <select id="time" required>
+                            <option value="">선택하세요</option>
+                            <option value="아침">아침</option>
+                            <option value="낮">낮</option>
+                            <option value="저녁">저녁</option>
+                            <option value="밤">밤</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>계절</label>
+                        <select id="season" required>
+                            <option value="">선택하세요</option>
+                            <option value="봄">봄</option>
+                            <option value="여름">여름</option>
+                            <option value="가을">가을</option>
+                            <option value="겨울">겨울</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>의사결정 기준</label>
+                    <select id="preference" required>
+                        <option value="">선택하세요</option>
+                        <option value="활동성">활동성 중심</option>
+                        <option value="시간대">시간대 중심</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">설문조사 제출</button>
+            </form>
+        </div>
+
+        <!-- 3단계: 장소 추천 및 투표 -->
+        <div class="step-container hidden" id="step3">
+            <div class="step-title">
+                <div class="step-number">3</div>
+                장소 추천 및 투표
+            </div>
+            <div id="recommendationsContainer">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    추천 장소를 불러오는 중...
+                </div>
+            </div>
+            <button class="btn btn-success" onclick="submitVotes()" style="display: none;">투표 완료</button>
+        </div>
+
+        <!-- 4단계: 여행 코스 생성 -->
+        <div class="step-container hidden" id="step4">
+            <div class="step-title">
+                <div class="step-number">4</div>
+                여행 코스 생성
+            </div>
+            <div id="recommendationsContainer">
+                <!-- 추천 장소가 여기에 동적으로 로드됩니다 -->
+            </div>
+            <div class="grid">
+                <div>
+                    <div class="form-group">
+                        <label>여행 기간</label>
+                        <select id="travelDuration">
+                            <option value="1">1일</option>
+                            <option value="2">2일</option>
+                            <option value="3">3일</option>
+                            <option value="4">4일</option>
+                            <option value="5">5일</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>여행 시작일</label>
+                        <input type="date" id="travelStartDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>시작점</label>
+                        <select id="startingPoint">
+                            <option value="">자동 선택</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="generateCourse()">코스 생성</button>
+                </div>
+                <div>
+                    <div id="selectedPlacesContainer">
+                        <h4>선택된 장소들</h4>
+                        <div id="selectedPlacesList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5단계: 지도 및 코스 표시 -->
+        <div class="step-container hidden" id="step5">
+            <div class="step-title">
+                <div class="step-number">5</div>
+                지도 및 코스 표시
+            </div>
+            <div class="map-container" id="map"></div>
+            <div id="courseDetails" style="margin-top: 20px;"></div>
+        </div>
+
+        <!-- 6단계: 근처 장소 검색 -->
+        <div class="step-container hidden" id="step6">
+            <div class="step-title">
+                <div class="step-number">6</div>
+                근처 장소 검색 및 추가
+            </div>
+            <div class="grid">
+                <div>
+                    <div class="form-group">
+                        <label>기준 장소 선택</label>
+                        <select id="basePlaceSelect">
+                            <option value="">기준 장소를 선택하세요</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>검색 반경 (km)</label>
+                        <input type="number" id="searchRadius" value="5" min="1" max="20">
+                    </div>
+                    <button class="btn" onclick="searchNearbyPlaces()">근처 장소 검색</button>
+                    <button class="btn btn-warning" onclick="searchPlaces()">장소 검색</button>
+                </div>
+                <div>
+                    <div class="form-group">
+                        <label>장소 검색</label>
+                        <input type="text" id="searchQuery" placeholder="검색할 장소명을 입력하세요">
+                    </div>
+                    <button class="btn" onclick="performSearch()">검색</button>
+                </div>
+            </div>
+            <div id="searchResults" style="margin-top: 20px;"></div>
+        </div>
+
+        <!-- 7단계: 코스 관리 -->
+        <div class="step-container hidden" id="step7">
+            <div class="step-title">
+                <div class="step-number">7</div>
+                코스 관리
+            </div>
+            <div class="grid">
+                <div>
+                    <h4>저장된 코스</h4>
+                    <div id="savedCourses"></div>
+                </div>
+                <div>
+                    <h4>코스 작업</h4>
+                    <button class="btn" onclick="saveCurrentCourse()">현재 코스 저장</button>
+                    <button class="btn btn-warning" onclick="loadSavedCourses()">저장된 코스 불러오기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Maps API는 동적으로 로드됩니다 -->
+
+    <script>
+        // 전역 변수
+        let currentUser = null;
+        let accessToken = null;
+        let selectedPlaces = [];
+        let currentCourse = null;
+        let map = null;
+        let markers = [];
+        let polylines = [];
+        let voteData = [];
+        let googleMapsApiKey = null;
+
+        // API 기본 URL
+        const API_BASE = 'http://localhost:8000/api/v1';
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            // 오늘 날짜를 기본값으로 설정
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('travelStartDate').value = today;
+            
+            // Google Maps API 키 가져오기
+            loadGoogleMapsApiKey();
+            
+            // 토큰 확인
+            checkAuthStatus();
+        });
+
+        // 인증 상태 확인
+        async function checkAuthStatus() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token') || getCookie('access_token');
+            
+            console.log('🔍 토큰 확인:', token ? '토큰 있음' : '토큰 없음');
+            console.log('🔍 URL 파라미터:', window.location.search);
+            
+            if (token) {
+                accessToken = token;
+                console.log('🔍 토큰으로 인증 확인 시도...');
+                try {
+                    const response = await fetch(`${API_BASE}/me`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    console.log('🔍 인증 응답 상태:', response.status);
+                    
+                    if (response.ok) {
+                        const userData = await response.json();
+                        console.log('🔍 사용자 데이터:', userData);
+                        currentUser = userData;
+                        showStep(2); // 설문조사 단계로 이동
+                        updateProgress(20);
+                        document.getElementById('loginStatus').innerHTML = 
+                            `<div class="status success">로그인됨: ${userData.name || userData.email}</div>`;
+                        document.querySelector('#step1 .btn').style.display = 'none';
+                        document.querySelector('#step1 .btn-danger').style.display = 'inline-block';
+                    } else {
+                        console.error('인증 실패:', response.status, await response.text());
+                        // 토큰이 있지만 인증 실패한 경우, 토큰을 사용해서 진행
+                        currentUser = { user_id: 'temp_user', name: '임시 사용자', email: 'temp@example.com' };
+                        showStep(2); // 설문조사 단계로 이동
+                        updateProgress(20);
+                        document.getElementById('loginStatus').innerHTML = 
+                            '<div class="status success">로그인됨 (토큰 인증)</div>';
+                        document.querySelector('#step1 .btn').style.display = 'none';
+                        document.querySelector('#step1 .btn-danger').style.display = 'inline-block';
+                    }
+                } catch (error) {
+                    console.error('인증 확인 실패:', error);
+                    // 네트워크 오류 등으로 인증 확인 실패한 경우, 토큰을 사용해서 진행
+                    currentUser = { user_id: 'temp_user', name: '임시 사용자', email: 'temp@example.com' };
+                    showStep(2); // 설문조사 단계로 이동
+                    updateProgress(20);
+                    document.getElementById('loginStatus').innerHTML = 
+                        '<div class="status success">로그인됨 (토큰 인증)</div>';
+                    document.querySelector('#step1 .btn').style.display = 'none';
+                    document.querySelector('#step1 .btn-danger').style.display = 'inline-block';
+                }
+            } else {
+                // 로그인이 필요한 경우
+                showStep(1);
+                updateProgress(0);
+                document.getElementById('loginStatus').innerHTML = 
+                    '<div class="status info">로그인이 필요합니다.</div>';
+            }
+        }
+
+        // Google 로그인
+        function loginWithGoogle() {
+            window.location.href = `${API_BASE}/auth/google/login`;
+        }
+
+        // 로그아웃
+        function logout() {
+            accessToken = null;
+            currentUser = null;
+            document.getElementById('loginStatus').innerHTML = 
+                '<div class="status info">로그인이 필요합니다.</div>';
+            document.querySelector('#step1 .btn').style.display = 'inline-block';
+            document.querySelector('#step1 .btn-danger').style.display = 'none';
+            hideAllSteps();
+            updateProgress(0);
+        }
+
+        // 설문조사 제출
+        document.getElementById('surveyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // 먼저 기존 설문조사가 있는지 확인
+            await checkExistingSurvey();
+        });
+
+        // 설문조사 단계 진입 시 기존 데이터 확인
+        function checkSurveyOnEntry() {
+            console.log('🔍 설문조사 단계 진입 - 기존 데이터 확인');
+            console.log('🔍 accessToken:', accessToken ? '있음' : '없음');
+            console.log('🔍 API_BASE:', API_BASE);
+            
+            if (!accessToken) {
+                console.log('⚠️ 토큰이 없어서 설문조사 폼을 표시합니다');
+                showSurveyForm();
+                return;
+            }
+            
+            checkExistingSurvey(true);
+        }
+
+        // 설문조사 진입 시 옵션 표시
+        function showSurveyEntryOptions(data) {
+            const surveyContainer = document.getElementById('surveyForm');
+            surveyContainer.innerHTML = `
+                <div class="survey-entry-options">
+                    <h3>📋 기존 설문조사가 있습니다</h3>
+                    <p>이미 설문조사를 완료하셨습니다. 어떻게 진행하시겠습니까?</p>
+                    <div class="survey-info">
+                        <h4>기존 설문조사 내용:</h4>
+                        <ul>
+                            <li>활동: ${data.user_schema.activity || 'N/A'}</li>
+                            <li>활동 수준: ${data.user_schema.activity_level || 'N/A'}</li>
+                            <li>시간대: ${data.user_schema.time || 'N/A'}</li>
+                            <li>계절: ${data.user_schema.season || 'N/A'}</li>
+                            <li>선호도: ${data.user_schema.preference || 'N/A'}</li>
+                        </ul>
+                    </div>
+                    <div class="button-group">
+                        <button onclick="proceedWithExistingSurvey()" class="btn btn-success">기존 설문으로 진행</button>
+                        <button onclick="restartSurvey()" class="btn btn-warning">새로 설문하기</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 기존 설문조사 확인
+        async function checkExistingSurvey(isOnEntry = false) {
+            try {
+                console.log('🔍 기존 설문조사 확인 중...');
+                console.log('🔍 isOnEntry:', isOnEntry);
+                console.log('🔍 API URL:', `${API_BASE}/survey/survey-data`);
+                
+                // 백엔드에서 기존 설문조사 데이터 가져오기
+                const response = await fetch(`${API_BASE}/survey/survey-data`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                console.log('🔍 응답 상태:', response.status);
+                console.log('🔍 응답 OK:', response.ok);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('🔍 기존 설문조사 데이터:', data);
+                    console.log('🔍 user_schema 존재:', !!data.user_schema);
+                    console.log('🔍 user_schema 키 개수:', data.user_schema ? Object.keys(data.user_schema).length : 0);
+                    
+                    if (data.user_schema && Object.keys(data.user_schema).length > 0) {
+                        // 기존 설문조사가 있는 경우
+                        console.log('📋 기존 설문조사 발견');
+                        if (isOnEntry) {
+                            console.log('🔍 설문조사 진입 시 옵션 표시');
+                            showSurveyEntryOptions(data);
+                        } else {
+                            console.log('🔍 기존 설문조사 옵션 표시');
+                            showExistingSurveyOptions(data);
+                        }
+                    } else {
+                        // 기존 설문조사가 없는 경우
+                        console.log('📝 기존 설문조사 없음');
+                        if (isOnEntry) {
+                            console.log('📝 설문조사 진행 - 폼 표시');
+                            showSurveyForm();
+                        } else {
+                            console.log('📝 새 설문조사 제출');
+                            submitNewSurvey();
+                        }
+                    }
+                } else {
+                    console.log('⚠️ 설문조사 데이터 확인 실패:', response.status);
+                    if (!isOnEntry) {
+                        submitNewSurvey();
+                    } else {
+                        console.log('📝 설문조사 폼 표시 (실패 시)');
+                        showSurveyForm();
+                    }
+                }
+            } catch (error) {
+                console.error('❌ 설문조사 확인 오류:', error);
+                if (!isOnEntry) {
+                    submitNewSurvey();
+                } else {
+                    console.log('📝 설문조사 폼 표시 (오류 시)');
+                    showSurveyForm();
+                }
+            }
+        }
+
+        // 기존 설문조사 옵션 표시
+        function showExistingSurveyOptions(data) {
+            const surveyContainer = document.getElementById('surveyForm');
+            surveyContainer.innerHTML = `
+                <div class="existing-survey">
+                    <h3>📋 기존 설문조사가 있습니다</h3>
+                    <p>이미 설문조사를 완료하셨습니다. 어떻게 진행하시겠습니까?</p>
+                    <div class="survey-info">
+                        <h4>기존 설문조사 내용:</h4>
+                        <ul>
+                            <li>활동: ${data.user_schema.activity || 'N/A'}</li>
+                            <li>활동 수준: ${data.user_schema.activity_level || 'N/A'}</li>
+                            <li>시간대: ${data.user_schema.time || 'N/A'}</li>
+                            <li>계절: ${data.user_schema.season || 'N/A'}</li>
+                            <li>선호도: ${data.user_schema.preference || 'N/A'}</li>
+                        </ul>
+                    </div>
+                    <div class="button-group">
+                        <button onclick="proceedWithExistingSurvey()" class="btn btn-success">기존 설문으로 진행</button>
+                        <button onclick="restartSurvey()" class="btn btn-warning">새로 설문하기</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 새 설문조사 제출
+        async function submitNewSurvey() {
+            const surveyData = {
+                activity: document.getElementById('activity').value,
+                activity_level: document.getElementById('activityLevel').value,
+                time: document.getElementById('time').value,
+                season: document.getElementById('season').value,
+                preference: document.getElementById('preference').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/survey/submit-complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify(surveyData)
+                });
+
+                console.log('🔍 설문조사 응답 상태:', response.status);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ 설문조사 제출 성공:', result);
+                    
+                    // 설문조사 완료 후 투표 페이지로 이동
+                    showStep(3);
+                    updateProgress(40);
+                    displayVotingPlaces();
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ 설문조사 제출 실패:', response.status, errorText);
+                    throw new Error(`설문조사 제출 실패: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('설문조사 오류:', error);
+                alert('설문조사 제출에 실패했습니다.');
+            }
+        }
+
+        // 기존 설문조사로 진행
+        function proceedWithExistingSurvey() {
+            console.log('🔍 기존 설문조사로 진행...');
+            
+            // 투표 페이지로 바로 이동
+            showStep(3);
+            updateProgress(40);
+            displayVotingPlaces();
+        }
+
+        // 설문조사 다시 시작
+        function restartSurvey() {
+            console.log('🔍 설문조사 다시 시작...');
+            
+            // 설문조사 폼 초기화
+            document.getElementById('activity').value = '';
+            document.getElementById('activityLevel').value = '';
+            document.getElementById('time').value = '';
+            document.getElementById('season').value = '';
+            document.getElementById('preference').value = '';
+            
+            // 설문조사 폼 다시 표시
+            const surveyContainer = document.getElementById('surveyForm');
+            surveyContainer.innerHTML = `
+                <div class="form-group">
+                    <label>관심 있는 활동</label>
+                    <select id="activity" required>
+                        <option value="">선택하세요</option>
+                        <option value="휴양">휴양</option>
+                        <option value="문화">문화</option>
+                        <option value="액티비티">액티비티</option>
+                        <option value="쇼핑">쇼핑</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>활동 수준</label>
+                    <select id="activityLevel" required>
+                        <option value="">선택하세요</option>
+                        <option value="낮음">낮음</option>
+                        <option value="보통">보통</option>
+                        <option value="높음">높음</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>선호하는 시간대</label>
+                    <select id="time" required>
+                        <option value="">선택하세요</option>
+                        <option value="아침">아침</option>
+                        <option value="오후">오후</option>
+                        <option value="저녁">저녁</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>선호하는 계절</label>
+                    <select id="season" required>
+                        <option value="">선택하세요</option>
+                        <option value="봄">봄</option>
+                        <option value="여름">여름</option>
+                        <option value="가을">가을</option>
+                        <option value="겨울">겨울</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>의사결정 기준</label>
+                    <select id="preference" required>
+                        <option value="">선택하세요</option>
+                        <option value="활동성">활동성 중심</option>
+                        <option value="시간대">시간대 중심</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">설문조사 제출</button>
+            `;
+            
+            // 이벤트 리스너 다시 등록
+            document.getElementById('surveyForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const surveyData = {
+                    activity: document.getElementById('activity').value,
+                    activity_level: document.getElementById('activityLevel').value,
+                    time: document.getElementById('time').value,
+                    season: document.getElementById('season').value,
+                    preference: document.getElementById('preference').value
+                };
+
+                try {
+                    const response = await fetch(`${API_BASE}/survey/submit-complete`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}`
+                        },
+                        body: JSON.stringify(surveyData)
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('✅ 설문조사 제출 성공:', result);
+                        
+                        // 설문조사 완료 후 투표 페이지로 이동
+                        showStep(3);
+                        updateProgress(40);
+                        displayVotingPlaces();
+                    } else {
+                        throw new Error('설문조사 제출 실패');
+                    }
+                } catch (error) {
+                    console.error('설문조사 오류:', error);
+                    alert('설문조사 제출에 실패했습니다.');
+                }
+            });
+        }
+
+        // 추천 장소 표시
+        function displayRecommendations(recommendations) {
+            const container = document.getElementById('recommendationsContainer');
+            
+            if (!recommendations || recommendations.length === 0) {
+                container.innerHTML = `
+                    <div class="no-recommendations">
+                        <h3>😔 추천 장소가 없습니다</h3>
+                        <p>추천할 장소를 찾지 못했습니다.</p>
+                        <button onclick="showDefaultRecommendations()" class="btn btn-primary">기본 추천 보기</button>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="recommendations-header">
+                    <h3>🎯 추천 장소</h3>
+                    <p>설문조사 결과를 바탕으로 추천된 장소들입니다.</p>
+                </div>
+                <div class="recommendations-grid">
+            `;
+
+            recommendations.forEach((place, index) => {
+                html += `
+                    <div class="recommendation-card" onclick="selectRecommendedPlace(${place.id || index + 1}, '${place.name}')">
+                        <div class="card-image">
+                            <img src="https://via.placeholder.com/300x200?text=${encodeURIComponent(place.name)}" alt="${place.name}">
+                            <div class="card-overlay">
+                                <span class="card-score">${place.score ? (place.score * 100).toFixed(0) + '%' : '추천'}</span>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <h4>${place.name}</h4>
+                            <p class="category">${place.category || '관광지'}</p>
+                            ${place.reason ? `<p class="reason">${place.reason}</p>` : ''}
+                            <div class="card-actions">
+                                <button class="btn btn-primary btn-sm">선택하기</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                </div>
+                <div class="recommendations-footer">
+                    <button onclick="generateTravelCourse()" class="btn btn-success btn-lg">여행 코스 생성하기</button>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // 추천 장소 선택
+        function selectRecommendedPlace(placeId, placeName) {
+            console.log(`🔍 추천 장소 선택: ${placeName} (ID: ${placeId})`);
+            
+            // 선택된 장소를 selectedPlaces에 추가
+            const place = recommendedPlaces.find(p => p.id == placeId);
+            if (place && !selectedPlaces.find(p => p.id == placeId)) {
+                selectedPlaces.push({
+                    id: placeId,
+                    name: placeName,
+                    category: place.category,
+                    score: place.score,
+                    reason: place.reason
+                });
+                
+                // UI 업데이트
+                updateSelectedPlacesDisplay();
+                updateStartingPointOptions();
+            }
+        }
+
+        // 선택된 장소 표시 업데이트
+        function updateSelectedPlacesDisplay() {
+            const container = document.getElementById('selectedPlaces');
+            if (!container) return;
+
+            if (selectedPlaces.length === 0) {
+                container.innerHTML = '<p>선택된 장소가 없습니다.</p>';
+                return;
+            }
+
+            let html = '<h4>선택된 장소:</h4><div class="selected-places-list">';
+            
+            selectedPlaces.forEach((place, index) => {
+                html += `
+                    <div class="selected-place-item">
+                        <span class="place-order">${index + 1}</span>
+                        <span class="place-name">${place.name}</span>
+                        <button onclick="removeSelectedPlace(${place.id})" class="btn btn-danger btn-sm">제거</button>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // 선택된 장소 제거
+        function removeSelectedPlace(placeId) {
+            selectedPlaces = selectedPlaces.filter(p => p.id != placeId);
+            updateSelectedPlacesDisplay();
+            updateStartingPointOptions();
+        }
+
+        // 장소 선택 토글
+        function togglePlaceSelection(place, card) {
+            if (card.classList.contains('selected')) {
+                card.classList.remove('selected');
+                selectedPlaces = selectedPlaces.filter(p => p.place_id !== place.place_id);
+            } else {
+                card.classList.add('selected');
+                selectedPlaces.push(place);
+            }
+            
+            updateSelectedPlacesList();
+        }
+
+        // 선택된 장소 목록 업데이트
+        function updateSelectedPlacesList() {
+            const container = document.getElementById('selectedPlacesList');
+            container.innerHTML = '';
+            
+            selectedPlaces.forEach(place => {
+                const item = document.createElement('div');
+                item.className = 'place-item';
+                item.innerHTML = `
+                    <strong>${place.name}</strong> 
+                    <span class="place-score">(${(place.score * 100).toFixed(1)}%)</span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // 투표 페이지 표시 (백엔드 API 사용)
+        async function displayVotingPlaces() {
+            console.log('🔍 displayVotingPlaces 함수 시작');
+            
+            const votingContainer = document.getElementById('recommendationsContainer');
+            console.log('🔍 votingContainer:', votingContainer);
+            
+            if (!votingContainer) {
+                console.error('❌ 투표 컨테이너를 찾을 수 없습니다.');
+                return;
+            }
+            
+            console.log('🔍 투표 페이지 표시 시작...');
+
+            try {
+                // 백엔드에서 투표 데이터 가져오기
+                const response = await fetch(`${API_BASE}/survey/data`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ 투표 데이터 가져오기 성공:', data);
+                    
+                    if (data.status === 'incomplete') {
+                        // 설문조사가 완료되지 않은 경우
+                        votingContainer.innerHTML = `
+                            <div class="error-message">
+                                <h3>⚠️ 설문조사 미완료</h3>
+                                <p>${data.message}</p>
+                                <p>누락된 필드: ${data.missing_fields.join(', ')}</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // 투표 시작
+                    startVotingFromBackend(data);
+                } else {
+                    console.error('❌ 투표 데이터 가져오기 실패:', response.status);
+                    // 실패 시 기본 투표 페이지 표시
+                    showDefaultVotingPage();
+                }
+            } catch (error) {
+                console.error('❌ 투표 데이터 가져오기 오류:', error);
+                // 오류 시 기본 투표 페이지 표시
+                showDefaultVotingPage();
+            }
+            
+            console.log('✅ 투표 페이지 표시 완료');
+        }
+
+        // 백엔드 데이터로 투표 시작
+        function startVotingFromBackend(data) {
+            const votingContainer = document.getElementById('recommendationsContainer');
+            
+            // 투표 상태 초기화
+            window.currentRound = 1;
+            window.votes = [];
+            
+            let html = '<h3>🎯 투표 페이지</h3>';
+            html += '<p>백엔드에서 투표 데이터를 가져왔습니다.</p>';
+            html += '<div class="voting-info">';
+            html += `<p><strong>사용자 스키마:</strong> ${JSON.stringify(data.user_schema || {})}</p>`;
+            html += `<p><strong>기존 투표 기록:</strong> ${JSON.stringify(data.votes || [])}</p>`;
+            html += '</div>';
+            
+            // 기존 투표가 있는 경우
+            if (data.votes && data.votes.length > 0) {
+                html += '<div class="voting-options">';
+                html += '<h4>📊 기존 투표 결과</h4>';
+                html += '<p>이미 투표 기록이 있습니다. 어떻게 진행하시겠습니까?</p>';
+                html += '<div class="button-group">';
+                html += '<button onclick="proceedToMLRecommendations()" class="btn btn-success">기존 결과로 ML 추천 받기</button>';
+                html += '<button onclick="startNewVoting()" class="btn btn-warning">새로 투표하기</button>';
+                html += '</div>';
+                html += '</div>';
+            } else {
+                // 투표 기록이 없는 경우
+                html += '<div class="voting-options">';
+                html += '<p>투표를 시작하거나 바로 ML 추천을 받을 수 있습니다.</p>';
+                html += '<div class="button-group">';
+                html += '<button onclick="startNewVoting()" class="btn btn-primary">투표 시작</button>';
+                html += '<button onclick="proceedToMLRecommendations()" class="btn btn-secondary">ML 추천 받기</button>';
+                html += '</div>';
+                html += '</div>';
+            }
+            
+            votingContainer.innerHTML = html;
+        }
+
+        // 새 투표 시작 (백엔드 API 사용)
+        async function startNewVoting() {
+            console.log('🔍 새 투표 시작...');
+            
+            const votingContainer = document.getElementById('recommendationsContainer');
+            
+            // 로딩 표시
+            votingContainer.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    투표 아이템을 불러오는 중...
+                </div>
+            `;
+
+            try {
+                // 백엔드에서 투표 아이템 가져오기 (/recommendations 엔드포인트 사용)
+                const response = await fetch(`${API_BASE}/survey/ml-recommendations`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ 투표 아이템 가져오기 성공:', data);
+                    console.log('🔍 응답 데이터 타입:', typeof data);
+                    console.log('🔍 recommendations 키 존재:', 'recommendations' in data);
+                    console.log('🔍 recommendations 타입:', typeof data.recommendations);
+                    console.log('🔍 recommendations 길이:', data.recommendations ? data.recommendations.length : 'undefined');
+                    
+                    // 백엔드 응답 구조 확인 - rounds 배열 사용
+                    let rounds = null;
+                    
+                    if (data.recommendations && data.recommendations.rounds) {
+                        rounds = data.recommendations.rounds;
+                    } else if (data.rounds) {
+                        rounds = data.rounds;
+                    }
+                    
+                    console.log('🔍 찾은 라운드 데이터:', rounds);
+                    
+                    if (rounds && rounds.length > 0) {
+                        console.log('🔍 라운드 데이터 구조:', rounds[0]);
+                        console.log('🔍 전체 라운드 데이터:', rounds);
+                        
+                        // 백엔드에서 가져온 라운드 데이터를 투표 아이템으로 변환
+                        window.votingRounds = rounds;
+                        
+                        // 투표 상태 초기화
+                        window.currentRound = 0;
+                        window.votes = [];
+
+                        console.log('🔍 라운드 개수:', window.votingRounds.length);
+
+                        // 첫 번째 라운드 시작
+                        startVotingRound();
+                    } else {
+                        console.log('⚠️ 추천 데이터가 없거나 형식이 잘못됨:', data);
+                        console.log('🔍 전체 응답 데이터:', data);
+                        // 추천이 없는 경우 기본 투표 아이템 사용
+                        showDefaultVotingItems();
+                    }
+                } else {
+                    console.error('❌ 투표 아이템 가져오기 실패:', response.status);
+                    // 실패 시 기본 투표 아이템 사용
+                    showDefaultVotingItems();
+                }
+            } catch (error) {
+                console.error('❌ 투표 아이템 가져오기 오류:', error);
+                // 오류 시 기본 투표 아이템 사용
+                showDefaultVotingItems();
+            }
+        }
+
+        // 기본 투표 아이템 표시 (백엔드 실패 시)
+        function showDefaultVotingItems() {
+            console.log('🔍 기본 투표 아이템 사용...');
+            
+            // 투표할 장소 목록 (기본 데이터)
+            window.votingPlaces = [
+                { id: 1, name: "해운대해수욕장", category: "해수욕장,해변", image: "https://via.placeholder.com/200x150?text=해운대해수욕장" },
+                { id: 2, name: "감천문화마을", category: "테마거리", image: "https://via.placeholder.com/200x150?text=감천문화마을" },
+                { id: 3, name: "부산타워", category: "관광명소", image: "https://via.placeholder.com/200x150?text=부산타워" },
+                { id: 4, name: "자갈치시장", category: "전통시장", image: "https://via.placeholder.com/200x150?text=자갈치시장" },
+                { id: 5, name: "태종대", category: "자연명소", image: "https://via.placeholder.com/200x150?text=태종대" },
+                { id: 6, name: "남포동 BIFF거리", category: "쇼핑,문화", image: "https://via.placeholder.com/200x150?text=BIFF거리" }
+            ];
+
+            // 투표 상태 초기화
+            window.currentRound = 0;
+            window.votes = [];
+            window.remainingPlaces = [...window.votingPlaces];
+
+            // 첫 번째 라운드 시작
+            startVotingRound();
+        }
+
+        // 투표 라운드 시작 (1대1 방식)
+        function startVotingRound() {
+            const votingContainer = document.getElementById('recommendationsContainer');
+            
+            console.log('🔍 투표 라운드 시작');
+            console.log('🔍 현재 라운드:', window.currentRound);
+            console.log('🔍 전체 라운드 수:', window.votingRounds ? window.votingRounds.length : 0);
+            
+            // 모든 라운드 완료 확인
+            if (window.currentRound >= (window.votingRounds ? window.votingRounds.length : 0)) {
+                console.log('🔍 투표 완료 - 모든 라운드 완료');
+                finishVoting();
+                return;
+            }
+
+            // 현재 라운드 데이터 가져오기
+            const currentRoundData = window.votingRounds[window.currentRound];
+            console.log('🔍 현재 라운드 데이터:', currentRoundData);
+            
+            const optionA = currentRoundData.option_a;
+            const optionB = currentRoundData.option_b;
+            
+            console.log('🔍 옵션 A:', optionA.item.name);
+            console.log('🔍 옵션 B:', optionB.item.name);
+
+            let html = `<h3>🎯 라운드 ${window.currentRound + 1}</h3>`;
+            html += `<p>두 장소 중에서 더 가고 싶은 장소를 선택해주세요.</p>`;
+            html += `<div class="voting-round">`;
+            
+            // 옵션 A (첫 번째 장소)
+            const itemA = optionA.item;
+            html += `
+                <div class="voting-option" onclick="selectPlace('${itemA.index}', '${itemA.name}', 'option_a')">
+                    <img src="https://via.placeholder.com/200x150?text=${encodeURIComponent(itemA.name)}" alt="${itemA.name}" class="place-image">
+                    <h4>${itemA.name}</h4>
+                    <p class="category">${itemA.category || itemA.category_group || '관광지'}</p>
+                    ${optionA.reason ? `<p class="reason">${optionA.reason}</p>` : ''}
+                </div>
+            `;
+            
+            html += `<div class="vs">VS</div>`;
+            
+            // 옵션 B (두 번째 장소)
+            const itemB = optionB.item;
+            html += `
+                <div class="voting-option" onclick="selectPlace('${itemB.index}', '${itemB.name}', 'option_b')">
+                    <img src="https://via.placeholder.com/200x150?text=${encodeURIComponent(itemB.name)}" alt="${itemB.name}" class="place-image">
+                    <h4>${itemB.name}</h4>
+                    <p class="category">${itemB.category || itemB.category_group || '관광지'}</p>
+                    ${optionB.reason ? `<p class="reason">${optionB.reason}</p>` : ''}
+                </div>
+            `;
+            
+            html += `</div>`;
+
+            votingContainer.innerHTML = html;
+        }
+
+        // 장소 선택
+        async function selectPlace(placeId, placeName, choice) {
+            console.log(`🔍 선택된 장소: ${placeName} (ID: ${placeId}, Choice: ${choice})`);
+            
+            try {
+                // 백엔드에 투표 제출
+                const response = await fetch(`${API_BASE}/survey/vote`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        round_number: window.currentRound + 1,
+                        choice: choice, // 선택된 옵션 (option_a 또는 option_b)
+                        item_name: placeName,
+                        item_index: parseInt(placeId)
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ 투표 제출 성공:', result);
+                    
+                    // 투표 기록
+                    window.votes.push({
+                        round: window.currentRound + 1,
+                        choice: choice,
+                        item_name: placeName,
+                        item_index: parseInt(placeId)
+                    });
+
+                    // 다음 라운드로 진행
+                    window.currentRound++;
+
+                    // 다음 라운드 또는 투표 완료
+                    setTimeout(() => {
+                        startVotingRound();
+                    }, 500);
+                } else {
+                    console.error('❌ 투표 제출 실패:', response.status);
+                    const errorText = await response.text();
+                    console.error('❌ 오류 내용:', errorText);
+                    alert('투표 제출에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('❌ 투표 제출 오류:', error);
+                alert('투표 제출 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 투표 완료
+        function finishVoting() {
+            const votingContainer = document.getElementById('recommendationsContainer');
+            
+            let html = '<h3>✅ 투표 완료!</h3>';
+            html += '<p>선택하신 장소들:</p>';
+            html += '<ul>';
+            
+            window.votes.forEach((vote, index) => {
+                html += `<li>라운드 ${vote.round}: ${vote.item_name}</li>`;
+            });
+            
+            html += '</ul>';
+            html += '<div class="button-group">';
+            html += '<button onclick="proceedToMLRecommendations()" class="btn btn-primary">ML 추천 받기</button>';
+            html += '<button onclick="testDisplayRecommendations()" class="btn btn-secondary">테스트 추천</button>';
+            html += '</div>';
+
+            votingContainer.innerHTML = html;
+            
+            // 투표 완료 후 자동으로 ML 추천 받기
+            setTimeout(() => {
+                proceedToMLRecommendations();
+            }, 2000);
+        }
+
+        // 기본 투표 페이지 표시 (백엔드 실패 시)
+        function showDefaultVotingPage() {
+            const votingContainer = document.getElementById('recommendationsContainer');
+            
+            let html = '<h3>🎯 투표 페이지</h3>';
+            html += '<p>백엔드 연결에 실패했습니다. 기본 투표를 진행합니다.</p>';
+            html += '<div class="voting-info">';
+            html += '<p>설문조사 데이터를 기반으로 투표를 진행합니다.</p>';
+            html += '</div>';
+            html += '<button onclick="proceedToMLRecommendations()" class="btn btn-primary">ML 추천 받기</button>';
+            
+            votingContainer.innerHTML = html;
+        }
+
+        // ML 추천으로 진행
+        async function proceedToMLRecommendations() {
+            console.log('🔍 ML 추천으로 진행...');
+            console.log('🔍 proceedToMLRecommendations 함수 호출됨');
+            await getMLRecommendations();
+        }
+
+
+        // 투표 제출 (백엔드 API 사용)
+        async function submitVotes() {
+            console.log('🔍 투표 제출 시작...');
+            
+            try {
+                // 백엔드의 /vote 엔드포인트 사용
+                const voteData = {
+                    round_number: window.currentRound || 1,
+                    choice: "selected",
+                    item_name: "투표 완료",
+                    item_index: 1
+                };
+                
+                console.log('🔍 투표 데이터:', voteData);
+                console.log('🔍 API URL:', `${API_BASE}/survey/vote`);
+                
+                const response = await fetch(`${API_BASE}/survey/vote`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify(voteData)
+                });
+
+                console.log('🔍 투표 제출 응답 상태:', response.status);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ 투표 제출 성공:', result);
+                    
+                    // ML 기반 추천 받기
+                    await getMLRecommendations();
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ 투표 제출 실패:', response.status, errorText);
+                    // 실패해도 ML 추천으로 진행
+                    await getMLRecommendations();
+                }
+            } catch (error) {
+                console.error('❌ 투표 제출 오류:', error);
+                // 오류가 발생해도 ML 추천으로 진행
+                await getMLRecommendations();
+            }
+        }
+
+        // ML 기반 추천 받기
+        async function getMLRecommendations() {
+            console.log('🔍 ML 추천 요청 시작...');
+            console.log('🔍 API URL:', `${API_BASE}/survey/ml-recommendations`);
+            console.log('🔍 토큰:', accessToken ? '있음' : '없음');
+            
+            // 로딩 표시
+            const votingContainer = document.getElementById('recommendationsContainer');
+            votingContainer.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    ML 추천을 생성하는 중...
+                </div>
+            `;
+            
+            try {
+                const response = await fetch(`${API_BASE}/survey/ml-recommendations`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                console.log('🔍 응답 상태:', response.status);
+                console.log('🔍 응답 헤더:', response.headers);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ ML 추천 받기 성공:', result);
+                    console.log('🔍 전체 응답 구조:', JSON.stringify(result, null, 2));
+                    
+                    // ML 추천 응답 구조에 맞게 데이터 처리
+                    let recommendations = null;
+                    
+                    console.log('🔍 ML 추천 응답 구조:', result);
+                    console.log('🔍 ml_recommendations 키 존재:', 'ml_recommendations' in result);
+                    
+                    if (result.ml_recommendations) {
+                        console.log('🔍 ml_recommendations 구조:', result.ml_recommendations);
+                        console.log('🔍 ml_recommendations 타입:', typeof result.ml_recommendations);
+                        console.log('🔍 ml_recommendations 키들:', Object.keys(result.ml_recommendations));
+                        
+                        if (result.ml_recommendations.recommendations) {
+                            recommendations = result.ml_recommendations.recommendations;
+                            console.log('🔍 ml_recommendations.recommendations 사용');
+                            console.log('🔍 recommendations 길이:', recommendations.length);
+                        } else if (Array.isArray(result.ml_recommendations)) {
+                            recommendations = result.ml_recommendations;
+                            console.log('🔍 ml_recommendations 배열 사용');
+                        } else {
+                            console.log('🔍 ml_recommendations에서 recommendations 찾을 수 없음');
+                            console.log('🔍 ml_recommendations 내용:', result.ml_recommendations);
+                        }
+                    } else if (result.recommendations) {
+                        recommendations = result.recommendations;
+                        console.log('🔍 recommendations 사용');
+                    } else if (Array.isArray(result)) {
+                        recommendations = result;
+                        console.log('🔍 result 배열 사용');
+                    } else {
+                        console.log('🔍 추천 데이터를 찾을 수 없음');
+                        console.log('🔍 사용 가능한 키들:', Object.keys(result));
+                    }
+                    
+                    console.log('🔍 최종 추천 데이터:', recommendations);
+                    console.log('🔍 추천 데이터 타입:', typeof recommendations);
+                    console.log('🔍 추천 데이터 길이:', recommendations ? recommendations.length : 'undefined');
+                    
+                    if (recommendations && recommendations.length > 0) {
+                        console.log('✅ 추천 데이터 발견, 전역 변수에 저장');
+                        recommendedPlaces = recommendations;
+                        console.log('🔍 추천 장소 개수:', recommendedPlaces.length);
+                        console.log('🔍 전역 recommendedPlaces 설정 완료:', window.recommendedPlaces);
+                        
+                        // 4단계로 이동 (추천 장소 표시)
+                        console.log('🔍 4단계로 이동 시작');
+                        showStep(4);
+                        updateProgress(60);
+                        console.log('🔍 displayRecommendedPlaces 호출 시작');
+                        console.log('🔍 호출 전 recommendedPlaces:', window.recommendedPlaces);
+                        displayRecommendedPlaces();
+                        console.log('🔍 displayRecommendedPlaces 호출 완료');
+                    } else {
+                        console.log('⚠️ 추천 데이터가 없거나 비어있음');
+                        console.log('🔍 recommendations:', recommendations);
+                        console.log('🔍 recommendations 타입:', typeof recommendations);
+                        console.log('🔍 recommendations 길이:', recommendations ? recommendations.length : 'undefined');
+                        
+                        // 추천이 없는 경우
+                        votingContainer.innerHTML = `
+                            <div class="no-recommendations">
+                                <h3>😔 추천 장소가 없습니다</h3>
+                                <p>설문조사 결과를 바탕으로 추천할 장소를 찾지 못했습니다.</p>
+                                <button onclick="showDefaultRecommendations()" class="btn btn-primary">기본 추천 보기</button>
+                            </div>
+                        `;
+                    }
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ ML 추천 받기 실패:', response.status, errorText);
+                    // 실패 시 기본 추천 표시
+                    showDefaultRecommendations();
+                }
+            } catch (error) {
+                console.error('❌ ML 추천 받기 오류:', error);
+                // 오류가 발생해도 기본 추천 표시
+                showDefaultRecommendations();
+            }
+        }
+
+        // 기본 추천 표시
+        function showDefaultRecommendations() {
+            const votingContainer = document.getElementById('recommendationsContainer');
+            
+            // 기본 추천 장소들
+            recommendedPlaces = [
+                { id: 1, name: "해운대해수욕장", category: "해수욕장,해변", score: 0.95, reason: "부산의 대표 해수욕장" },
+                { id: 2, name: "감천문화마을", category: "테마거리", score: 0.88, reason: "한국의 마추픽추" },
+                { id: 3, name: "부산타워", category: "관광명소", score: 0.82, reason: "부산의 랜드마크" },
+                { id: 4, name: "자갈치시장", category: "전통시장", score: 0.78, reason: "신선한 수산물" },
+                { id: 5, name: "태종대", category: "자연명소", score: 0.75, reason: "아름다운 해안 절경" }
+            ];
+            
+            // 4단계로 이동
+            showStep(4);
+            updateProgress(60);
+            displayRecommendedPlaces();
+        }
+
+        // 테스트용 함수 - 추천 장소 강제 표시
+        function testDisplayRecommendations() {
+            console.log('🧪 테스트: 추천 장소 강제 표시');
+            const container = document.getElementById('recommendationsContainer');
+            
+            const testPlaces = [
+                { name: '테스트 장소 1', category: '관광지', score: 0.9, reason: '테스트 추천' },
+                { name: '테스트 장소 2', category: '관광지', score: 0.8, reason: '테스트 추천' },
+                { name: '테스트 장소 3', category: '관광지', score: 0.7, reason: '테스트 추천' }
+            ];
+            
+            let html = '<h3>🧪 테스트 추천 장소</h3><div class="recommendations-grid">';
+            
+            testPlaces.forEach((place, index) => {
+                html += `
+                    <div class="recommendation-card">
+                        <h4>${place.name}</h4>
+                        <p>카테고리: ${place.category}</p>
+                        <p>점수: ${place.score}</p>
+                        <p>이유: ${place.reason}</p>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+            console.log('🧪 테스트 HTML 설정 완료');
+        }
+
+        // 추천 장소 표시
+        function displayRecommendedPlaces() {
+            console.log('🔍 displayRecommendedPlaces 함수 시작');
+            const container = document.getElementById('recommendationsContainer');
+            console.log('🔍 container 요소:', container);
+            
+            console.log('🔍 displayRecommendedPlaces 호출됨');
+            console.log('🔍 recommendedPlaces:', recommendedPlaces);
+            console.log('🔍 recommendedPlaces 타입:', typeof recommendedPlaces);
+            console.log('🔍 recommendedPlaces 길이:', recommendedPlaces ? recommendedPlaces.length : 'undefined');
+            
+            if (!container) {
+                console.error('❌ recommendationsContainer를 찾을 수 없습니다!');
+                return;
+            }
+            
+            if (!recommendedPlaces || recommendedPlaces.length === 0) {
+                console.log('⚠️ 추천 장소가 없거나 비어있음');
+                container.innerHTML = `
+                    <div class="no-recommendations">
+                        <h3>😔 추천 장소가 없습니다</h3>
+                        <p>추천할 장소를 찾지 못했습니다.</p>
+                        <button onclick="showDefaultRecommendations()" class="btn btn-primary">기본 추천 보기</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            console.log('✅ 추천 장소 표시 시작');
+            console.log('🔍 첫 번째 추천 장소:', recommendedPlaces[0]);
+
+            let html = `
+                <div class="recommendations-header">
+                    <h3>🎯 추천 장소</h3>
+                    <p>설문조사 결과를 바탕으로 추천된 장소들입니다.</p>
+                </div>
+                <div class="recommendations-grid">
+            `;
+
+            recommendedPlaces.forEach((place, index) => {
+                console.log(`🔍 추천 장소 ${index + 1}:`, place);
+                
+                // ML 추천 데이터 구조에 맞게 필드 매핑
+                const placeName = place.item_name || place.name || place.title || `장소 ${index + 1}`;
+                const placeId = place.item_id || place.id || place.ml_index || (index + 1);
+                const category = place.category || place.category_group || '관광지';
+                const score = place.score || 0.5;
+                const reason = place.reason || place.description || '추천 장소';
+                
+                console.log(`🔍 매핑된 데이터 - 이름: ${placeName}, ID: ${placeId}, 카테고리: ${category}, 점수: ${score}`);
+                
+                html += `
+                    <div class="recommendation-card" onclick="selectRecommendedPlace('${placeId}', '${placeName}')">
+                        <div class="card-image">
+                            <img src="https://picsum.photos/300/200?random=${index + 1}" alt="${placeName}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2YjcyODAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn5GAPC90ZXh0Pjwvc3ZnPg=='">
+                            <div class="card-overlay">
+                                <span class="card-score">${(score * 100).toFixed(0)}%</span>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <h4>${placeName}</h4>
+                            <p class="category">${category}</p>
+                            <p class="reason">${reason}</p>
+                            <div class="card-actions">
+                                <button class="btn btn-primary btn-sm">선택하기</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                </div>
+                <div class="recommendations-footer">
+                    <button onclick="generateTravelCourse()" class="btn btn-success btn-lg">여행 코스 생성하기</button>
+                </div>
+            `;
+
+            // 테스트: 간단한 HTML 먼저 설정
+            container.innerHTML = '<div style="background: red; color: white; padding: 20px; margin: 10px;">테스트: 추천 장소가 여기에 표시됩니다!</div>';
+            
+            // 2초 후 실제 HTML 설정
+            setTimeout(() => {
+                container.innerHTML = html;
+                
+                // 강제로 보이도록 스타일 설정
+                container.style.display = 'block';
+                container.style.visibility = 'visible';
+                container.style.opacity = '1';
+                container.style.height = 'auto';
+                container.style.minHeight = '200px';
+            }, 2000);
+            
+            console.log('✅ HTML 설정 완료');
+            console.log('🔍 설정된 HTML 길이:', html.length);
+            console.log('🔍 container.innerHTML 길이:', container.innerHTML.length);
+            console.log('🔍 container 스타일:', {
+                display: container.style.display,
+                visibility: container.style.visibility,
+                opacity: container.style.opacity,
+                height: container.style.height
+            });
+            
+            // 생성된 HTML의 첫 500자 출력
+            console.log('🔍 생성된 HTML (첫 500자):', html.substring(0, 500));
+            
+            // 컨테이너의 실제 DOM 구조 확인
+            console.log('🔍 container 실제 내용:', container.innerHTML.substring(0, 500));
+            
+            // 컨테이너의 부모 요소 확인
+            console.log('🔍 container 부모 요소:', container.parentElement);
+            console.log('🔍 container 부모 스타일:', {
+                display: container.parentElement?.style.display,
+                visibility: container.parentElement?.style.visibility
+            });
+        }
+
+        // 시작점 옵션 업데이트
+        function updateStartingPointOptions() {
+            const select = document.getElementById('startingPoint');
+            select.innerHTML = '<option value="">자동 선택</option>';
+            
+            selectedPlaces.forEach(place => {
+                const option = document.createElement('option');
+                option.value = place.place_id;
+                option.textContent = place.name;
+                select.appendChild(option);
+            });
+        }
+
+        // 코스 생성
+        async function generateCourse() {
+            if (selectedPlaces.length === 0) {
+                alert('최소 1개 이상의 장소를 선택해주세요.');
+                return;
+            }
+
+            const courseData = {
+                selected_places: selectedPlaces.map(p => p.place_id),
+                travelDuration: parseInt(document.getElementById('travelDuration').value),
+                travelStartDate: document.getElementById('travelStartDate').value,
+                starting_point: document.getElementById('startingPoint').value || null
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify(courseData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    currentCourse = result;
+                    showStep(5);
+                    updateProgress(80);
+                    displayCourseOnMap(result);
+                    displayCourseDetails(result);
+                } else {
+                    throw new Error('코스 생성 실패');
+                }
+            } catch (error) {
+                console.error('코스 생성 오류:', error);
+                alert('코스 생성에 실패했습니다.');
+            }
+        }
+
+        // 지도에 코스 표시
+        function displayCourseOnMap(course) {
+            if (!map) return;
+
+            // 기존 마커와 선 제거
+            markers.forEach(marker => marker.setMap(null));
+            polylines.forEach(polyline => polyline.setMap(null));
+            markers = [];
+            polylines = [];
+
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+            let bounds = new google.maps.LatLngBounds();
+
+            course.itinerary.forEach((day, dayIndex) => {
+                const dayColor = colors[dayIndex % colors.length];
+                const dayPlaces = [];
+
+                day.places.forEach(place => {
+                    // 장소 좌표 가져오기 (실제로는 API에서 좌표 정보를 받아야 함)
+                    const lat = 35.1796 + (Math.random() - 0.5) * 0.1; // 임시 좌표
+                    const lng = 129.0756 + (Math.random() - 0.5) * 0.1;
+                    
+                    const position = { lat, lng };
+                    dayPlaces.push(position);
+                    bounds.extend(position);
+
+                    const marker = new google.maps.Marker({
+                        position: position,
+                        map: map,
+                        title: place.name,
+                        label: `${dayIndex + 1}-${dayPlaces.length}`,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            fillColor: dayColor,
+                            fillOpacity: 1,
+                            strokeColor: '#fff',
+                            strokeWeight: 2,
+                            scale: 8
+                        }
+                    });
+
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: `
+                            <div>
+                                <h4>${place.name}</h4>
+                                <p>${day.date} - ${place.time}</p>
+                            </div>
+                        `
+                    });
+
+                    marker.addListener('click', () => {
+                        infoWindow.open(map, marker);
+                    });
+
+                    markers.push(marker);
+                });
+
+                // 날짜별 경로 그리기
+                if (dayPlaces.length > 1) {
+                    const polyline = new google.maps.Polyline({
+                        path: dayPlaces,
+                        geodesic: true,
+                        strokeColor: dayColor,
+                        strokeOpacity: 0.8,
+                        strokeWeight: 4
+                    });
+                    polyline.setMap(map);
+                    polylines.push(polyline);
+                }
+            });
+
+            map.fitBounds(bounds);
+        }
+
+        // 코스 상세 정보 표시
+        function displayCourseDetails(course) {
+            const container = document.getElementById('courseDetails');
+            container.innerHTML = '';
+
+            course.itinerary.forEach((day, index) => {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'course-day';
+                dayDiv.innerHTML = `
+                    <div class="day-header">${day.dayName} - ${day.date}</div>
+                    ${day.places.map(place => `
+                        <div class="place-item">
+                            <strong>${place.name}</strong>
+                            <span style="float: right; color: #666;">${place.time}</span>
+                        </div>
+                    `).join('')}
+                `;
+                container.appendChild(dayDiv);
+            });
+
+            // 기준 장소 선택 옵션 업데이트
+            updateBasePlaceOptions(course);
+        }
+
+        // 기준 장소 옵션 업데이트
+        function updateBasePlaceOptions(course) {
+            const select = document.getElementById('basePlaceSelect');
+            select.innerHTML = '<option value="">기준 장소를 선택하세요</option>';
+            
+            course.itinerary.forEach(day => {
+                day.places.forEach(place => {
+                    const option = document.createElement('option');
+                    option.value = place.placeId || place.id;
+                    option.textContent = `${day.dayName} - ${place.name}`;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        // 근처 장소 검색
+        async function searchNearbyPlaces() {
+            const basePlaceId = document.getElementById('basePlaceSelect').value;
+            const radius = document.getElementById('searchRadius').value;
+            
+            if (!basePlaceId) {
+                alert('기준 장소를 선택해주세요.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/nearby/all/${basePlaceId}?max_distance=${radius}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displaySearchResults(data, '근처 장소');
+                }
+            } catch (error) {
+                console.error('근처 장소 검색 오류:', error);
+                alert('근처 장소 검색에 실패했습니다.');
+            }
+        }
+
+        // 장소 검색
+        async function performSearch() {
+            const query = document.getElementById('searchQuery').value;
+            
+            if (!query.trim()) {
+                alert('검색어를 입력해주세요.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/search?query=${encodeURIComponent(query)}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displaySearchResults(data, '검색 결과');
+                }
+            } catch (error) {
+                console.error('장소 검색 오류:', error);
+                alert('장소 검색에 실패했습니다.');
+            }
+        }
+
+        // 검색 결과 표시
+        function displaySearchResults(results, title) {
+            const container = document.getElementById('searchResults');
+            container.innerHTML = `<h4>${title}</h4>`;
+            
+            if (Array.isArray(results)) {
+                results.forEach(place => {
+                    const placeCard = document.createElement('div');
+                    placeCard.className = 'place-card';
+                    placeCard.innerHTML = `
+                        <div class="place-name">${place.name || place.place_name}</div>
+                        <div class="place-category">${place.category || place.type || '관광지'}</div>
+                        ${place.score ? `<div class="place-score">추천점수: ${(place.score * 100).toFixed(1)}%</div>` : ''}
+                    `;
+                    container.appendChild(placeCard);
+                });
+            } else if (results.tourism || results.cafes || results.restaurants) {
+                // 근처 장소 검색 결과 처리
+                if (results.tourism) {
+                    results.tourism.forEach(place => {
+                        const placeCard = document.createElement('div');
+                        placeCard.className = 'place-card';
+                        placeCard.innerHTML = `
+                            <div class="place-name">${place.name}</div>
+                            <div class="place-category">관광지</div>
+                        `;
+                        container.appendChild(placeCard);
+                    });
+                }
+            }
+        }
+
+        // 현재 코스 저장
+        async function saveCurrentCourse() {
+            if (!currentCourse) {
+                alert('저장할 코스가 없습니다.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/save`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify(currentCourse)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('코스가 저장되었습니다.');
+                    showStep(7);
+                    updateProgress(100);
+                }
+            } catch (error) {
+                console.error('코스 저장 오류:', error);
+                alert('코스 저장에 실패했습니다.');
+            }
+        }
+
+        // 저장된 코스 불러오기
+        async function loadSavedCourses() {
+            try {
+                const response = await fetch(`${API_BASE}/user/${currentUser.user_id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displaySavedCourses(data.courses);
+                }
+            } catch (error) {
+                console.error('저장된 코스 불러오기 오류:', error);
+                alert('저장된 코스 불러오기에 실패했습니다.');
+            }
+        }
+
+        // 저장된 코스 표시
+        function displaySavedCourses(courses) {
+            const container = document.getElementById('savedCourses');
+            container.innerHTML = '';
+
+            courses.forEach(course => {
+                const courseDiv = document.createElement('div');
+                courseDiv.className = 'course-day';
+                courseDiv.innerHTML = `
+                    <div class="day-header">${course.course_name}</div>
+                    <div>생성일: ${new Date(course.created_at).toLocaleDateString()}</div>
+                    <button class="btn" onclick="loadCourse('${course.course_id}')">불러오기</button>
+                `;
+                container.appendChild(courseDiv);
+            });
+        }
+
+        // 코스 불러오기
+        async function loadCourse(courseId) {
+            try {
+                const response = await fetch(`${API_BASE}/course/${courseId}/frontend`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const course = await response.json();
+                    currentCourse = course;
+                    displayCourseOnMap(course);
+                    displayCourseDetails(course);
+                    alert('코스를 불러왔습니다.');
+                }
+            } catch (error) {
+                console.error('코스 불러오기 오류:', error);
+                alert('코스 불러오기에 실패했습니다.');
+            }
+        }
+
+        // 단계 표시
+        function showStep(stepNumber) {
+            hideAllSteps();
+            const stepElement = document.getElementById(`step${stepNumber}`);
+            stepElement.classList.remove('hidden');
+            
+            // step4의 경우 추가 스타일 설정
+            if (stepNumber === 4) {
+                stepElement.style.display = 'block';
+                stepElement.style.visibility = 'visible';
+                console.log('🔍 step4 표시 설정 완료');
+            }
+            
+            // 설문조사 단계(2단계) 진입 시 기존 데이터 확인
+            if (stepNumber === 2) {
+                checkSurveyOnEntry();
+            }
+        }
+
+        // 모든 단계 숨기기
+        function hideAllSteps() {
+            for (let i = 1; i <= 7; i++) {
+                document.getElementById(`step${i}`).classList.add('hidden');
+            }
+        }
+
+        // 진행률 업데이트
+        function updateProgress(percentage) {
+            document.getElementById('progressFill').style.width = percentage + '%';
+            const progressTexts = [
+                '테스트 시작',
+                '로그인 완료',
+                '설문조사 완료',
+                '장소 추천 완료',
+                '코스 생성 완료',
+                '지도 표시 완료',
+                '근처 장소 검색 완료',
+                '모든 테스트 완료'
+            ];
+            const textIndex = Math.floor(percentage / 20);
+            document.getElementById('progressText').textContent = progressTexts[textIndex] || '테스트 진행 중';
+        }
+
+        // 쿠키 가져오기
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        // Google Maps API 키 로드
+        async function loadGoogleMapsApiKey() {
+            try {
+                const response = await fetch(`${API_BASE}/config/maps-api-key`);
+                if (response.ok) {
+                    const data = await response.json();
+                    googleMapsApiKey = data.api_key;
+                    loadGoogleMapsScript();
+                } else {
+                    console.error('Google Maps API 키를 가져올 수 없습니다.');
+                }
+            } catch (error) {
+                console.error('Google Maps API 키 로드 오류:', error);
+            }
+        }
+
+        // Google Maps 스크립트 동적 로드
+        function loadGoogleMapsScript() {
+            if (googleMapsApiKey) {
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&callback=initMap`;
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            }
+        }
+
+        // Google Maps 초기화
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 35.1796, lng: 129.0756 }, // 부산 중심
+                zoom: 12
+            });
+        }
+    </script>
+</body>
+</html>

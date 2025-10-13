@@ -1206,7 +1206,7 @@ async def submit_complete_survey(survey_data: CompleteSurveyData):
     전체 설문조사 데이터를 한 번에 처리 (인증 불필요)
     프론트엔드에서 모든 설문 데이터를 한 번에 전송할 때 사용
     """
-    global user_selections
+    global user_selections, current_user_uuid
     
     # 전역 user_selections 업데이트
     user_selections.update({
@@ -1218,6 +1218,35 @@ async def submit_complete_survey(survey_data: CompleteSurveyData):
     })
     
     print(f"✅ 설문조사 완료: {user_selections}")
+    
+    # DB에 설문 결과 저장
+    try:
+        if user_interaction_col is not None:
+            # 임시 user_id 생성 (로그인하지 않은 경우)
+            user_id = current_user_uuid if current_user_uuid else str(uuid.uuid4())
+            
+            # 설문 결과 문서 생성
+            survey_doc = {
+                "user_id": user_id,
+                "type": "survey_submission",
+                "survey_data": {
+                    "activity": survey_data.activity,
+                    "activity_level": survey_data.activity_level,
+                    "time": survey_data.time,
+                    "season": survey_data.season,
+                    "preference": survey_data.preference
+                },
+                "timestamp": datetime.now()
+            }
+            
+            # MongoDB에 저장
+            result = user_interaction_col.insert_one(survey_doc)
+            print(f"✅ 설문 결과 DB 저장 완료: {result.inserted_id}")
+            print(f"📊 저장된 설문 데이터: {survey_doc}")
+        else:
+            print(f"⚠️ user_interaction 컬렉션을 사용할 수 없어 DB 저장 생략")
+    except Exception as e:
+        print(f"❌ 설문 결과 DB 저장 실패: {e}")
     
     return {
         "status": "success",
@@ -2459,7 +2488,7 @@ def extract_user_preferences_from_votes(user_vote_schemas):
 
 
 def save_base_schema_to_user_interaction(user_id: str, base_schemas: List, positive_items: List) -> bool:
-    """base schema를 user_interaction 컬렉션에 저장하는 함수"""
+    """base schema를 user_interaction 컬렉션에 저장하는 함수 (효율적인 구조로)"""
     try:
         print(f"🔍 save_base_schema_to_user_interaction 호출됨")
         print(f"📊 user_id: {user_id}")
@@ -2470,16 +2499,46 @@ def save_base_schema_to_user_interaction(user_id: str, base_schemas: List, posit
             print("❌ user_interaction 컬렉션을 사용할 수 없습니다.")
             return False
 
-        # BASE_SCHEMA 배열을 단순한 문서 형태로 저장
+        if not base_schemas or len(base_schemas) == 0:
+            print("❌ base_schemas가 비어있습니다.")
+            return False
+
+        # 첫 번째 스키마에서 공통 설문 정보 추출
+        first_schema = base_schemas[0]
+        
+        # 투표 결과만 추출 (각 라운드의 pos/neg 아이템)
+        votes = []
+        for i, schema in enumerate(base_schemas):
+            if len(schema) >= 8:
+                votes.append({
+                    "round": i + 1,
+                    "pos_item_index": int(schema[6]),  # pos_item
+                    "neg_item_index": int(schema[7])   # neg_item
+                })
+        
+        # 효율적인 문서 구조로 저장
         interaction_doc = {
-            "BASE_SCHEMA": base_schemas  # 5개의 개별 BASE_SCHEMA 스키마 배열
+            "user_id": user_id,
+            "type": "vote_submission",
+            "survey_data": {
+                "category_group": str(first_schema[1]),
+                "activity_level_idx": int(first_schema[2]),
+                "time_period": int(first_schema[3]),
+                "season": int(first_schema[4]),
+                "preference": int(first_schema[5])
+            },
+            "votes": votes,  # 5개 라운드 투표 결과
+            "timestamp": datetime.now()
         }
 
-        print(f"📋 저장할 BASE_SCHEMA 배열: {base_schemas}")
+        print(f"📋 저장할 문서 구조:")
+        print(f"  - user_id: {user_id}")
+        print(f"  - survey_data: {interaction_doc['survey_data']}")
+        print(f"  - votes: {len(votes)}개 라운드")
 
         # MongoDB에 저장
         result = user_interaction_col.insert_one(interaction_doc)
-        print(f"✅ user_interaction 컬렉션에 BASE_SCHEMA 저장 완료: {result.inserted_id}")
+        print(f"✅ user_interaction 컬렉션에 투표 결과 저장 완료: {result.inserted_id}")
         return True
 
     except Exception as db_error:
