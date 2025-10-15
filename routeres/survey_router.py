@@ -1133,9 +1133,9 @@ def find_recommended_items(user_schema: List) -> Dict:
         return {"error": f"추천 생성 중 오류가 발생했습니다: {str(e)}"}
 
 
-@router.get("", response_class=HTMLResponse)
-async def read_root(request: Request):
-    """메인 페이지 - 로그인 상태 확인 후 설문조사 진행"""
+@router.get("")
+async def get_survey_info(request: Request):
+    """설문조사 정보 조회 - 로그인 상태 확인"""
     # 로그인 상태 확인
     print(f"🔍 설문조사 페이지 접근 - 쿠키 확인 중...")
     print(f"🔍 요청 쿠키: {request.cookies}")
@@ -1143,9 +1143,13 @@ async def read_root(request: Request):
     token = request.cookies.get("access_token")
 
     if not token:
-        # 로그인되지 않은 경우 즉시 Google 로그인 페이지로 리다이렉트
+        # 로그인되지 않은 경우
         print("🔐 로그인되지 않음")
-        return # (url="http://localhost:8000/api/v1/auth/google/login", status_code=302)
+        return {
+            "logged_in": False,
+            "message": "로그인이 필요합니다",
+            "redirect_url": "/api/v1/auth/google/login"
+        }
 
     try:
         # 토큰 검증
@@ -1158,26 +1162,35 @@ async def read_root(request: Request):
         print(f"🔍 토큰 디코딩 성공 - user_id: {user_id}")
 
         if not user_id:
-            # 유효하지 않은 토큰인 경우 즉시 Google 로그인 페이지로 리다이렉트
+            # 유효하지 않은 토큰인 경우
             print("🔐 유효하지 않은 토큰")
-            return # RedirectResponse(url="http://localhost:8000/api/v1/auth/google/login", status_code=302)
+            return {
+                "logged_in": False,
+                "message": "유효하지 않은 토큰입니다",
+                "redirect_url": "/api/v1/auth/google/login"
+            }
 
-        # 로그인된 사용자 - 설문조사 진행
+        # 로그인된 사용자 - 설문조사 정보 반환
         print(f"✅ 로그인된 사용자: {user_id} - 설문조사 시작")
         global current_user_uuid
         current_user_uuid = user_id
 
-        return templates.TemplateResponse("index.html", {
-            "request": request,
+        return {
+            "logged_in": True,
+            "user_id": user_id,
             "step": "activity",
             "selections": user_selections,
-            "user_id": user_id
-        })
+            "message": "설문조사를 시작할 수 있습니다"
+        }
 
     except jwt.JWTError as e:
-        # 토큰 검증 실패 - 즉시 Google 로그인 페이지로 리다이렉트
+        # 토큰 검증 실패
         print(f"🔐 토큰 검증 실패: {e}")
-        return # RedirectResponse(url="http://localhost:8000/api/v1/auth/google/login", status_code=302)
+        return {
+            "logged_in": False,
+            "message": f"토큰 검증 실패: {str(e)}",
+            "redirect_url": "/api/v1/auth/google/login"
+        }
 
 
 @router.post("/select")
@@ -1995,13 +2008,13 @@ def get_developer_recommendations(user_category, tourism_data, selected_items, c
     return selected
 
 
-async def recommend_with_vote_context(model, user_vote_schemas, data, tourism_data, device, top_k=10):
-    """vote_schema 컨텍스트를 기반으로 한 추천 (3가지 카테고리로 분류) - 10개 추천"""
+async def recommend_with_vote_context(model, user_vote_schemas, data, tourism_data, device, top_k=20):
+    """vote_schema 컨텍스트를 기반으로 한 추천 (3가지 카테고리로 분류) - 20개 추천 (두 세트 반복)"""
     # 매번 다른 결과를 위해 현재 시간을 시드로 사용
     import time
     random.seed(int(time.time() * 1000) % 1000000)
 
-    print(f"🎯 Vote schema 기반 컨텍스트 추천 시작 (10개 추천, 3가지 카테고리)")
+    print(f"🎯 Vote schema 기반 컨텍스트 추천 시작 (20개 추천, 두 세트 반복)")
     
     # DB에서 Tourism 데이터 로드
     try:
@@ -2157,6 +2170,52 @@ async def recommend_with_vote_context(model, user_vote_schemas, data, tourism_da
                 'rank': i + 1
             })
 
+        # 🎯 두 번째 세트: 10개 더 추천 (11-20위)
+        print(f"🔄 두 번째 세트 추천 시작 (11-20위)")
+        
+        # 이미 선택된 모든 아이템들 업데이트 (첫 번째 세트 포함)
+        all_selected_items = set(selected_items) | set(top_3_items) | set(ml_high_items) | set(developer_items)
+        
+        # 1. 두 번째 세트 상위 3개 추천 (8-10위)
+        top_3_items_2nd = get_survey_matching_recommendations(user_context, tourism_data, list(all_selected_items), valid_indices,
+                                                             predictions_np, 3)
+        print(f"🏆 두 번째 세트 설문조사 조건 맞는 상위 3개: {top_3_items_2nd}")
+        
+        # 2. 두 번째 세트 ML 점수 높은 4개 (11-14위)
+        # valid_indices에서 이미 선택된 것들 제외하고 다음 4개 선택
+        remaining_valid_indices = [idx for idx in valid_indices if idx not in all_selected_items]
+        ml_high_items_2nd = remaining_valid_indices[:4] if len(remaining_valid_indices) >= 4 else remaining_valid_indices
+        print(f"🤖 두 번째 세트 ML 높은 점수 4개: {ml_high_items_2nd}")
+        
+        # 3. 두 번째 세트 개발자 추천 3개
+        all_selected_items_2nd = all_selected_items | set(top_3_items_2nd) | set(ml_high_items_2nd)
+        developer_items_2nd = get_developer_recommendations(user_context['category_group'], tourism_data, all_selected_items_2nd, 3)
+        print(f"👨‍💻 두 번째 세트 개발자 추천 3개: {developer_items_2nd}")
+
+        # 두 번째 세트 상위 3개 추가 (11-13위)
+        for i, item_idx in enumerate(top_3_items_2nd):
+            final_recommendations.append({
+                'item_idx': int(item_idx),
+                'category': 'top_3',
+                'rank': i + 1
+            })
+
+        # 두 번째 세트 ML 높은 점수 4개 추가 (14-17위)
+        for i, item_idx in enumerate(ml_high_items_2nd):
+            final_recommendations.append({
+                'item_idx': int(item_idx),
+                'category': 'ml_high',
+                'rank': i + 1
+            })
+
+        # 두 번째 세트 개발자 추천 3개 추가 (18-20위)
+        for i, item_idx in enumerate(developer_items_2nd):
+            final_recommendations.append({
+                'item_idx': int(item_idx),
+                'category': 'developer',
+                'rank': i + 1
+            })
+
         # 추천 결과 생성
         recommendations = []
         for i, rec in enumerate(final_recommendations):
@@ -2259,7 +2318,7 @@ async def recommend_with_vote_context(model, user_vote_schemas, data, tourism_da
     return recommendations
 
 
-async def get_ml_recommendations_for_user(user_vote_schemas, top_k=10):
+async def get_ml_recommendations_for_user(user_vote_schemas, top_k=20):
     """ML 모델을 사용한 추론 전용 추천 시스템 - 10개 추천"""
     global loaded_ncf_model, model_data
 
@@ -2316,7 +2375,7 @@ async def get_ml_recommendations_for_user(user_vote_schemas, top_k=10):
         return get_rule_based_fallback_recommendations(user_vote_schemas, top_k)
 
 
-def get_rule_based_fallback_recommendations(user_vote_schemas, top_k=10):
+def get_rule_based_fallback_recommendations(user_vote_schemas, top_k=20):
     """룰 기반 fallback 추천 시스템 - 10개 추천"""
     print("🔄 룰 기반 fallback 추천 시작 (10개 추천)")
 

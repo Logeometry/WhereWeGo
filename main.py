@@ -10,7 +10,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 # 라우터 imports
-from settings import Settings
 from routeres.category_router import router as category_router
 from routeres.auth_router import router as auth_router
 from routeres.google_login_router import router as google_login_router
@@ -39,15 +38,8 @@ import asyncio
 
 load_dotenv()
 
-# 환경변수 기본값 설정
-os.environ.setdefault("SECRET_KEY", "y314adfas...23414afdafasf524515411")
-os.environ.setdefault("FRONTEND_URL", "http://localhost:3000")
-os.environ.setdefault("MONGO_ATLAS_URI", "mongodb://localhost:27017")
-os.environ.setdefault("ENVIRONMENT", "dev")
-
 SECRET_KEY = os.getenv("SECRET_KEY")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
-settings = Settings()
 
 
 @asynccontextmanager
