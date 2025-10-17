@@ -13,6 +13,8 @@ class ItineraryRequest(BaseModel):
     travelDuration: Optional[int] = Field(None, description="여행 기간 (일) - 미입력 시 자동 계산")
     starting_point: Optional[str] = Field(None, description="부산 내 여행 시작점 장소 ID (선택사항)")
     transport_mode: Optional[str] = Field("DRIVE", description="교통수단 (DRIVE, TRANSIT, WALK, BICYCLE, TWO_WHEELER)")
+    is_public: Optional[bool] = Field(False, description="공개 여부 (True: 공개, False: 비공개)")
+    description: Optional[str] = Field(None, description="코스 설명 (선택사항)")
     # 아래 필드들은 프롬프트에 활용될 수 있으므로 포함합니다.
     preferences: Optional[Dict[str, bool]] = None
     surveyAttractions: Optional[List[str]] = None
@@ -444,6 +446,8 @@ class CourseSaveRequest(BaseModel):
     user_id: str
     course_name: str
     itinerary: CourseItinerary
+    is_public: bool = Field(False, description="공개 여부 (True: 공개, False: 비공개)")
+    description: Optional[str] = Field(None, description="코스 설명 (선택사항)")
 
 # ML 추천 관련 모델
 class MLRecommendationRequest(BaseModel):

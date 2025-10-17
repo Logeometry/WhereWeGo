@@ -212,7 +212,7 @@ class SmartCourseGenerator:
     ) -> Dict[str, Any]:
         """
         🎯 DB 저장 형태로 바로 여행 코스를 생성합니다.
-        data_converter가 바로 처리할 수 있는 형태로 직접 생성합니다.
+        지역 기반 최적화 알고리즘을 사용합니다.
         """
         if not places_data:
             raise ValueError("장소 목록이 비어있습니다.")
@@ -239,7 +239,7 @@ class SmartCourseGenerator:
         # 3. 시작점 찾기
         start_idx = self._find_start_place_index(valid_places, start_place_id)
         
-        # 4. DB 형태로 바로 일별 일정 생성
+        # 4. ML 추천점수 기반 최적화 일정 생성
         return self._generate_db_format_schedules(
             valid_places,
             distance_dict,
@@ -289,7 +289,6 @@ class SmartCourseGenerator:
         """일별 최적화된 일정을 생성합니다."""
         itinerary = []
         place_ids = [str(place['_id']) for place in places]
-        unvisited = set(range(len(places))) - {start_idx}
         
         # 각 장소의 ML 모델 추천 점수 가져오기
         place_scores = {i: self._get_place_score(places[i]) for i in range(len(places))}
@@ -297,6 +296,9 @@ class SmartCourseGenerator:
         # 시작 날짜 계산 (오늘 날짜 사용)
         from datetime import datetime, timedelta
         start_date = datetime.now()
+        
+        # 방문하지 않은 장소들 (시작점 제외)
+        unvisited = set(range(len(places))) - {start_idx}
         
         for day in range(travel_duration):
             current_date = start_date + timedelta(days=day)
@@ -318,11 +320,18 @@ class SmartCourseGenerator:
                 place_data = places[current_idx]
                 day_schedule["places"].append({
                     "place_id": str(place_data['_id']),
+                    "_id": str(place_data['_id']),
                     "name": place_data.get('name', 'Unknown Place'),
+                    "description": place_data.get('description', ''),
+                    "address": place_data.get('address', ''),
+                    "location": place_data.get('location', {"type": "Point", "coordinates": [0, 0]}),
+                    "rating": place_data.get('rating', 0),
+                    "estimated_duration": 120,  # 기본 체류시간 2시간
                     "time": "09:00"
                 })
                 places_visited_today += 1
                 daily_time_budget -= 120  # 첫 장소 체류 시간 차감
+                unvisited.discard(current_idx)  # 방문한 장소를 unvisited에서 제거
             
             # 나머지 장소 선택
             while unvisited and places_visited_today < max_places_per_day and daily_time_budget > 60:
@@ -374,7 +383,13 @@ class SmartCourseGenerator:
                 place_data = places[best_next_idx]
                 day_schedule["places"].append({
                     "place_id": str(place_data['_id']),
+                    "_id": str(place_data['_id']),
                     "name": place_data.get('name', 'Unknown Place'),
+                    "description": place_data.get('description', ''),
+                    "address": place_data.get('address', ''),
+                    "location": place_data.get('location', {"type": "Point", "coordinates": [0, 0]}),
+                    "rating": place_data.get('rating', 0),
+                    "estimated_duration": 120,  # 기본 체류시간 2시간
                     "time": arrival_time
                 })
                 
@@ -395,7 +410,9 @@ class SmartCourseGenerator:
             "course_name": "AI 추천 여행",
             "itinerary": {
                 "days": itinerary
-            }
+            },
+            "is_public": False,  # 기본적으로 비공개로 설정
+            "description": getattr(request, 'description', "")  # 코스 설명
         }
     
     async def generate_course_for_db(
@@ -469,6 +486,7 @@ class SmartCourseGenerator:
                 })
                 places_visited_today += 1
                 daily_time_budget -= 120  # 첫 장소 체류시간 차감
+                unvisited.discard(current_idx)  # 방문한 장소를 unvisited에서 제거
             
             # 나머지 장소 선택
             while unvisited and places_visited_today < max_places_per_day and daily_time_budget > 60:
@@ -534,8 +552,293 @@ class SmartCourseGenerator:
             "course_name": f"ML 추천 부산 여행 {travel_duration}일",
             "itinerary": {
                 "days": course_days
-            }
+            },
+            "is_public": False,  # 기본적으로 비공개로 설정
+            "description": getattr(request, 'description', "")  # 코스 설명
         }
+    
+    def _cluster_places_by_region(self, places_data: List[Dict]) -> Dict[str, List[Dict]]:
+        """
+        장소들을 지역별로 클러스터링합니다.
+        기존 region 필드를 활용하여 그룹화합니다.
+        """
+        region_clusters = {}
+        
+        for place in places_data:
+            region = place.get('region', '기타')
+            if region not in region_clusters:
+                region_clusters[region] = []
+            region_clusters[region].append(place)
+        
+        print(f"🗺️ 지역별 클러스터링 완료: {len(region_clusters)}개 지역")
+        for region, places in region_clusters.items():
+            print(f"   📍 {region}: {len(places)}개 장소")
+        
+        return region_clusters
+    
+    def _calculate_region_distance(self, place1: Dict, place2: Dict) -> float:
+        """두 장소 간의 거리를 계산합니다."""
+        coords1 = self._extract_coordinates(place1)
+        coords2 = self._extract_coordinates(place2)
+        
+        if not coords1 or not coords2:
+            return float('inf')
+        
+        # 간단한 유클리드 거리 계산 (대략적인 거리)
+        lat1, lon1 = coords1
+        lat2, lon2 = coords2
+        
+        # 위도 1도 ≈ 111km, 경도 1도 ≈ 111km * cos(위도)
+        lat_diff = (lat2 - lat1) * 111
+        lon_diff = (lon2 - lon1) * 111 * abs(lat1) / 90  # 부산 위도 고려
+        
+        return (lat_diff ** 2 + lon_diff ** 2) ** 0.5
+    
+    def _is_same_region(self, place1: Dict, place2: Dict) -> bool:
+        """두 장소가 같은 지역인지 확인합니다."""
+        return place1.get('region', '기타') == place2.get('region', '기타')
+    
+    def _generate_region_optimized_schedule(
+        self,
+        places: List[Dict],
+        distance_dict: Dict[str, Dict[str, Dict]],
+        travel_duration: int,
+        request: ItineraryRequest
+    ) -> Dict[str, Any]:
+        """
+        지역 기반 최적화된 일정을 생성합니다.
+        - 하루 2-3개 장소
+        - 같은 지역 우선 배치
+        - 지역 간 이동거리가 길면 다음날로 미루기
+        """
+        # 1. 지역별 클러스터링
+        region_clusters = self._cluster_places_by_region(places)
+        
+        # 2. 각 지역 내에서 TSP로 최적 경로 생성
+        region_routes = {}
+        for region, region_places in region_clusters.items():
+            if len(region_places) <= 1:
+                region_routes[region] = region_places
+            else:
+                # 지역 내 TSP (간단한 Nearest Neighbor)
+                region_routes[region] = self._solve_tsp_for_region(region_places, distance_dict)
+        
+        # 3. 일별 일정 생성
+        itinerary = []
+        start_date = datetime.now()
+        place_ids = [str(place['_id']) for place in places]
+        place_scores = {i: self._get_place_score(places[i]) for i in range(len(places))}
+        
+        # 모든 장소를 방문할 때까지 반복
+        all_places = []
+        for region_route in region_routes.values():
+            all_places.extend(region_route)
+        
+        visited_places = set()
+        
+        for day in range(travel_duration):
+            current_date = start_date + timedelta(days=day)
+            day_schedule = {
+                "day": day + 1,
+                "date": current_date.strftime("%Y-%m-%d"),
+                "places": [],
+                "total_distance": 0,
+                "total_duration": 0
+            }
+            
+            places_visited_today = 0
+            max_places_per_day = 3
+            min_places_per_day = 2
+            daily_time_budget = 8 * 60  # 8시간 (분 단위)
+            current_region = None
+            
+            # 하루 일정 생성
+            while places_visited_today < max_places_per_day and daily_time_budget > 60:
+                best_next_place = self._select_next_place_region_optimized(
+                    all_places,
+                    visited_places,
+                    current_region,
+                    place_ids,
+                    distance_dict,
+                    place_scores,
+                    daily_time_budget,
+                    places_visited_today == 0
+                )
+                
+                if best_next_place is None:
+                    break
+                
+                # 지역 간 이동거리 체크
+                if current_region is not None and not self._is_same_region(
+                    best_next_place, 
+                    all_places[list(visited_places)[-1]] if visited_places else best_next_place
+                ):
+                    # 다른 지역으로 이동하는 경우 거리 체크
+                    if places_visited_today >= min_places_per_day:
+                        # 이미 최소 장소 수를 채웠으면 다음날로 미루기
+                        print(f"   📍 지역 변경으로 인한 다음날 연기: {best_next_place.get('name')}")
+                        break
+                
+                # 시간 예산 확인
+                travel_time = 0
+                if visited_places:
+                    last_place_idx = list(visited_places)[-1]
+                    travel_info = distance_dict[place_ids[last_place_idx]][str(best_next_place['_id'])]
+                    travel_time = travel_info.get("duration_minutes", 30)
+                
+                required_time = travel_time + 120  # 이동시간 + 체류시간
+                if required_time > daily_time_budget:
+                    break
+                
+                # 도착 시간 계산
+                base_hour = 9 + (places_visited_today * 3)
+                arrival_time = f"{base_hour:02d}:00"
+                
+                # 일정에 추가 (상세 정보 포함)
+                day_schedule["places"].append({
+                    "place_id": str(best_next_place['_id']),
+                    "_id": str(best_next_place['_id']),
+                    "name": best_next_place.get('name', 'Unknown Place'),
+                    "description": best_next_place.get('description', ''),
+                    "address": best_next_place.get('address', ''),
+                    "location": best_next_place.get('location', {"type": "Point", "coordinates": [0, 0]}),
+                    "rating": best_next_place.get('rating', 0),
+                    "estimated_duration": 120,  # 기본 체류시간 2시간
+                    "time": arrival_time
+                })
+                
+                # 상태 업데이트
+                day_schedule["total_distance"] += travel_time * 0.5  # 대략적인 거리
+                day_schedule["total_duration"] += travel_time
+                daily_time_budget -= required_time
+                
+                visited_places.add(all_places.index(best_next_place))
+                current_region = best_next_place.get('region', '기타')
+                places_visited_today += 1
+            
+            # 최소 장소 수 미달 시 경고
+            if places_visited_today < min_places_per_day:
+                print(f"   ⚠️ Day {day + 1}: 최소 장소 수 미달 ({places_visited_today}개)")
+            
+            itinerary.append(day_schedule)
+        
+        # data_converter가 기대하는 형식으로 반환
+        return {
+            "user_id": request.user_id if hasattr(request, 'user_id') and request.user_id else "guest_user",
+            "course_name": "지역 최적화 여행",
+            "itinerary": {
+                "days": itinerary
+            },
+            "is_public": False,
+            "description": getattr(request, 'description', "")
+        }
+    
+    def _solve_tsp_for_region(self, region_places: List[Dict], distance_dict: Dict) -> List[Dict]:
+        """지역 내에서 TSP로 최적 경로를 생성합니다."""
+        if len(region_places) <= 1:
+            return region_places
+        
+        # 간단한 Nearest Neighbor 알고리즘
+        unvisited = set(range(len(region_places)))
+        route = []
+        current_idx = 0  # 첫 번째 장소부터 시작
+        route.append(region_places[current_idx])
+        unvisited.remove(current_idx)
+        
+        while unvisited:
+            best_idx = None
+            best_distance = float('inf')
+            
+            for next_idx in unvisited:
+                place1_id = str(region_places[current_idx]['_id'])
+                place2_id = str(region_places[next_idx]['_id'])
+                
+                if place1_id in distance_dict and place2_id in distance_dict[place1_id]:
+                    distance = distance_dict[place1_id][place2_id].get("distance_km", float('inf'))
+                else:
+                    distance = self._calculate_region_distance(
+                        region_places[current_idx], 
+                        region_places[next_idx]
+                    )
+                
+                if distance < best_distance:
+                    best_distance = distance
+                    best_idx = next_idx
+            
+            if best_idx is not None:
+                route.append(region_places[best_idx])
+                unvisited.remove(best_idx)
+                current_idx = best_idx
+            else:
+                # 거리 정보가 없는 경우 남은 장소를 순서대로 추가
+                route.extend([region_places[i] for i in unvisited])
+                break
+        
+        return route
+    
+    def _select_next_place_region_optimized(
+        self,
+        all_places: List[Dict],
+        visited_places: set,
+        current_region: Optional[str],
+        place_ids: List[str],
+        distance_dict: Dict[str, Dict[str, Dict]],
+        place_scores: Dict[int, float],
+        time_budget: int,
+        is_first_selection: bool
+    ) -> Optional[Dict]:
+        """지역 최적화된 다음 장소를 선택합니다."""
+        best_place = None
+        best_score = -1
+        
+        for i, place in enumerate(all_places):
+            if i in visited_places:
+                continue
+            
+            # 시간 예산 확인
+            travel_time = 0
+            if visited_places:
+                last_place_idx = list(visited_places)[-1]
+                travel_info = distance_dict[place_ids[last_place_idx]][str(place['_id'])]
+                travel_time = travel_info.get("duration_minutes", 30)
+            
+            if travel_time + 120 > time_budget:
+                continue
+            
+            # 지역 일관성 점수 (같은 지역이면 높은 점수)
+            region_consistency = 1.0 if current_region == place.get('region', '기타') else 0.3
+            
+            # 거리 점수
+            if visited_places:
+                last_place_idx = list(visited_places)[-1]
+                travel_info = distance_dict[place_ids[last_place_idx]][str(place['_id'])]
+                distance_km = travel_info.get("distance_km", 0)
+                distance_score = max(0, 1 - (distance_km / 50))
+            else:
+                distance_score = 1.0
+            
+            # ML 추천 점수
+            recommendation_score = place_scores.get(i, 0.5)
+            
+            # 가중치 적용 (지역 일관성 강화)
+            if is_first_selection:
+                combined_score = (
+                    region_consistency * 0.4 +
+                    distance_score * 0.2 +
+                    recommendation_score * 0.4
+                )
+            else:
+                combined_score = (
+                    region_consistency * 0.5 +  # 지역 일관성 강화
+                    distance_score * 0.3 +
+                    recommendation_score * 0.2
+                )
+            
+            if combined_score > best_score:
+                best_score = combined_score
+                best_place = place
+        
+        return best_place
     
     def _select_next_best_place(
         self,
@@ -547,39 +850,36 @@ class SmartCourseGenerator:
         time_budget: int,
         is_first_selection: bool
     ) -> Optional[int]:
-        """다음 방문할 최적의 장소를 선택합니다."""
+        """ML 추천점수 + 이동거리 기반으로 다음 최적 장소를 선택합니다."""
         best_idx = None
         best_score = -1
         
         for next_idx in unvisited:
+            # 시간 예산 확인
+            travel_time = 0
             if current_idx is not None:
                 travel_info = distance_dict[place_ids[current_idx]][place_ids[next_idx]]
-                
-                if travel_info["status"] != "OK":
-                    continue
-                
                 travel_time = travel_info.get("duration_minutes", 30)
-                distance_km = travel_info.get("distance_km", 0)
-                
-                # 시간 예산 확인
-                if travel_time + 120 > time_budget:  # 이동시간 + 체류시간
-                    continue
-                
-                # 거리 점수 (가까울수록 높음)
-                distance_score = max(0, 1 - (distance_km / 50))
-            else:
-                distance_score = 1.0  # 첫 번째 선택시
             
-            # 추천 점수
+            if travel_time + 120 > time_budget:
+                continue
+            
+            # 거리 점수 (가까울수록 높은 점수)
+            if current_idx is not None:
+                travel_info = distance_dict[place_ids[current_idx]][place_ids[next_idx]]
+                distance_km = travel_info.get("distance_km", 0)
+                distance_score = max(0, 1 - (distance_km / 50))  # 50km 기준으로 정규화
+            else:
+                distance_score = 1.0
+            
+            # ML 추천 점수
             recommendation_score = place_scores.get(next_idx, 0.5)
             
-            # 가중치 적용
-            if is_first_selection:
-                # 첫 번째 선택: 추천점수 우선
-                combined_score = (distance_score * 0.3) + (recommendation_score * 0.7)
-            else:
-                # 나머지 선택: 이동 효율성 우선
-                combined_score = (distance_score * 0.6) + (recommendation_score * 0.4)
+            # 가중치 적용 (ML 추천점수 우선)
+            combined_score = (
+                recommendation_score * 0.6 +  # ML 추천점수 60%
+                distance_score * 0.4          # 거리 점수 40%
+            )
             
             if combined_score > best_score:
                 best_score = combined_score
@@ -831,6 +1131,8 @@ async def save_course(request_data: Union[List[dict], dict] = Body(...)):
             "user_id": normalized_data["user_id"],
             "course_name": normalized_data["course_name"],
             "itinerary": normalized_data["itinerary"],
+            "is_public": False,  # 기본적으로 비공개로 설정
+            "description": normalized_data.get("description", ""),  # 코스 설명
             "created_at": now,
             "updated_at": now
         }
@@ -853,23 +1155,221 @@ async def save_course(request_data: Union[List[dict], dict] = Body(...)):
         print(f"코스 저장 중 오류 발생: {e}")
         raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
 
+# TODO: 공개 코스 관련 기능들은 향후 구현 예정
+# @router.get("/courses/public")
+# async def get_public_courses(limit: int = 20, skip: int = 0):
+#     """
+#     공개된 코스 목록을 조회합니다.
+#     
+#     Args:
+#         limit: 조회할 코스 수 (기본값: 20)
+#         skip: 건너뛸 코스 수 (기본값: 0)
+#     """
+#     # MongoDB 연결 상태 확인
+#     if courses_collection is None:
+#         raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다.")
+#     
+#     try:
+#         # 공개 코스만 조회 (최신순 정렬)
+#         cursor = courses_collection.find(
+#             {"is_public": True}
+#         ).sort("created_at", -1).skip(skip).limit(limit)
+#         
+#         courses = []
+#         for course in cursor:
+#             # 민감한 정보 제외하고 반환
+#             course_data = {
+#                 "course_id": course["course_id"],
+#                 "course_name": course["course_name"],
+#                 "description": course.get("description", ""),
+#                 "user_id": course["user_id"],
+#                 "created_at": course["created_at"],
+#                 "updated_at": course["updated_at"],
+#                 "total_days": len(course["itinerary"]["days"]),
+#                 "total_places": sum(len(day["places"]) for day in course["itinerary"]["days"])
+#             }
+#             courses.append(course_data)
+#         
+#         # 전체 공개 코스 수 조회
+#         total_count = courses_collection.count_documents({"is_public": True})
+#         
+#         return {
+#             "success": True,
+#             "courses": courses,
+#             "total_count": total_count,
+#             "limit": limit,
+#             "skip": skip
+#         }
+#         
+#     except Exception as e:
+#         print(f"공개 코스 조회 중 오류 발생: {e}")
+#         raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
+
+# @router.get("/courses/user/{user_id}")
+# async def get_user_courses(user_id: str, include_private: bool = True):
+#     """
+#     특정 사용자의 코스 목록을 조회합니다.
+#     
+#     Args:
+#         user_id: 사용자 ID
+#         include_private: 비공개 코스 포함 여부 (기본값: True)
+#     """
+#     # MongoDB 연결 상태 확인
+#     if courses_collection is None:
+#         raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다.")
+#     
+#     try:
+#         # 쿼리 조건 설정
+#         query = {"user_id": user_id}
+#         if not include_private:
+#             query["is_public"] = True
+#         
+#         # 사용자 코스 조회 (최신순 정렬)
+#         cursor = courses_collection.find(query).sort("created_at", -1)
+#         
+#         courses = []
+#         for course in cursor:
+#             course_data = {
+#                 "course_id": course["course_id"],
+#                 "course_name": course["course_name"],
+#                 "description": course.get("description", ""),
+#                 "is_public": course.get("is_public", False),
+#                 "created_at": course["created_at"],
+#                 "updated_at": course["updated_at"],
+#                 "total_days": len(course["itinerary"]["days"]),
+#                 "total_places": sum(len(day["places"]) for day in course["itinerary"]["days"])
+#             }
+#             courses.append(course_data)
+#         
+#         return {
+#             "success": True,
+#             "courses": courses,
+#             "total_count": len(courses)
+#         }
+#         
+#     except Exception as e:
+#         print(f"사용자 코스 조회 중 오류 발생: {e}")
+#         raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
+
+# @router.get("/course/{course_id}")
+# async def get_course_detail(course_id: str, user_id: Optional[str] = None):
+#     """
+#     특정 코스의 상세 정보를 조회합니다.
+#     
+#     Args:
+#         course_id: 코스 ID
+#         user_id: 요청한 사용자 ID (선택사항, 소유자 확인용)
+#     """
+#     # MongoDB 연결 상태 확인
+#     if courses_collection is None:
+#         raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다.")
+#     
+#     try:
+#         # 코스 조회
+#         course = courses_collection.find_one({"course_id": course_id})
+#         if not course:
+#             raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다.")
+#         
+#         # 공개 여부 및 소유자 확인
+#         is_public = course.get("is_public", False)
+#         is_owner = user_id and course["user_id"] == user_id
+#         
+#         if not is_public and not is_owner:
+#             raise HTTPException(status_code=403, detail="비공개 코스입니다. 접근 권한이 없습니다.")
+#         
+#         # 코스 상세 정보 반환
+#         return {
+#             "success": True,
+#             "course": {
+#                 "course_id": course["course_id"],
+#                 "course_name": course["course_name"],
+#                 "description": course.get("description", ""),
+#                 "is_public": is_public,
+#                 "user_id": course["user_id"],
+#                 "is_owner": is_owner,
+#                 "itinerary": course["itinerary"],
+#                 "created_at": course["created_at"],
+#                 "updated_at": course["updated_at"]
+#             }
+#         }
+#         
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         print(f"코스 상세 조회 중 오류 발생: {e}")
+#         raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
+
+# @router.put("/course/{course_id}/privacy")
+# async def update_course_privacy(course_id: str, is_public: bool = Body(...), user_id: str = Body(...)):
+#     """
+#     코스의 공개/비공개 설정을 변경합니다.
+#     
+#     Args:
+#         course_id: 코스 ID
+#         is_public: 공개 여부
+#         user_id: 요청한 사용자 ID (소유자 확인용)
+#     """
+#     # MongoDB 연결 상태 확인
+#     if courses_collection is None:
+#         raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다.")
+#     
+#     try:
+#         # 코스 존재 및 소유자 확인
+#         course = courses_collection.find_one({"course_id": course_id})
+#         if not course:
+#             raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다.")
+#         
+#         if course["user_id"] != user_id:
+#             raise HTTPException(status_code=403, detail="코스 수정 권한이 없습니다.")
+#         
+#         # 공개/비공개 설정 업데이트
+#         result = courses_collection.update_one(
+#             {"course_id": course_id},
+#             {
+#                 "$set": {
+#                     "is_public": is_public,
+#                     "updated_at": datetime.now()
+#                 }
+#             }
+#         )
+#         
+#         if result.modified_count > 0:
+#             return {
+#                 "success": True,
+#                 "message": f"코스가 {'공개' if is_public else '비공개'}로 설정되었습니다.",
+#                 "course_id": course_id,
+#                 "is_public": is_public
+#             }
+#         else:
+#             raise HTTPException(status_code=500, detail="코스 설정 변경에 실패했습니다.")
+#             
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         print(f"코스 공개 설정 변경 중 오류 발생: {e}")
+#         raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
+
 @router.delete("/course/{course_id}")
-async def delete_course(course_id: str):
+async def delete_course(course_id: str, user_id: str = Body(...)):
     """
     특정 코스를 삭제합니다.
     
     Args:
         course_id: 삭제할 코스 ID
+        user_id: 요청한 사용자 ID (소유자 확인용)
     """
     # MongoDB 연결 상태 확인
     if courses_collection is None:
         raise HTTPException(status_code=503, detail="데이터베이스 연결이 되어있지 않습니다.")
     
     try:
-        # 코스 존재 확인
+        # 코스 존재 및 소유자 확인
         course = courses_collection.find_one({"course_id": course_id})
         if not course:
             raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다.")
+        
+        if course["user_id"] != user_id:
+            raise HTTPException(status_code=403, detail="코스 삭제 권한이 없습니다.")
         
         # 코스 삭제
         result = courses_collection.delete_one({"course_id": course_id})

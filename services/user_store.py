@@ -7,8 +7,22 @@ from datetime import datetime, timedelta
 
 load_dotenv()
 
-MONGO_ATLAS_URI: str = os.getenv("MONGO_ATLAS_URI", "")
-_client = MongoClient(MONGO_ATLAS_URI)
+MONGO_ATLAS_URI: str = os.getenv("MONGO_ATLAS_URI", "mongodb://localhost:27017")
+
+# MongoDB URI가 비어있는지 확인
+if not MONGO_ATLAS_URI or MONGO_ATLAS_URI.strip() == "":
+    MONGO_ATLAS_URI = "mongodb://localhost:27017"
+    print("Warning: MONGO_ATLAS_URI not set, using default localhost connection")
+
+try:
+    _client = MongoClient(MONGO_ATLAS_URI, serverSelectionTimeoutMS=5000)
+    # 연결 테스트
+    _client.admin.command('ping')
+    print("MongoDB 연결 성공")
+except Exception as e:
+    print(f"MongoDB 연결 실패: {e}")
+    print("로컬 MongoDB를 사용합니다.")
+    _client = MongoClient("mongodb://localhost:27017", serverSelectionTimeoutMS=5000)
 _user_db = _client.get_database("user_db")
 user_data_col = _user_db.get_collection("user_data")
 blacklisted_tokens_col = _user_db.get_collection("blacklisted_tokens")
