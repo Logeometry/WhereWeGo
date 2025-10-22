@@ -19,6 +19,9 @@ from schemas import ItineraryRequest, ItineraryResponse, FrontendItineraryRespon
 from services.db_handler import get_random_places, tourism_collection, starting_point_collection
 from services.data_converter import data_converter
 
+# 근처 장소 추천 서비스 import
+from services.recommend_nearby_places_optimized import recommend_nearby_restaurants_optimized
+
 # MongoDB 클라이언트 설정 (코스 저장용) - 안전하게 처리
 MONGO_URI = os.getenv("MONGO_URI") or os.getenv("MONGO_ATLAS_URI", "mongodb://localhost:27017/")
 
@@ -274,10 +277,84 @@ class SmartCourseGenerator:
         """
         # 🤖 ML 모델에서 계산된 추천 점수 사용
         ml_score = place.get('recommendation_score', place.get('score', 0.5))
+        base_score = min(1.0, max(0.0, float(ml_score)))
         
-        # 0-1 범위로 정규화
-        return min(1.0, max(0.0, float(ml_score)))
+        return base_score
     
+    async def _add_nearby_restaurants_to_course(self, daily_schedule: List[FrontendDay]) -> List[FrontendDay]:
+        """
+        코스의 각 장소 근처에서 음식점을 찾아 점심/저녁 시간에 추가합니다.
+        """
+        print("🍽️ 근처 음식점을 찾아 코스에 추가 중...")
+        
+        for day_schedule in daily_schedule:
+            # 점심 시간(12:00)과 저녁 시간(18:00)에 음식점 추가
+            meal_times = [12, 18]
+            
+            for meal_time in meal_times:
+                # 해당 시간대에 이미 장소가 있는지 확인
+                existing_place = None
+                for place in day_schedule.places:
+                    if place.time.startswith(f"{meal_time:02d}"):
+                        existing_place = place
+                        break
+                
+                if existing_place:
+                    continue  # 이미 해당 시간에 장소가 있으면 건너뛰기
+                
+                # 가장 가까운 장소를 기준으로 음식점 찾기
+                if day_schedule.places:
+                    # 첫 번째 장소를 기준으로 근처 음식점 찾기
+                    reference_place = day_schedule.places[0]
+                    place_id = reference_place.id
+                    
+                    try:
+                        # 근처 음식점 조회 (1km 반경)
+                        nearby_restaurants = await recommend_nearby_restaurants_optimized(place_id, 1.0)
+                        
+                        if nearby_restaurants:
+                            # 이미 추가된 음식점들 확인 (정확한 이름 비교)
+                            added_restaurant_names = set()
+                            for place in day_schedule.places:
+                                if place.name:
+                                    added_restaurant_names.add(place.name)
+                            
+                            # 중복되지 않는 음식점 찾기
+                            selected_restaurant = None
+                            for restaurant in nearby_restaurants:
+                                restaurant_name = restaurant.get('name', '')
+                                if restaurant_name not in added_restaurant_names:
+                                    selected_restaurant = restaurant
+                                    break
+                            
+                            if selected_restaurant:
+                                # 음식점을 FrontendPlace로 변환
+                                restaurant_place = FrontendPlace(
+                                    id=str(selected_restaurant.get('_id', selected_restaurant.get('id', 'unknown'))),
+                                    name=selected_restaurant.get('name', '근처 음식점'),
+                                    time=f"{meal_time:02d}:00",
+                                    address=selected_restaurant.get('address', ''),
+                                    location=selected_restaurant.get('location', {}),
+                                    rating=selected_restaurant.get('rating', 0.0),
+                                    estimated_duration=120  # 2시간
+                                )
+                                
+                                # 시간순으로 정렬하여 적절한 위치에 삽입
+                                day_schedule.places.append(restaurant_place)
+                                day_schedule.places.sort(key=lambda x: x.time)
+                                
+                                print(f"✅ {meal_time}시에 '{restaurant_place.name}' 추가됨")
+                            else:
+                                print(f"⚠️ {meal_time}시 중복되지 않는 음식점을 찾을 수 없습니다.")
+                        else:
+                            print(f"⚠️ {meal_time}시 근처에 음식점을 찾을 수 없습니다.")
+                    
+                    except Exception as e:
+                        print(f"❌ 음식점 조회 중 오류: {e}")
+                        continue
+        
+        return daily_schedule
+
     def _generate_db_format_schedules(
         self,
         places: List[Dict],
@@ -290,8 +367,13 @@ class SmartCourseGenerator:
         itinerary = []
         place_ids = [str(place['_id']) for place in places]
         
-        # 각 장소의 ML 모델 추천 점수 가져오기
-        place_scores = {i: self._get_place_score(places[i]) for i in range(len(places))}
+        # 각 장소의 ML 모델 추천 점수 가져오기 (시간대별 먹거리 보너스 적용)
+        place_scores = {}
+        current_hour = 9  # 9시부터 시작
+        for i in range(len(places)):
+            current_time = f"{current_hour:02d}:00"
+            place_scores[i] = self._get_place_score(places[i])
+            current_hour += 2  # 다음 장소는 2시간 후
         
         # 시작 날짜 계산 (오늘 날짜 사용)
         from datetime import datetime, timedelta
@@ -313,7 +395,7 @@ class SmartCourseGenerator:
             current_idx = start_idx if day == 0 else None
             places_visited_today = 0
             max_places_per_day = 3
-            daily_time_budget = 8 * 60  # 8시간 (분 단위)
+            daily_time_budget = 12 * 60  # 8시간 (분 단위)
             
             # 첫째 날 첫 장소는 시작점
             if day == 0:
@@ -333,8 +415,11 @@ class SmartCourseGenerator:
                 daily_time_budget -= 120  # 첫 장소 체류 시간 차감
                 unvisited.discard(current_idx)  # 방문한 장소를 unvisited에서 제거
             
-            # 나머지 장소 선택
-            while unvisited and places_visited_today < max_places_per_day and daily_time_budget > 60:
+            # 나머지 장소 선택 (하루 최대 3곳 엄격한 제한)
+            while (unvisited and 
+                   places_visited_today < max_places_per_day and 
+                   daily_time_budget > 60):
+                
                 best_next_idx = self._select_next_best_place(
                     current_idx,
                     unvisited,
@@ -346,6 +431,7 @@ class SmartCourseGenerator:
                 )
                 
                 if best_next_idx is None:
+                    print(f"   📍 Day {day + 1}: 더 이상 추가할 장소가 없습니다.")
                     break
                 
                 # 이동 정보 가져오기
@@ -357,12 +443,13 @@ class SmartCourseGenerator:
                     travel_time = 0
                     distance = 0
                 
-                # 시간 예산 확인
-                required_time = travel_time + 120  # 이동시간 + 체류시간
+                # 시간 예산 확인 (이동시간 + 체류시간 2시간)
+                required_time = travel_time + 120
                 if required_time > daily_time_budget:
+                    print(f"   ⏰ Day {day + 1}: 시간 예산 부족으로 장소 추가 중단")
                     break
                 
-                # 도착 시간 계산
+                # 도착 시간 계산 (9시부터 시작, 각 장소당 3시간 간격)
                 base_hour = 9 + (places_visited_today * 3)
                 arrival_time = f"{base_hour:02d}:00"
                 
@@ -401,6 +488,11 @@ class SmartCourseGenerator:
                 unvisited.remove(best_next_idx)
                 current_idx = best_next_idx
                 places_visited_today += 1
+                
+                print(f"   ✅ Day {day + 1}: {place_data.get('name', 'Unknown')} 추가 ({places_visited_today}/{max_places_per_day})")
+            
+            # 하루 일정 완료 로그
+            print(f"   📅 Day {day + 1} 완료: {places_visited_today}개 장소 방문")
             
             itinerary.append(day_schedule)
         
@@ -456,8 +548,13 @@ class SmartCourseGenerator:
         start_date = datetime.now()
         unvisited = set(range(len(valid_places))) - {start_idx}
         
-        # 각 장소의 ML 추천 점수 가져오기
-        place_scores = {i: self._get_place_score(valid_places[i]) for i in range(len(valid_places))}
+        # 각 장소의 ML 추천 점수 가져오기 (시간대별 먹거리 보너스 적용)
+        place_scores = {}
+        current_hour = 9  # 9시부터 시작
+        for i in range(len(valid_places)):
+            current_time = f"{current_hour:02d}:00"
+            place_scores[i] = self._get_place_score(valid_places[i], current_time)
+            current_hour += 2  # 다음 장소는 2시간 후
         
         for day in range(travel_duration):
             day_number = day + 1
@@ -488,8 +585,11 @@ class SmartCourseGenerator:
                 daily_time_budget -= 120  # 첫 장소 체류시간 차감
                 unvisited.discard(current_idx)  # 방문한 장소를 unvisited에서 제거
             
-            # 나머지 장소 선택
-            while unvisited and places_visited_today < max_places_per_day and daily_time_budget > 60:
+            # 나머지 장소 선택 (하루 최대 3곳 엄격한 제한)
+            while (unvisited and 
+                   places_visited_today < max_places_per_day and 
+                   daily_time_budget > 60):
+                
                 best_next_idx = self._select_next_best_place(
                     current_idx,
                     unvisited,
@@ -501,6 +601,7 @@ class SmartCourseGenerator:
                 )
                 
                 if best_next_idx is None:
+                    print(f"   📍 Day {day_number}: 더 이상 추가할 장소가 없습니다.")
                     break
                 
                 # 이동 정보 계산
@@ -510,12 +611,13 @@ class SmartCourseGenerator:
                 else:
                     travel_time = 0
                 
-                # 시간 예산 확인
+                # 시간 예산 확인 (이동시간 + 체류시간 2시간)
                 required_time = travel_time + 120
                 if required_time > daily_time_budget:
+                    print(f"   ⏰ Day {day_number}: 시간 예산 부족으로 장소 추가 중단")
                     break
                 
-                # 도착 시간 계산
+                # 도착 시간 계산 (9시부터 시작, 각 장소당 3시간 간격)
                 base_hour = 9 + (places_visited_today * 3)
                 arrival_time = f"{base_hour:02d}:00"
                 
@@ -538,6 +640,11 @@ class SmartCourseGenerator:
                 unvisited.remove(best_next_idx)
                 current_idx = best_next_idx
                 places_visited_today += 1
+                
+                print(f"   ✅ Day {day_number}: {place_detail.get('name', 'Unknown')} 추가 ({places_visited_today}/{max_places_per_day})")
+            
+            # 하루 일정 완료 로그
+            print(f"   📅 Day {day_number} 완료: {places_visited_today}개 장소 방문")
             
             # DB 형태의 일일 일정 추가
             course_days.append({
@@ -850,35 +957,36 @@ class SmartCourseGenerator:
         time_budget: int,
         is_first_selection: bool
     ) -> Optional[int]:
-        """ML 추천점수 + 이동거리 기반으로 다음 최적 장소를 선택합니다."""
+        """개선된 장소 선택 로직: 하루 최대 3곳 제한 + 거리+ML 점수 조합"""
         best_idx = None
         best_score = -1
         
         for next_idx in unvisited:
-            # 시간 예산 확인
+            # 1. 시간 예산 확인 (이동시간 + 체류시간 2시간)
             travel_time = 0
             if current_idx is not None:
                 travel_info = distance_dict[place_ids[current_idx]][place_ids[next_idx]]
                 travel_time = travel_info.get("duration_minutes", 30)
             
-            if travel_time + 120 > time_budget:
+            required_time = travel_time + 120  # 이동시간 + 체류시간
+            if required_time > time_budget:
                 continue
             
-            # 거리 점수 (가까울수록 높은 점수)
+            # 2. 거리 점수 계산 (가까울수록 높은 점수)
             if current_idx is not None:
                 travel_info = distance_dict[place_ids[current_idx]][place_ids[next_idx]]
                 distance_km = travel_info.get("distance_km", 0)
-                distance_score = max(0, 1 - (distance_km / 50))  # 50km 기준으로 정규화
+                distance_score = max(0, 1 - (distance_km / 50))  # 50km 기준 정규화
             else:
                 distance_score = 1.0
             
-            # ML 추천 점수
+            # 3. ML 추천 점수
             recommendation_score = place_scores.get(next_idx, 0.5)
             
-            # 가중치 적용 (ML 추천점수 우선)
+            # 4. 가중치 적용 (거리 40% + ML 점수 60%)
             combined_score = (
-                recommendation_score * 0.6 +  # ML 추천점수 60%
-                distance_score * 0.4          # 거리 점수 40%
+                distance_score * 0.4 +        # 거리 점수 40%
+                recommendation_score * 0.6    # ML 추천점수 60%
             )
             
             if combined_score > best_score:
@@ -1089,6 +1197,16 @@ async def generate_itinerary(request: ItineraryRequest = Body(...)):
                 ]
             ) for day in frontend_response_data
         ])
+        
+        # 9. 근처 음식점을 찾아서 코스에 추가
+        try:
+            # SmartCourseGenerator 인스턴스 생성 (distance_service 필요)
+            generator = SmartCourseGenerator(distance_service)
+            frontend_response.dailySchedule = await generator._add_nearby_restaurants_to_course(frontend_response.dailySchedule)
+            print("🍽️ 근처 음식점 추가 완료")
+        except Exception as e:
+            print(f"⚠️ 음식점 추가 중 오류 발생: {e}")
+            # 오류가 발생해도 기본 코스는 반환
         
         # 9. 결과 로그
         total_places = sum(len(day.get('places', [])) for day in backend_course_data.get('itinerary', {}).get('days', []))
@@ -1562,23 +1680,35 @@ async def generate_simple_optimized_course(all_places, distance_matrix, travel_d
             unvisited.remove(unvisited[0])
             current_place = route[-1]
     
-    # 일정을 일수별로 나누기
-    places_per_day = max(1, len(route) // travel_duration)
+    # 일정을 일수별로 나누기 (하루에 최대 3개 장소)
+    max_places_per_day = 3
     daily_schedule = []
     
+    # 장소를 균등하게 분배 (하루에 최대 3개)
+    total_places = len(route)
+    base_places_per_day = total_places // travel_duration
+    extra_places = total_places % travel_duration
+    
+    place_index = 0
     for day in range(travel_duration):
-        start_idx = day * places_per_day
-        end_idx = min((day + 1) * places_per_day, len(route))
+        # 하루에 최대 3개 장소로 제한
+        places_for_this_day = min(max_places_per_day, base_places_per_day + (1 if day < extra_places else 0))
         
-        if start_idx < len(route):
-            day_places = route[start_idx:end_idx]
+        if place_index < len(route):
+            end_index = min(place_index + places_for_this_day, len(route))
+            day_places = route[place_index:end_index]
+            place_index = end_index
             
-            # FrontendPlace 형태로 변환
+            # FrontendPlace 형태로 변환 (점심/저녁 시간 비워두기)
             frontend_places = []
+            current_hour = 9  # 9시부터 시작
+            
             for i, place in enumerate(day_places):
-                # 시간 계산 (9시부터 시작, 각 장소당 2시간)
-                hour = 9 + (i * 2)
-                time_str = f"{hour:02d}:00"
+                # 점심 시간(12:00-14:00)과 저녁 시간(18:00-20:00) 비워두기
+                while current_hour in [12, 13, 18, 19]:
+                    current_hour += 1
+                
+                time_str = f"{current_hour:02d}:00"
                 
                 frontend_place = FrontendPlace(
                     id=str(place['_id']),
@@ -1590,12 +1720,25 @@ async def generate_simple_optimized_course(all_places, distance_matrix, travel_d
                     estimated_duration=120  # 2시간
                 )
                 frontend_places.append(frontend_place)
+                
+                # 다음 장소는 2시간 후
+                current_hour += 2
             
             daily_schedule.append(FrontendDay(
                 day=day + 1,
                 date=(datetime.now() + timedelta(days=day)).strftime('%Y-%m-%d'),
                 places=frontend_places
             ))
+    
+    # 근처 음식점을 찾아서 코스에 추가
+    try:
+        # SmartCourseGenerator 인스턴스 생성 (distance_service 필요)
+        distance_service = OptimizedDistanceMatrixService(GOOGLE_MAPS_API_KEY)
+        generator = SmartCourseGenerator(distance_service)
+        daily_schedule = await generator._add_nearby_restaurants_to_course(daily_schedule)
+    except Exception as e:
+        print(f"⚠️ 음식점 추가 중 오류 발생: {e}")
+        # 오류가 발생해도 기본 코스는 반환
     
     return FrontendItineraryResponse(dailySchedule=daily_schedule)
 

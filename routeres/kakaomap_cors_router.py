@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Body
 from pydantic import BaseModel, Field
 
 from services.db_handler import tourism_collection
+from db import restaurant_col
 from bson import ObjectId
 
 router = APIRouter()
@@ -283,20 +284,39 @@ async def get_course_route_data(request: MapRouteRequest = Body(...)):
     try:
         print(f"🗺️ 코스 경로 데이터 생성 시작: {len(request.places)}개 장소")
         
-        # 1. MongoDB에서 장소 정보 조회
+        # 1. MongoDB에서 장소 정보 조회 (tourism + restaurant)
         place_ids = [ObjectId(pid) for pid in request.places]
-        places_cursor = tourism_collection.find({"_id": {"$in": place_ids}})
-        places_data = [place async for place in places_cursor]
+        
+        # tourism 컬렉션에서 조회
+        tourism_cursor = tourism_collection.find({"_id": {"$in": place_ids}})
+        tourism_data = [place async for place in tourism_cursor]
+        
+        # restaurant 컬렉션에서 조회
+        restaurant_cursor = restaurant_col.find({"_id": {"$in": place_ids}})
+        restaurant_data = [place async for place in restaurant_cursor]
+        
+        # 두 컬렉션 결과 합치기
+        places_data = tourism_data + restaurant_data
         
         if len(places_data) != len(request.places):
-            raise HTTPException(
-                status_code=404,
-                detail="일부 장소를 찾을 수 없습니다."
-            )
+            print(f"⚠️ 일부 장소를 찾을 수 없음: 요청 {len(request.places)}개, 찾음 {len(places_data)}개")
+            print(f"   tourism: {len(tourism_data)}개, restaurant: {len(restaurant_data)}개")
         
         # 순서 유지 (요청한 순서대로 정렬)
         places_dict = {str(place["_id"]): place for place in places_data}
-        ordered_places = [places_dict[pid] for pid in request.places]
+        ordered_places = []
+        
+        for pid in request.places:
+            if pid in places_dict:
+                ordered_places.append(places_dict[pid])
+            else:
+                print(f"⚠️ 장소 ID {pid}를 찾을 수 없습니다.")
+        
+        if len(ordered_places) < 2:
+            raise HTTPException(
+                status_code=404,
+                detail="최소 2개 이상의 유효한 장소가 필요합니다."
+            )
         
         # 2. 각 구간별 경로 계산
         directions_service = GoogleDirectionsService(GOOGLE_MAPS_API_KEY)

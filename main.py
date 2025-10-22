@@ -69,10 +69,12 @@ origins = [
     "http://localhost:3000",
     "http://127.0.0.1:8000",
     "http://127.0.0.1:3000",
-    FRONTEND_URL
+    FRONTEND_URL,
+    "https://wherewegobusan.com",
+    "https://www.wherewegobusan.com"
 ]
 
-# CORS 설정 추가
+# CORS 설정 추가 (개발용 - 모든 도메인 허용)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -105,7 +107,9 @@ app.include_router(googlemap_router, prefix="/api/v1/googlemap", tags=["구글�
 # app.include_router(optimized_course_router, prefix="/api/v1", tags=["Route Matrix 최적화"])  # 파일이 없어서 주석 처리
 app.include_router(auth_router, prefix="/api/v1", tags=["인증"])
 
-app.mount("/test", StaticFiles(directory="test"), name="test")
+# test 디렉토리가 존재할 때만 마운트
+if os.path.exists("test"):
+    app.mount("/test", StaticFiles(directory="test"), name="test")
 # app.mount("/static", StaticFiles(directory="."), name="static")  # 보안상 제거 - templates 직접 접근 방지
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -128,12 +132,14 @@ def get_safe_file_path(filename):
     return current_path
 
 
+# test 디렉토리가 존재할 때만 마운트
 test_dir = os.path.join(os.path.dirname(__file__), "test")
-app.mount(
-    "/test",
-    StaticFiles(directory=test_dir, html=True),
-    name="test_static"
-)
+if os.path.exists(test_dir):
+    app.mount(
+        "/test",
+        StaticFiles(directory=test_dir, html=True),
+        name="test_static"
+    )
 
 @app.get("/")
 async def root():
@@ -233,5 +239,7 @@ if __name__ == "__main__":
     # 작업 디렉토리를 WhereWeGo-backend로 변경
     os.chdir(current_dir)
 
-    # reload=False로 변경하여 서버 중복 실행 방지
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=False)
+    # Railway 배포용 설정 (환경 변수 포트 사용)
+    port = int(os.getenv("PORT", 8080))
+    print(f"🚀 서버 시작 - 포트: {port}")
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
