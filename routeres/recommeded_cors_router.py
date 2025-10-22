@@ -974,6 +974,11 @@ async def generate_itinerary(request: ItineraryRequest = Body(...)):
         print(f"   📍 선택된 장소: {len(request.spots)}곳")
         print(f"   📅 여행기간: {request.travelDuration}일")
         
+        # 5개 이상일 때 배치 처리
+        if len(request.spots) > 5:
+            print(f"📊 {len(request.spots)}개 장소를 5개씩 묶어서 처리합니다.")
+            return await generate_batch_optimized_course(request)
+        
         # 2. 장소 ID를 ObjectId로 변환 시도
         selected_place_ids = []
         place_names = []
@@ -1390,6 +1395,209 @@ async def delete_course(course_id: str, user_id: str = Body(...)):
         raise HTTPException(status_code=500, detail=f"서버 내부 오류가 발생했습니다: {e}")
 
 
+async def generate_batch_optimized_course(request: ItineraryRequest):
+    """
+    5개씩 묶어서 모든 경로를 계산하는 배치 최적화 함수
+    12개 장소 → 144개 경로를 여러 번에 나누어 계산
+    """
+    print(f"🔄 배치 최적화 시작: {len(request.spots)}개 장소")
+    
+    # 1. 장소 ID를 ObjectId로 변환
+    selected_place_ids = []
+    place_names = []
+    
+    for place_identifier in request.spots:
+        try:
+            place_oid = ObjectId(place_identifier)
+            selected_place_ids.append(place_oid)
+        except Exception:
+            place_names.append(place_identifier)
+    
+    # 2. MongoDB에서 장소 정보 조회
+    all_places = []
+    if selected_place_ids:
+        places_cursor = tourism_collection.find({"_id": {"$in": selected_place_ids}})
+        all_places.extend([place async for place in places_cursor])
+    
+    if place_names:
+        places_cursor = tourism_collection.find({"name": {"$in": place_names}})
+        all_places.extend([place async for place in places_cursor])
+    
+    if len(all_places) != len(request.spots):
+        raise HTTPException(status_code=404, detail="일부 장소를 찾을 수 없습니다.")
+    
+    # 3. 5개씩 묶어서 배치 처리
+    batch_size = 5
+    batches = []
+    for i in range(0, len(all_places), batch_size):
+        batches.append(all_places[i:i + batch_size])
+    
+    print(f"📊 {len(all_places)}개 장소를 {len(batches)}개 그룹으로 분할")
+    
+    # 4. 모든 그룹 간의 거리 계산 (5×5씩 나누어 계산)
+    distance_matrix = {}
+    
+    for i, batch1 in enumerate(batches):
+        for j, batch2 in enumerate(batches):
+            print(f"🔄 그룹 {i+1} → 그룹 {j+1} 거리 계산 중...")
+            
+            # 5×5씩 나누어 Google Distance Matrix API 호출
+            batch_distances = await calculate_batch_distances(batch1, batch2, request.transport_mode)
+            distance_matrix.update(batch_distances)
+    
+    print(f"✅ 총 {len(distance_matrix)}개 경로 계산 완료")
+    
+    # 5. 최적 경로 생성 (간단한 TSP 알고리즘 사용)
+    optimized_course = await generate_simple_optimized_course(
+        all_places=all_places,
+        distance_matrix=distance_matrix,
+        travel_duration=request.travelDuration,
+        starting_point=request.starting_point
+    )
+    
+    return optimized_course
+
+
+async def calculate_batch_distances(batch1, batch2, transport_mode):
+    """
+    5×5 배치의 거리를 계산하는 함수
+    """
+    if not batch1 or not batch2:
+        return {}
+    
+    # Google Distance Matrix API 호출
+    origins = [f"{place['location']['coordinates'][1]},{place['location']['coordinates'][0]}" for place in batch1]
+    destinations = [f"{place['location']['coordinates'][1]},{place['location']['coordinates'][0]}" for place in batch2]
+    
+    # 교통수단 매핑
+    mode_map = {
+        'TRANSIT': 'transit',
+        'DRIVE': 'driving', 
+        'WALK': 'walking'
+    }
+    
+    google_mode = mode_map.get(transport_mode, 'transit')
+    
+    # Google Distance Matrix API 호출
+    url = "https://maps.googleapis.com/maps/api/distancematrix/json"
+    params = {
+        'origins': '|'.join(origins),
+        'destinations': '|'.join(destinations),
+        'mode': google_mode,
+        'key': GOOGLE_MAPS_API_KEY,
+        'units': 'metric',
+        'language': 'ko'
+    }
+    
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, params=params) as response:
+            if response.status == 200:
+                data = await response.json()
+                
+                if data['status'] == 'OK':
+                    # 거리 정보 파싱
+                    distances = {}
+                    for i, origin_place in enumerate(batch1):
+                        for j, dest_place in enumerate(batch2):
+                            if i < len(data['rows']) and j < len(data['rows'][i]['elements']):
+                                element = data['rows'][i]['elements'][j]
+                                if element['status'] == 'OK':
+                                    distances[f"{origin_place['_id']}_{dest_place['_id']}"] = {
+                                        'distance_km': element['distance']['value'] / 1000,
+                                        'duration_minutes': element['duration']['value'] / 60
+                                    }
+                    return distances
+                else:
+                    print(f"⚠️ Google Distance Matrix API 오류: {data['status']}")
+                    return {}
+            else:
+                print(f"❌ Google Distance Matrix API HTTP 오류: {response.status}")
+                return {}
+    
+    return {}
+
+
+async def generate_simple_optimized_course(all_places, distance_matrix, travel_duration, starting_point):
+    """
+    간단한 TSP 알고리즘을 사용한 최적 경로 생성
+    """
+    print(f"🎯 간단한 TSP 알고리즘으로 최적 경로 생성 중...")
+    
+    # 시작점 찾기
+    start_place = None
+    if starting_point:
+        for place in all_places:
+            if str(place['_id']) == starting_point:
+                start_place = place
+                break
+    
+    if not start_place:
+        start_place = all_places[0]
+    
+    # 방문하지 않은 장소들
+    unvisited = [place for place in all_places if place['_id'] != start_place['_id']]
+    current_place = start_place
+    route = [start_place]
+    
+    # 가장 가까운 장소를 찾아서 경로 생성
+    while unvisited:
+        nearest_place = None
+        min_distance = float('inf')
+        
+        for place in unvisited:
+            key = f"{current_place['_id']}_{place['_id']}"
+            if key in distance_matrix:
+                distance = distance_matrix[key]['distance_km']
+                if distance < min_distance:
+                    min_distance = distance
+                    nearest_place = place
+        
+        if nearest_place:
+            route.append(nearest_place)
+            unvisited.remove(nearest_place)
+            current_place = nearest_place
+        else:
+            # 거리 정보가 없는 경우 첫 번째 미방문 장소 선택
+            route.append(unvisited[0])
+            unvisited.remove(unvisited[0])
+            current_place = route[-1]
+    
+    # 일정을 일수별로 나누기
+    places_per_day = max(1, len(route) // travel_duration)
+    daily_schedule = []
+    
+    for day in range(travel_duration):
+        start_idx = day * places_per_day
+        end_idx = min((day + 1) * places_per_day, len(route))
+        
+        if start_idx < len(route):
+            day_places = route[start_idx:end_idx]
+            
+            # FrontendPlace 형태로 변환
+            frontend_places = []
+            for i, place in enumerate(day_places):
+                # 시간 계산 (9시부터 시작, 각 장소당 2시간)
+                hour = 9 + (i * 2)
+                time_str = f"{hour:02d}:00"
+                
+                frontend_place = FrontendPlace(
+                    id=str(place['_id']),
+                    name=place.get('name', 'Unknown'),
+                    time=time_str,
+                    address=place.get('address', ''),
+                    location=place.get('location', {}),
+                    rating=place.get('rating', 0.0),
+                    estimated_duration=120  # 2시간
+                )
+                frontend_places.append(frontend_place)
+            
+            daily_schedule.append(FrontendDay(
+                day=day + 1,
+                date=(datetime.now() + timedelta(days=day)).strftime('%Y-%m-%d'),
+                places=frontend_places
+            ))
+    
+    return FrontendItineraryResponse(dailySchedule=daily_schedule)
 
 
 

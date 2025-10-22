@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🗺️ 카카오맵 코스 테스트 - 부산 여행</title>
-    <!-- 카카오맵 API 키는 JavaScript에서 동적으로 로드됩니다 -->
+    <!-- 카카오맵 SDK 직접 로드 (JavaScript 키 사용) -->
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=89fc5955b80f4c5ac937b020e1d7855c"></script>
     <style>
         * {
             margin: 0;
@@ -295,6 +296,187 @@
             color: #6c757d;
         }
 
+        /* 로그인 관련 스타일 */
+        .login-section {
+            margin-top: 20px;
+        }
+
+        .login-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-login:last-child {
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+        }
+
+        .btn-login:last-child:hover {
+            box-shadow: 0 5px 20px rgba(66, 133, 244, 0.4);
+        }
+
+        .login-icon {
+            font-size: 1.2em;
+        }
+
+        .user-section {
+            margin-top: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .user-avatar {
+            font-size: 2em;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 3px;
+        }
+
+        .user-email {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .btn-logout {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* 설문조사 관련 스타일 */
+        .survey-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #e9ecef;
+        }
+
+        .survey-question {
+            margin-bottom: 15px;
+        }
+
+        .survey-question label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+
+        .survey-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .survey-option {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .survey-option:hover {
+            border-color: #667eea;
+            background: #e3f2fd;
+        }
+
+        .survey-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .ml-recommendations {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #28a745;
+        }
+
+        .ml-recommendation-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ml-recommendation-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .ml-recommendation-item .score {
+            background: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
         @media (max-width: 1024px) {
             .content {
                 grid-template-columns: 1fr;
@@ -302,6 +484,16 @@
 
             .sidebar {
                 max-height: none;
+            }
+            
+            .login-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                text-align: center;
             }
         }
     </style>
@@ -311,19 +503,124 @@
         <div class="header">
             <h1>🗺️ 부산 여행 코스 경로 테스트</h1>
             <p>관광지를 선택하고 카카오맵에서 실제 경로를 확인해보세요!</p>
+            
+            <!-- 로그인 섹션 -->
+            <div class="login-section" id="login-section">
+                <div class="login-buttons">
+                    <button class="btn btn-login" onclick="loginWithKakao()">
+                        <span class="login-icon">💬</span> 카카오로 로그인
+                    </button>
+                    <button class="btn btn-login" onclick="loginWithGoogle()">
+                        <span class="login-icon">🔍</span> 구글로 로그인
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 사용자 정보 섹션 -->
+            <div class="user-section" id="user-section" style="display: none;">
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-details">
+                        <div class="user-name" id="user-name">사용자</div>
+                        <div class="user-email" id="user-email">user@example.com</div>
+                    </div>
+                    <button class="btn btn-logout" onclick="logout()">로그아웃</button>
+                </div>
+            </div>
         </div>
 
         <div class="content">
             <!-- 사이드바 -->
             <div class="sidebar">
-                <!-- 이동 수단 선택 -->
-                <div class="travel-mode-selector" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                    <label for="travel-mode" style="display: block; margin-bottom: 8px; font-weight: bold; color: #495057;">🚗 이동 수단 선택</label>
-                    <select id="travel-mode" style="width: 100%; padding: 10px; border: 2px solid #dee2e6; border-radius: 6px; font-size: 1em; background: white;">
-                        <option value="transit">🚇 대중교통 (추천)</option>
-                        <option value="driving">🚗 자동차</option>
-                        <option value="walking">🚶 도보</option>
-                    </select>
+                <!-- 설문조사 섹션 -->
+                <div class="survey-section" id="survey-section" style="display: none;">
+                    <h3>📋 개인화 설문조사</h3>
+                    <div class="survey-question">
+                        <label>🎯 어떤 활동을 선호하시나요?</label>
+                        <div class="survey-options">
+                            <div class="survey-option" data-value="culture" onclick="selectSurveyOption(this, 'activity')">문화</div>
+                            <div class="survey-option" data-value="nature" onclick="selectSurveyOption(this, 'activity')">자연</div>
+                            <div class="survey-option" data-value="food" onclick="selectSurveyOption(this, 'activity')">음식</div>
+                            <div class="survey-option" data-value="shopping" onclick="selectSurveyOption(this, 'activity')">쇼핑</div>
+                        </div>
+                    </div>
+                    <div class="survey-question">
+                        <label>⚡ 활동 강도는?</label>
+                        <div class="survey-options">
+                            <div class="survey-option" data-value="low" onclick="selectSurveyOption(this, 'activity_level')">낮음</div>
+                            <div class="survey-option" data-value="medium" onclick="selectSurveyOption(this, 'activity_level')">보통</div>
+                            <div class="survey-option" data-value="high" onclick="selectSurveyOption(this, 'activity_level')">높음</div>
+                        </div>
+                    </div>
+                    <div class="survey-question">
+                        <label>⏰ 여행 시간은?</label>
+                        <div class="survey-options">
+                            <div class="survey-option" data-value="morning" onclick="selectSurveyOption(this, 'time')">오전</div>
+                            <div class="survey-option" data-value="afternoon" onclick="selectSurveyOption(this, 'time')">오후</div>
+                            <div class="survey-option" data-value="evening" onclick="selectSurveyOption(this, 'time')">저녁</div>
+                            <div class="survey-option" data-value="all_day" onclick="selectSurveyOption(this, 'time')">하루종일</div>
+                        </div>
+                    </div>
+                    <div class="survey-question">
+                        <label>🌸 선호하는 계절은?</label>
+                        <div class="survey-options">
+                            <div class="survey-option" data-value="spring" onclick="selectSurveyOption(this, 'season')">봄</div>
+                            <div class="survey-option" data-value="summer" onclick="selectSurveyOption(this, 'season')">여름</div>
+                            <div class="survey-option" data-value="autumn" onclick="selectSurveyOption(this, 'season')">가을</div>
+                            <div class="survey-option" data-value="winter" onclick="selectSurveyOption(this, 'season')">겨울</div>
+                        </div>
+                    </div>
+                    <div class="survey-question">
+                        <label>💝 어떤 것을 선호하시나요?</label>
+                        <div class="survey-options">
+                            <div class="survey-option" data-value="quiet" onclick="selectSurveyOption(this, 'preference')">조용한 곳</div>
+                            <div class="survey-option" data-value="lively" onclick="selectSurveyOption(this, 'preference')">활기찬 곳</div>
+                            <div class="survey-option" data-value="traditional" onclick="selectSurveyOption(this, 'preference')">전통적인 곳</div>
+                            <div class="survey-option" data-value="modern" onclick="selectSurveyOption(this, 'preference')">현대적인 곳</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="submitSurvey()" id="submit-survey-btn" disabled>
+                        📝 설문조사 제출
+                    </button>
+                </div>
+
+                <!-- ML 추천 섹션 -->
+                <div class="ml-recommendations" id="ml-recommendations" style="display: none;">
+                    <h3>🤖 AI 개인화 추천</h3>
+                    <div id="ml-recommendation-list">
+                        <!-- ML 추천 결과가 여기에 표시됩니다 -->
+                    </div>
+                    <button class="btn btn-secondary" onclick="loadMLRecommendations()">
+                        🔄 추천 새로고침
+                    </button>
+                </div>
+
+                <!-- 여행 설정 -->
+                <div class="travel-settings" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 15px; color: #495057;">🎯 여행 설정</h4>
+                    
+                    <!-- 여행 기간 선택 -->
+                    <div style="margin-bottom: 15px;">
+                        <label for="travel-duration" style="display: block; margin-bottom: 8px; font-weight: bold; color: #495057;">📅 여행 기간</label>
+                        <select id="travel-duration" style="width: 100%; padding: 10px; border: 2px solid #dee2e6; border-radius: 6px; font-size: 1em; background: white;">
+                            <option value="auto">🤖 자동 계산 (장소 3개당 1일)</option>
+                            <option value="1">1일</option>
+                            <option value="2">2일</option>
+                            <option value="3">3일</option>
+                            <option value="4">4일</option>
+                            <option value="5">5일</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 이동 수단 선택 -->
+                    <div>
+                        <label for="travel-mode" style="display: block; margin-bottom: 8px; font-weight: bold; color: #495057;">🚗 이동 수단</label>
+                        <select id="travel-mode" style="width: 100%; padding: 10px; border: 2px solid #dee2e6; border-radius: 6px; font-size: 1em; background: white;">
+                            <option value="transit">🚇 대중교통 (추천)</option>
+                            <option value="driving">🚗 자동차</option>
+                            <option value="walking">🚶 도보</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- 추천 코스 -->
@@ -367,8 +664,8 @@
                 </div>
 
                 <!-- 버튼 -->
-                <button class="btn btn-primary" onclick="generateRoute()" id="generate-btn" disabled>
-                    🗺️ 경로 생성하기
+                <button class="btn btn-primary" onclick="generateRouteWithML()" id="generate-ml-btn" disabled style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    🤖 AI 최적화 코스 생성
                 </button>
                 <button class="btn btn-secondary" onclick="clearSelection()">
                     🔄 선택 초기화
@@ -423,37 +720,49 @@
         let markers = [];
         let polylines = [];
         let customOverlays = []; // 대중교통 정보 오버레이
+        
+        // 사용자 상태 관리
+        let currentUser = null;
+        let userToken = null;
+        let surveyCompleted = false;
+        let mlRecommendations = [];
+
+        // 설문조사 데이터
+        let surveyData = {
+            activity: null,
+            activity_level: null,
+            time: null,
+            season: null,
+            preference: null
+        };
 
         // 페이지 로드 시 초기화
         window.onload = async function() {
             try {
-                // 1. 먼저 API 키 로드
-                await loadKakaoAPIKey();
+                // 1. 사용자 로그인 상태 확인
+                await checkUserLoginStatus();
                 
-                // 2. DB에서 장소 로드
+                // 2. 카카오맵 SDK 로드 대기 (HTML에서 직접 로드됨)
+                console.log('✅ 카카오맵 SDK 로드 완료, 초기화 시작');
+                
+                // 3. DB에서 장소 로드
                 await loadPlacesFromDB();
                 
-                // 3. 장소 목록 UI 초기화
+                // 4. 장소 목록 UI 초기화
                 initPlaceList();
                 
-                // 4. 카카오맵 초기화 (SDK 로드 대기)
-                let retryCount = 0;
-                const maxRetries = 10;
+                // 5. 카카오맵 초기화 (SDK가 이미 로드됨)
+                console.log('🗺️ 카카오맵 초기화 시작');
+                console.log('🗺️ kakao 객체:', typeof kakao);
+                console.log('🗺️ kakao.maps 객체:', typeof kakao?.maps);
                 
-                const initMap = () => {
-                    if (typeof kakao !== 'undefined' && kakao.maps) {
-                        initKakaoMap();
-                        console.log('✅ 카카오맵 초기화 완료');
-                    } else if (retryCount < maxRetries) {
-                        retryCount++;
-                        console.log(`⏳ 카카오맵 SDK 로드 대기 중... (${retryCount}/${maxRetries})`);
-                        setTimeout(initMap, 500);
-                    } else {
-                        console.warn('⚠️ 카카오맵 SDK를 찾을 수 없습니다. 지도 기능이 비활성화됩니다.');
-                    }
-                };
-                
-                initMap();
+                if (typeof kakao !== 'undefined' && kakao.maps) {
+                    initKakaoMap();
+                    console.log('✅ 카카오맵 초기화 완료');
+                    console.log('🗺️ kakaoMap 객체:', kakaoMap);
+                } else {
+                    console.warn('⚠️ 카카오맵 SDK를 찾을 수 없습니다. 지도 기능이 비활성화됩니다.');
+                }
                 
                 console.log('✅ 카카오맵 코스 테스트 페이지 로드 완료');
             } catch (error) {
@@ -462,46 +771,6 @@
             }
         };
 
-        // 카카오맵 API 키 동적 로드
-        async function loadKakaoAPIKey() {
-            try {
-                console.log('🔑 카카오맵 API 키 로드 중...');
-                const response = await fetch(`${API_BASE_URL}/api/v1/config/kakao-javascript-key`);
-                
-                if (!response.ok) {
-                    throw new Error(`API 키 로드 실패: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                const apiKey = data.api_key;
-                
-                if (!apiKey) {
-                    throw new Error('API 키가 비어있습니다');
-                }
-                
-                console.log('✅ 카카오맵 API 키 로드 완료');
-                
-                // 동적으로 스크립트 태그 생성하여 카카오맵 SDK 로드
-                const script = document.createElement('script');
-                script.type = 'text/javascript';
-                script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}`;
-                script.async = true;
-                
-                script.onload = function() {
-                    console.log('✅ 카카오맵 SDK 로드 완료');
-                };
-                
-                script.onerror = function() {
-                    console.error('❌ 카카오맵 SDK 로드 실패');
-                };
-                
-                document.head.appendChild(script);
-                
-            } catch (error) {
-                console.error('❌ 카카오맵 API 키 로드 실패:', error);
-                throw error;
-            }
-        }
 
         // DB에서 실제 장소 데이터 로드
         async function loadPlacesFromDB() {
@@ -773,20 +1042,35 @@
         // 카카오맵 초기화
         function initKakaoMap() {
             try {
+                console.log('🗺️ initKakaoMap 함수 호출됨');
+                
                 if (typeof kakao === 'undefined') {
                     console.error('❌ Kakao SDK가 로드되지 않았습니다');
                     return;
                 }
                 
-            const container = document.getElementById('map');
-            const options = {
-                center: new kakao.maps.LatLng(35.1796, 129.0756), // 부산 중심
-                level: 8
-            };
-            kakaoMap = new kakao.maps.Map(container, options);
-            console.log('🗺️ 카카오맵 초기화 완료');
+                console.log('🗺️ Kakao SDK 확인됨');
+                
+                const container = document.getElementById('map');
+                console.log('🗺️ 지도 컨테이너:', container);
+                
+                if (!container) {
+                    console.error('❌ 지도 컨테이너를 찾을 수 없습니다');
+                    return;
+                }
+                
+                const options = {
+                    center: new kakao.maps.LatLng(35.1796, 129.0756), // 부산 중심
+                    level: 8
+                };
+                console.log('🗺️ 지도 옵션:', options);
+                
+                kakaoMap = new kakao.maps.Map(container, options);
+                console.log('🗺️ 카카오맵 객체 생성 완료:', kakaoMap);
+                console.log('🗺️ 카카오맵 초기화 완료');
             } catch (error) {
                 console.error('❌ 카카오맵 초기화 실패:', error);
+                console.error('❌ 오류 상세:', error.stack);
                 // 지도 없이도 계속 진행
             }
         }
@@ -812,6 +1096,7 @@
             if (selectedPlaces.length === 0) {
                 container.innerHTML = '<p style="color: #999; text-align: center;">장소를 선택해주세요</p>';
                 document.getElementById('generate-btn').disabled = true;
+                document.getElementById('generate-ml-btn').disabled = true;
             } else {
                 container.innerHTML = '';
                 selectedPlaces.forEach((name, idx) => {
@@ -823,7 +1108,32 @@
                     `;
                     container.appendChild(tag);
                 });
-                document.getElementById('generate-btn').disabled = selectedPlaces.length < 2;
+                
+                const canGenerate = selectedPlaces.length >= 2;
+                document.getElementById('generate-ml-btn').disabled = !canGenerate;
+                
+                // 여행 기간 자동 업데이트
+                updateTravelDurationOptions();
+            }
+        }
+        
+        // 여행 기간 옵션 업데이트
+        function updateTravelDurationOptions() {
+            const durationSelect = document.getElementById('travel-duration');
+            const currentValue = durationSelect.value;
+            
+            // 자동 계산된 기간
+            const autoCalculated = Math.max(1, Math.ceil(selectedPlaces.length / 3));
+            
+            // 자동 계산 옵션 텍스트 업데이트
+            const autoOption = durationSelect.querySelector('option[value="auto"]');
+            if (autoOption) {
+                autoOption.textContent = `🤖 자동 계산 (${autoCalculated}일, 장소 ${selectedPlaces.length}개 기준)`;
+            }
+            
+            // 자동 계산이 선택되어 있으면 업데이트
+            if (currentValue === 'auto') {
+                console.log(`📅 여행 기간 자동 업데이트: ${autoCalculated}일`);
             }
         }
 
@@ -895,61 +1205,10 @@
             // 대중교통 모드로 자동 설정
             document.getElementById('travel-mode').value = 'transit';
             
-            // 자동으로 경로 생성
-            setTimeout(() => generateRoute(), 500);
+            // 자동으로 AI 최적화 코스 생성
+            setTimeout(() => generateRouteWithML(), 500);
         }
 
-        // 경로 생성
-        async function generateRoute() {
-            if (selectedPlaces.length < 2) {
-                alert('최소 2개 이상의 장소를 선택해주세요.');
-                return;
-            }
-
-            showLoading();
-
-            try {
-                // 1단계: 장소 이름으로 ObjectId 조회
-                console.log('🔍 1단계: 장소 ID 조회 중...');
-                const placeIds = await getPlaceIds(selectedPlaces);
-
-                if (placeIds.length !== selectedPlaces.length) {
-                    throw new Error('일부 장소를 찾을 수 없습니다.');
-                }
-
-                // 2단계: 경로 데이터 요청
-                const travelMode = document.getElementById('travel-mode').value;
-                console.log(`🛣️ 2단계: 경로 계산 중... (이동수단: ${travelMode})`);
-                
-                const response = await fetch(`${API_BASE_URL}/api/v1/map/course-route`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        places: placeIds,
-                        mode: travelMode
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`API 오류: ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log('✅ 경로 데이터 수신:', data);
-
-                // 3단계: 지도에 표시
-                displayRouteOnMap(data);
-                displayRouteInfo(data);
-
-            } catch (error) {
-                console.error('❌ 경로 생성 실패:', error);
-                alert(`경로 생성 중 오류가 발생했습니다: ${error.message}`);
-            } finally {
-                hideLoading();
-            }
-        }
 
         // 장소 이름으로 ObjectId 조회
         async function getPlaceIds(placeNames) {
@@ -1018,10 +1277,16 @@
             return ids;
         }
 
-        // 지도에 경로 표시
+        // 지도에 경로 표시 (/course-route API 응답용)
         function displayRouteOnMap(data) {
+            console.log('🗺️ displayRouteOnMap 호출됨');
+            console.log('🗺️ kakaoMap 상태:', kakaoMap);
+            console.log('🗺️ kakao 객체 상태:', typeof kakao);
+            
             if (!kakaoMap || typeof kakao === 'undefined') {
                 console.warn('⚠️ 카카오맵이 초기화되지 않았습니다');
+                console.warn('⚠️ kakaoMap:', kakaoMap);
+                console.warn('⚠️ kakao:', typeof kakao);
                 alert('지도를 표시할 수 없지만, 경로 정보는 아래에서 확인할 수 있습니다.');
                 return;
             }
@@ -1061,26 +1326,35 @@
             });
 
             // 경로 표시 (각 구간별로 다른 색상!)
+            console.log('🗺️ 경로 표시 시작:', data.segments.length, '개 구간');
             data.segments.forEach((segment, segIdx) => {
-                // 기본 경로선 표시
-                const path = segment.polyline.map(coord => 
-                    new kakao.maps.LatLng(coord.lat, coord.lng)
-                );
+                try {
+                    console.log(`🗺️ 구간 ${segIdx + 1} 표시:`, segment.from_place, '→', segment.to_place);
+                    console.log(`🗺️ 구간 ${segIdx + 1} 좌표 개수:`, segment.polyline.length);
+                    
+                    // 기본 경로선 표시
+                    const path = segment.polyline.map(coord => 
+                        new kakao.maps.LatLng(coord.lat, coord.lng)
+                    );
 
-                const polyline = new kakao.maps.Polyline({
-                    path: path,
-                    strokeWeight: 5,
-                    strokeColor: segment.color,
-                    strokeOpacity: 0.7,
-                    strokeStyle: 'solid'
-                });
+                    const polyline = new kakao.maps.Polyline({
+                        path: path,
+                        strokeWeight: 5,
+                        strokeColor: segment.color,
+                        strokeOpacity: 0.7,
+                        strokeStyle: 'solid'
+                    });
 
-                polyline.setMap(kakaoMap);
-                polylines.push(polyline);
-                
-                // 상세 경로 단계 표시 (버스, 도보 등)
-                if (segment.steps && segment.steps.length > 0) {
-                    displayTransitStepsOnMap(segment, segIdx);
+                    polyline.setMap(kakaoMap);
+                    polylines.push(polyline);
+                    console.log(`🗺️ 구간 ${segIdx + 1} 경로선 표시 완료 (색상: ${segment.color})`);
+                    
+                    // 상세 경로 단계 표시 (버스, 도보 등)
+                    if (segment.steps && segment.steps.length > 0) {
+                        displayTransitStepsOnMap(segment, segIdx);
+                    }
+                } catch (error) {
+                    console.error(`❌ 구간 ${segIdx + 1} 표시 실패:`, error);
                 }
             });
 
@@ -1306,6 +1580,513 @@
 
         function hideLoading() {
             document.getElementById('loading').classList.remove('show');
+        }
+
+        // ============ 로그인 관련 함수들 ============
+        
+        // 사용자 로그인 상태 확인
+        async function checkUserLoginStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    currentUser = userData;
+                    showUserSection(userData);
+                    showSurveySection();
+                    console.log('✅ 사용자 로그인 상태 확인됨:', userData);
+                } else {
+                    showLoginSection();
+                    console.log('ℹ️ 로그인되지 않은 상태');
+                }
+            } catch (error) {
+                console.error('❌ 로그인 상태 확인 실패:', error);
+                showLoginSection();
+            }
+        }
+
+        // 카카오 로그인
+        function loginWithKakao() {
+            window.location.href = `${API_BASE_URL}/api/v1/auth/kakao/login`;
+        }
+
+        // 구글 로그인
+        function loginWithGoogle() {
+            window.location.href = `${API_BASE_URL}/api/v1/auth/google/login`;
+        }
+
+        // 로그아웃
+        async function logout() {
+            try {
+                await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                currentUser = null;
+                userToken = null;
+                surveyCompleted = false;
+                mlRecommendations = [];
+                
+                showLoginSection();
+                hideSurveySection();
+                hideMLRecommendations();
+                
+                console.log('✅ 로그아웃 완료');
+            } catch (error) {
+                console.error('❌ 로그아웃 실패:', error);
+            }
+        }
+
+        // 로그인 섹션 표시
+        function showLoginSection() {
+            document.getElementById('login-section').style.display = 'block';
+            document.getElementById('user-section').style.display = 'none';
+        }
+
+        // 사용자 섹션 표시
+        function showUserSection(userData) {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('user-section').style.display = 'block';
+            
+            document.getElementById('user-name').textContent = userData.name || '사용자';
+            document.getElementById('user-email').textContent = userData.email || 'user@example.com';
+        }
+
+        // 설문조사 섹션 표시
+        function showSurveySection() {
+            document.getElementById('survey-section').style.display = 'block';
+        }
+
+        // 설문조사 섹션 숨기기
+        function hideSurveySection() {
+            document.getElementById('survey-section').style.display = 'none';
+        }
+
+        // ML 추천 섹션 표시
+        function showMLRecommendations() {
+            document.getElementById('ml-recommendations').style.display = 'block';
+        }
+
+        // ML 추천 섹션 숨기기
+        function hideMLRecommendations() {
+            document.getElementById('ml-recommendations').style.display = 'none';
+        }
+
+        // ============ 설문조사 관련 함수들 ============
+
+        // 설문조사 옵션 선택
+        function selectSurveyOption(element, category) {
+            // 같은 카테고리의 다른 옵션들 선택 해제
+            const parent = element.parentElement;
+            parent.querySelectorAll('.survey-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // 현재 옵션 선택
+            element.classList.add('selected');
+            surveyData[category] = element.dataset.value;
+            
+            // 모든 항목이 선택되었는지 확인
+            checkSurveyCompletion();
+        }
+
+        // 설문조사 완료 상태 확인
+        function checkSurveyCompletion() {
+            const allSelected = Object.values(surveyData).every(value => value !== null);
+            const submitBtn = document.getElementById('submit-survey-btn');
+            
+            if (allSelected) {
+                submitBtn.disabled = false;
+                submitBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.style.background = '#6c757d';
+            }
+        }
+
+        // 설문조사 제출
+        async function submitSurvey() {
+            try {
+                console.log('📝 설문조사 제출 중:', surveyData);
+                
+                const response = await fetch(`${API_BASE_URL}/api/v1/survey/submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(surveyData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`설문조사 제출 실패: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('✅ 설문조사 제출 완료:', result);
+                
+                surveyCompleted = true;
+                
+                // ML 추천 섹션 표시
+                showMLRecommendations();
+                
+                // ML 추천 자동 로드
+                await loadMLRecommendations();
+                
+                alert('설문조사가 완료되었습니다! AI 추천을 확인해보세요.');
+                
+            } catch (error) {
+                console.error('❌ 설문조사 제출 실패:', error);
+                alert('설문조사 제출 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // ============ ML 추천 관련 함수들 ============
+
+        // ML 추천 로드
+        async function loadMLRecommendations() {
+            try {
+                console.log('🤖 ML 추천 로드 중...');
+                
+                const response = await fetch(`${API_BASE_URL}/api/v1/survey/ml-recommendations`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`ML 추천 로드 실패: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('✅ ML 추천 로드 완료:', result);
+                
+                mlRecommendations = result.recommendations || [];
+                displayMLRecommendations(mlRecommendations);
+                
+            } catch (error) {
+                console.error('❌ ML 추천 로드 실패:', error);
+                alert('ML 추천 로드 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // ML 추천 결과 표시
+        function displayMLRecommendations(recommendations) {
+            const container = document.getElementById('ml-recommendation-list');
+            container.innerHTML = '';
+
+            if (!recommendations || recommendations.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center;">추천 결과가 없습니다.</p>';
+                return;
+            }
+
+            recommendations.forEach((rec, index) => {
+                const item = document.createElement('div');
+                item.className = 'ml-recommendation-item';
+                item.onclick = () => addMLRecommendationToSelection(rec);
+                
+                item.innerHTML = `
+                    <div class="score">${(rec.score * 100).toFixed(0)}%</div>
+                    <div class="info">
+                        <div class="name">${rec.name || '장소명 없음'}</div>
+                        <div class="category">${rec.category || '카테고리 없음'}</div>
+                    </div>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+
+        // ML 추천 장소를 선택 목록에 추가
+        function addMLRecommendationToSelection(recommendation) {
+            const placeName = recommendation.name;
+            if (placeName && !selectedPlaces.includes(placeName)) {
+                selectedPlaces.push(placeName);
+                placeIdMap[placeName] = recommendation.place_id || recommendation.id;
+                updateSelectedPlaces();
+                updatePlaceListUI();
+                
+                console.log('✅ ML 추천 장소 추가:', placeName);
+            }
+        }
+
+        // ============ /generate API 연동 ============
+
+        // 새로운 경로 생성 (generate API 사용)
+        async function generateRouteWithML() {
+            if (selectedPlaces.length < 2) {
+                alert('최소 2개 이상의 장소를 선택해주세요.');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                // 1단계: 장소 이름으로 ObjectId 조회
+                console.log('🔍 1단계: 장소 ID 조회 중...');
+                console.log('🔍 선택된 장소들:', selectedPlaces);
+                const placeIds = await getPlaceIds(selectedPlaces);
+                console.log('🔍 조회된 장소 ID들:', placeIds);
+
+                if (placeIds.length !== selectedPlaces.length) {
+                    throw new Error('일부 장소를 찾을 수 없습니다.');
+                }
+                
+                if (placeIds.length === 0) {
+                    throw new Error('유효한 장소 ID가 없습니다.');
+                }
+
+                // 2단계: /generate API 호출
+                const travelMode = document.getElementById('travel-mode').value;
+                console.log(`🎯 2단계: /generate API 호출 중... (이동수단: ${travelMode})`);
+                
+                // 교통수단 매핑
+                const transportModeMap = {
+                    'transit': 'TRANSIT',
+                    'driving': 'DRIVE', 
+                    'walking': 'WALK'
+                };
+                
+                // 여행 기간 계산
+                const durationSelect = document.getElementById('travel-duration').value;
+                let travelDuration;
+                
+                if (durationSelect === 'auto') {
+                    // 자동 계산 (장소 3개당 1일, 최소 1일)
+                    travelDuration = Math.max(1, Math.ceil(placeIds.length / 3));
+                    console.log(`📅 자동 계산된 여행 기간: ${travelDuration}일 (장소 ${placeIds.length}개 기준)`);
+                } else {
+                    // 사용자 선택
+                    travelDuration = parseInt(durationSelect);
+                    console.log(`📅 사용자 선택된 여행 기간: ${travelDuration}일`);
+                }
+                
+                const requestData = {
+                    spots: placeIds,
+                    user_id: currentUser ? currentUser.id || currentUser.user_id : null,
+                    travelDuration: travelDuration,
+                    starting_point: placeIds[0], // 첫 번째 장소를 시작점으로
+                    transport_mode: transportModeMap[travelMode] || 'DRIVE',
+                    is_public: false,
+                    description: "AI 최적화 코스"
+                };
+                
+                console.log('📤 /generate API 요청 데이터:', requestData);
+
+                const response = await fetch(`${API_BASE_URL}/api/v1/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(requestData)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ /generate API 오류 응답:', errorText);
+                    throw new Error(`/generate API 오류: ${response.status} - ${errorText}`);
+                }
+
+                const data = await response.json();
+                console.log('✅ /generate API 응답:', data);
+
+                // 3단계: 결과 표시
+                displayGenerateResult(data);
+                
+                // 4단계: 지도에 경로 표시를 위해 /course-route API 호출
+                await displayRouteOnMapFromGenerate(data);
+
+            } catch (error) {
+                console.error('❌ /generate API 호출 실패:', error);
+                alert(`경로 생성 중 오류가 발생했습니다: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // /generate API 결과 표시
+        function displayGenerateResult(data) {
+            console.log('📊 받은 데이터 구조:', data);
+            
+            // 백엔드 응답 구조에 맞게 수정
+            if (!data || !data.dailySchedule || !Array.isArray(data.dailySchedule)) {
+                console.error('❌ 잘못된 데이터 구조:', data);
+                alert('생성된 코스 데이터가 올바르지 않습니다.');
+                return;
+            }
+
+            // 기존 경로 정보 초기화
+            document.getElementById('route-info').style.display = 'none';
+            clearMap();
+
+            // 새로운 코스 정보 표시
+            const container = document.getElementById('route-segments');
+            container.innerHTML = '';
+
+            let totalDistance = 0;
+            let totalDuration = 0;
+
+            data.dailySchedule.forEach((day, dayIdx) => {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'route-segment';
+                dayDiv.style.borderLeftColor = `hsl(${dayIdx * 60}, 70%, 50%)`;
+                
+                let dayHTML = `
+                    <div class="route-header" style="font-weight: bold; margin-bottom: 10px; font-size: 1.2em; color: #495057;">
+                        📅 ${day.day}일차
+                    </div>
+                `;
+
+                if (day.places && day.places.length > 0) {
+                    day.places.forEach((place, placeIdx) => {
+                        dayHTML += `
+                            <div style="margin-bottom: 8px; padding: 8px; background: #f8f9fa; border-radius: 4px;">
+                                <div style="font-weight: bold; color: #495057;">
+                                    ${placeIdx + 1}. ${place.name}
+                                </div>
+                                <div style="font-size: 0.9em; color: #666; margin-top: 3px;">
+                                    ${place.address || '주소 정보 없음'}
+                                </div>
+                                ${place.time ? `<div style="font-size: 0.85em; color: #888;">⏰ ${place.time}</div>` : ''}
+                                ${place.estimated_duration ? `<div style="font-size: 0.85em; color: #888;">⏱️ 예상 소요시간: ${place.estimated_duration}분</div>` : ''}
+                            </div>
+                        `;
+                    });
+                }
+
+                dayDiv.innerHTML = dayHTML;
+                container.appendChild(dayDiv);
+            });
+
+            // 총합 표시
+            const summary = document.createElement('div');
+            summary.className = 'alert alert-success';
+            summary.style.marginTop = '10px';
+            summary.innerHTML = `
+                <strong>🎯 AI 최적화 코스 생성 완료!</strong><br>
+                <strong>📊 총 ${data.dailySchedule.length}일 코스</strong><br>
+                <strong>📍 방문 장소: ${selectedPlaces.length}개</strong>
+            `;
+            container.appendChild(summary);
+
+            document.getElementById('route-info').style.display = 'block';
+        }
+
+        // /generate 결과를 지도에 표시 (/course-route API 사용)
+        async function displayRouteOnMapFromGenerate(data) {
+            if (!data.dailySchedule || !Array.isArray(data.dailySchedule)) return;
+
+            // 기존 마커/경로 제거
+            clearMap();
+
+            let allPlaces = [];
+            data.dailySchedule.forEach(day => {
+                if (day.places) {
+                    allPlaces = allPlaces.concat(day.places);
+                }
+            });
+
+            if (allPlaces.length === 0) return;
+
+            try {
+                // /course-route API 호출하여 상세 경로 데이터 가져오기
+                const placeIds = allPlaces.map(place => place.id);
+                const travelMode = document.getElementById('travel-mode').value;
+                
+                console.log('🗺️ /course-route API 호출 중...', { placeIds, travelMode });
+                
+                const response = await fetch(`${API_BASE_URL}/api/v1/map/course-route`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        places: placeIds,
+                        mode: travelMode
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`/course-route API 오류: ${response.status}`);
+                }
+
+                const routeData = await response.json();
+                console.log('✅ /course-route API 응답:', routeData);
+
+                // 카카오맵이 초기화되지 않은 경우 재시도
+                if (!kakaoMap || typeof kakao === 'undefined') {
+                    console.log('🗺️ 카카오맵 초기화 대기 중...');
+                    await waitForKakaoMap();
+                }
+
+                // 지도에 경로 표시
+                displayRouteOnMap(routeData);
+                
+            } catch (error) {
+                console.error('❌ /course-route API 호출 실패:', error);
+                // Fallback: 간단한 마커만 표시
+                displaySimpleMarkers(allPlaces);
+            }
+        }
+
+        // 카카오맵 초기화 대기
+        async function waitForKakaoMap() {
+            let retryCount = 0;
+            const maxRetries = 20;
+            
+            while (retryCount < maxRetries) {
+                if (kakaoMap && typeof kakao !== 'undefined') {
+                    console.log('🗺️ 카카오맵 초기화 확인됨');
+                    return;
+                }
+                
+                retryCount++;
+                console.log(`🗺️ 카카오맵 초기화 대기 중... (${retryCount}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            console.warn('⚠️ 카카오맵 초기화를 기다릴 수 없습니다');
+        }
+
+        // 간단한 마커 표시 (Fallback)
+        function displaySimpleMarkers(places) {
+            places.forEach((place, index) => {
+                if (place.location && place.location.coordinates && place.location.coordinates.length >= 2) {
+                    const [lng, lat] = place.location.coordinates;
+                    const position = new kakao.maps.LatLng(lat, lng);
+                    
+                    const marker = new kakao.maps.Marker({
+                        position: position,
+                        map: kakaoMap
+                    });
+
+                    const infowindow = new kakao.maps.InfoWindow({
+                        content: `
+                            <div style="padding:10px; min-width:150px;">
+                                <strong>${index + 1}. ${place.name}</strong><br>
+                                <small style="color:#666;">${place.address || ''}</small>
+                            </div>
+                        `
+                    });
+
+                    kakao.maps.event.addListener(marker, 'click', function() {
+                        infowindow.open(kakaoMap, marker);
+                    });
+
+                    markers.push({ marker, infowindow });
+                }
+            });
+
+            // 지도 중심 설정
+            if (places[0] && places[0].location && places[0].location.coordinates && places[0].location.coordinates.length >= 2) {
+                const [lng, lat] = places[0].location.coordinates;
+                const center = new kakao.maps.LatLng(lat, lng);
+                kakaoMap.setCenter(center);
+                kakaoMap.setLevel(8);
+            }
         }
     </script>
 </body>
