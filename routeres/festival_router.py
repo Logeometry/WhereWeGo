@@ -8,7 +8,7 @@ import json
 
 router = APIRouter(prefix="/festival", tags=["festival"])
 
-SERVICE_KEY = "pFhO7c0hyxvss8UdPm2CVpsS9kTrr813vQyjbEYg8xx8kQEqFjxGqL3CFlHks2VrGrsjgSKlB7Y5l1ZM9B6lbw=="
+SERVICE_KEY = os.getenv("FESTIVAL_API_KEY", "pFhO7c0hyxvss8UdPm2CVpsS9kTrr813vQyjbEYg8xx8kQEqFjxGqL3CFlHks2VrGrsjgSKlB7Y5l1ZM9B6lbw==")
 
 class FestivalItem(BaseModel):
     contentid: int
@@ -44,16 +44,15 @@ async def list_festivals(
         "serviceKey":     SERVICE_KEY,
         "MobileOS":       "ETC",
         "MobileApp":      "WhereWeGoApp",
-        "listYN":         "Y",
         "arrange":        arrange,
         "eventStartDate": today,
         "eventEndDate":   two_months,
         "pageNo":         pageNo,
         "numOfRows":      numOfRows,
         "_type":          "json",
-        "areaCode":       6,
+        "areaCode":       6,  # 부산 지역코드
     }
-    url = "http://apis.data.go.kr/B551011/KorService1/searchFestival1"
+    url = "http://apis.data.go.kr/B551011/KorService2/searchFestival2"
 
     async with httpx.AsyncClient() as client:
         resp = await client.get(url, params=params)
@@ -65,7 +64,13 @@ async def list_festivals(
     # ——————————————————
 
     if resp.status_code != 200:
-        raise HTTPException(502, "API 호출 실패")
+        error_detail = f"Festival API 호출 실패: HTTP {resp.status_code}"
+        try:
+            error_body = resp.text[:500]
+            error_detail += f"\n응답 내용: {error_body}"
+        except:
+            pass
+        raise HTTPException(502, error_detail)
 
     try:
         data = resp.json()
