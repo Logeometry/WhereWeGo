@@ -1,35 +1,33 @@
-# 부산 관광지 추천 서비스
+🏠 루트: 앱 초기화 및 전역 설정
+📦 assets: 정적 리소스
+🧩 components: 재사용 가능한 UI 컴포넌트
+  └── survey: 설문조사 전용 컴포넌트
+🌐 contexts: 전역 상태 관리
+📊 data: 정적 데이터 및 설정
+🪝 hooks: 커스텀 훅
+📄 pages: 페이지 컴포넌트
+  └── SurveyForm: 설문 폼 전용
 
-부산 지역 관광지를 사용자 맞춤형으로 추천하는 머신러닝 기반 관광 추천 시스템입니다
+의존성 설치
+처음 설치 시 기존 캐시 및 모듈 제거 후 재설치하는 것을 권장합니다.
+Remove-Item -Recurse -Force node_modules
+Remove-Item -Force package-lock.json
+npm install
 
-## 프로젝트 소개
+npm start
+기본 실행 주소: http://localhost:3000
 
-이 프로젝트는 사용자의 선호도와 여행 스타일에 맞는 부산 지역 관광지를 추천하는 서비스 개발을 목표로 합니다.    
-KAKAO API를 통해 수집한 관광지 데이터와 머신러닝 알고리즘을 활용하여 사용자의 취향에 맞는 관광지를 추천합니다.
+🛠 주요 라이브러리
+React: 18.0.0
 
-## 기술 스택
+MUI:
 
-- **Backend**: FastAPI
-- **Database**: MongoDB, PyMongo
-- **머신러닝**: pytorch
-- **API 통합**: Foursquare Places API
-- **Frontend**: React.Js, MUI, SCSS
+@mui/material 6.4.8
 
-## 코드 컨벤션
+@mui/icons-material 6.4.12
 
-### 명명 규칙
-- **모듈명**: snake_case, 기능을 직관적으로 표시 (예: data_processor)
-- **클래스명**: PascalCase (예: DataProcessor)
-- **함수명**: snake_case, 동사나 동사구로 시작 (예: get_recommendations())
-- **변수명**: snake_case, 약어 대신 직관적인 이름 사용 (예: place_id)
-- **상수명**: 대문자와 언더바 (예: MAX_RESULTS)
+Emotion (스타일링): 11.14.0
 
-### 코드 스타일
-- **들여쓰기**: 스페이스 4회
-- **공백**: 함수, 클래스 간 공백 1줄
-- **연산자**: 연산자 양쪽에 공백 추가 (예: top_k: int = 5)
+Framer Motion: 12.23.15
 
-### 코딩 패턴
-- **비동기 함수**: 데이터베이스 조회, API 요청, 파일 작업은 비동기 함수로 구현
-- **비동기 키워드**: async 함수, async with 컨텍스트 매니저 사용
-- **타입 힌팅**: 함수 파라미터와 반환값에 타입 힌팅 사용 (예: def get_data(user_id: str) -> dict:)
+React Router DOM: 7.4.1
