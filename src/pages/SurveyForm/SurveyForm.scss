@@ -1,0 +1,106 @@
+/* src/pages/SurveyForm.scss */
+.survey-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px 32px;
+}
+
+.survey-header .logo {
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+}
+
+.survey-form {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  padding: 20px 18px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.06);
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 14px;
+}
+.form-header h1 {
+  font-weight: 800;
+  font-size: 20px;
+  margin: 0 0 6px;
+}
+.form-header p {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
+}
+
+.question-block {
+  padding: 14px 0;
+  border-top: 1px dashed #eee;
+}
+.question-block:first-of-type {
+  border-top: 0;
+}
+.question-block h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.option-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 4px 6px 4px 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-size: 14px;
+  background: #fafafa;
+}
+.option-item input { accent-color: #ff6b6b; }
+
+.tags-container {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.tag {
+  user-select: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 9999px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+.tag.selected {
+  background: #ffefef;
+  border-color: #ffb3b3;
+  color: #b91c1c;
+}
+
+.slider { width: 100%; }
+.slider-values {
+  display: flex; justify-content: space-between;
+  color: #9ca3af; font-size: 12px; margin-top: 4px;
+}
+
+.rating { display: inline-flex; gap: 8px; }
+.rating input { display: none; }
+.rating label {
+  cursor: pointer;
+  padding: 6px 10px; border-radius: 8px;
+  border: 1px solid #e5e7eb; background: #fafafa; font-size: 13px;
+}
+.rating input:checked + label {
+  background: #e8f2ff; border-color: #b9dcff; color: #0b5db7;
+}
+
+.btn-container { text-align: center; margin-top: 10px; }
+.submit-btn {
+  background: #ff6b6b; color: #fff; border: 0;
+  padding: 12px 18px; border-radius: 12px; font-weight: 700;
+  box-shadow: 0 8px 20px rgba(255, 107, 107, .25);
+  cursor: pointer;
+}
+.submit-btn:hover { filter: brightness(1.03); }

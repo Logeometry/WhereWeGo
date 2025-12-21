@@ -1,0 +1,1355 @@
+// src/TouristDetailPage.scss
+
+// Enhanced Variables
+$primary-color: #3b82f6;
+$secondary-color: #6b7280;
+$accent-color: #10b981;
+$background-color: #f8fafc;
+$card-background: #ffffff;
+$text-color: #1f2937;
+$light-text-color: #6b7280;
+$border-color: #e5e7eb;
+$shadow-color: rgba(0, 0, 0, 0.1);
+$shadow-color-light: rgba(0, 0, 0, 0.05);
+$gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+$gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+
+// Mixins for responsiveness
+@mixin breakpoint-sm {
+  @media (min-width: 640px) {
+    @content;
+  }
+}
+
+@mixin breakpoint-md {
+  @media (min-width: 768px) {
+    @content;
+  }
+}
+
+@mixin breakpoint-lg {
+  @media (min-width: 1024px) {
+    @content;
+  }
+}
+
+@mixin breakpoint-xl {
+  @media (min-width: 1280px) {
+    @content;
+  }
+}
+
+// Enhanced Mixins
+@mixin glass-effect {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+// Loading Spinner Animation
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@mixin card-hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+@mixin smooth-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Enhanced Keyframe Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+// Base Styles
+.tourist-detail-page {
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: $background-color;
+  color: $text-color;
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+// Enhanced Floating Header
+.floating-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 16px 20px;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  @include smooth-transition;
+
+  &--transparent {
+    background: transparent;
+    
+    .back-button, .action-button {
+      @include glass-effect;
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.4);
+        transform: translateY(-2px);
+      }
+    }
+    
+    .back-text {
+      color: white;
+    }
+  }
+
+  &--scrolled {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    
+    .header-content {
+      max-width: 1200px;
+      width: 100%;
+    }
+    
+    .back-button, .action-button {
+      background: $background-color;
+      color: $text-color;
+      border: 1px solid $border-color;
+      
+      &:hover {
+        background: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+      }
+    }
+  }
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+  }
+
+  .back-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    @include smooth-transition;
+
+    .back-text {
+      display: none;
+      @include breakpoint-md {
+        display: inline;
+      }
+    }
+  }
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0;
+      background: $gradient-primary;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .rating-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 12px;
+
+    .action-button {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      @include smooth-transition;
+
+      &:hover {
+        transform: translateY(-2px) scale(1.05);
+      }
+
+      &--liked {
+        background: linear-gradient(135deg, #ec4899, #be185d) !important;
+        color: white !important;
+        
+        .heart-icon {
+          animation: pulse 0.6s ease;
+        }
+      }
+    }
+  }
+}
+
+// Enhanced Hero Section
+.hero-section {
+  position: relative;
+  width: 100%;
+  height: 80vh; // 데스크톱 높이
+  min-height: 600px; // 최소 높이 보장
+  overflow: visible; // hidden에서 visible로 변경 (sticky 작동을 위해)
+  display: flex;
+  align-items: flex-end;
+  z-index: 1;
+  
+  // 모바일에서는 줄여서 콘텐츠 공간 확보
+  @media (max-width: 1023px) {
+    height: 60vh; // 모바일에서는 화면의 60%만 차지
+    min-height: 400px;
+  }
+
+  .hero-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%; // 110%에서 100%로 변경
+    height: 100%; // 110%에서 100%로 변경
+    background-size: cover;
+    background-position: center;
+    @include smooth-transition;
+    transform: scale(1.1);
+    clip-path: inset(0); // scale 효과가 밖으로 나가지 않도록
+    
+    &.loaded {
+      animation: fadeIn 1s ease-out;
+      transform: scale(1);
+    }
+  }
+
+  .hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.8) 0%,
+      rgba(0, 0, 0, 0.4) 50%,
+      rgba(0, 0, 0, 0.1) 100%
+    );
+  }
+
+  // Weather Widget
+  .weather-widget {
+    position: absolute;
+    top: 100px;
+    left: 24px;
+    z-index: 10;
+    
+    .weather-content {
+      @include glass-effect;
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: white;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      
+      .weather-icon {
+        font-size: 28px;
+      }
+      
+      .weather-info {
+        .weather-temp {
+          font-size: 24px;
+          font-weight: 700;
+          line-height: 1;
+        }
+        
+        .weather-location {
+          font-size: 12px;
+          opacity: 0.8;
+        }
+      }
+    }
+  }
+
+  .floating-actions {
+    position: absolute;
+    top: 100px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 10;
+
+    .floating-button {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      @include glass-effect;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      @include smooth-transition;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+      &:hover {
+        transform: translateY(-4px) scale(1.1);
+        background: rgba(255, 255, 255, 0.4);
+      }
+    }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 10;
+    padding: 80px 24px 20px 24px; // 하단 패딩 더 줄임
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+
+    .content-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 24px; // CTA 버튼이 있던 위치로 이동
+
+      .category-tag {
+        background: $gradient-primary;
+        color: white;
+        padding: 10px 18px; // 패딩 증가
+        border-radius: 50px;
+        font-size: 0.9rem; // 폰트 크기 증가
+        font-weight: 600;
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        @include smooth-transition;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.6);
+        }
+      }
+
+      .tag {
+        @include glass-effect;
+        color: white;
+        padding: 8px 14px; // 패딩 증가
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+        @include smooth-transition;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+        }
+      }
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 8vw, 4rem);
+      font-weight: 800;
+      color: white;
+      margin-bottom: 20px;
+      text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 24px;
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 1rem;
+      margin-bottom: 24px;
+
+      .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+      }
+
+      .rating-info {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        
+        .star-icon {
+          color: #fbbf24;
+          filter: drop-shadow(0 2px 4px rgba(251, 191, 36, 0.5));
+        }
+        
+        .rating-score {
+          color: #fbbf24;
+          font-size: 1.125rem;
+        }
+        
+        .review-count {
+          font-size: 0.875rem;
+          color: rgba(255, 255, 255, 0.8);
+        }
+      }
+    }
+
+  }
+}
+
+// Enhanced Main Content Layout
+.main-content {
+  max-width: 1200px;
+  margin: 24px auto 0 auto; // 데스크톱 간격
+  padding: 24px;
+  position: relative;
+  z-index: 20;
+  
+  // 모바일에서는 더 큰 간격
+  @media (max-width: 1023px) {
+    margin: 60px auto 0 auto; // 모바일에서 더 큰 간격으로 한 화면에 적게 보이게
+    padding: 32px; // 모바일 좌우 여백 증가: 20px → 32px
+  }
+
+  .content-grid {
+    display: grid;
+    gap: 32px; // 데스크톱 간격
+    grid-template-columns: 1fr;
+    
+    // 모바일에서는 더 큰 간격
+    @media (max-width: 1023px) {
+      gap: 48px; // 모바일에서 카드 간 간격 증가
+    }
+
+    @include breakpoint-lg {
+      grid-template-columns: 2fr 1fr;
+      align-items: start;
+    }
+  }
+  
+  // 사이드바 스타일
+  .sidebar {
+    position: relative; // 특별 혜택 카드의 absolute 포지셔닝을 위한 기준점
+    
+    // 모바일에서는 자연스러운 높이
+    @media (max-width: 1023px) {
+      height: auto;
+      min-height: auto;
+    }
+    
+    @include breakpoint-lg {
+      position: relative;
+    }
+  }
+
+  .content-card {
+    background: $card-background;
+    border-radius: 24px;
+    box-shadow: 0 8px 32px $shadow-color-light;
+    padding: 32px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    @include smooth-transition;
+    
+    // 모바일에서 카드 크기와 폰트 증가
+    @media (max-width: 1023px) {
+      padding: 48px 32px; // 상하 패딩 증가
+      margin-bottom: 32px;
+      font-size: 1.1rem; // 기본 폰트 크기 증가
+      line-height: 1.7; // 줄 간격 증가
+    }
+    
+    &:hover {
+      @include card-hover;
+    }
+    
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: $text-color;
+      
+      // 모바일에서 제목 폰트 크기 증가
+      @media (max-width: 1023px) {
+        font-size: 1.8rem; // 제목 크기 증가
+        margin-bottom: 32px; // 하단 여백 증가
+      }
+      
+      // 아코디언 헤더 스타일 (모바일에서만)
+      &.accordion-header {
+        .title-content {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+        
+        @media (max-width: 1023px) {
+          cursor: pointer;
+          justify-content: space-between;
+          margin-bottom: 0;
+          padding-bottom: 16px;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+          
+          .accordion-icon {
+            transition: transform 0.3s ease;
+            color: $secondary-color;
+            
+            &.rotated {
+              transform: rotate(180deg);
+            }
+          }
+          
+          &:hover {
+            .accordion-icon {
+              color: $primary-color;
+            }
+          }
+        }
+        
+        @media (min-width: 1024px) {
+          cursor: default;
+          border-bottom: none;
+          
+          .accordion-icon {
+            display: none; // 데스크톱에서는 아이콘 숨김
+          }
+        }
+      }
+    }
+    
+    // 아코디언 콘텐츠 스타일
+    .accordion-content {
+      overflow: hidden;
+      transition: all 0.3s ease;
+      padding-top: 24px;
+    }
+    
+    // 모바일에서만 아코디언 동작
+    @media (max-width: 1023px) {
+      &.collapsed {
+        .accordion-content {
+          max-height: 0;
+          padding-top: 0;
+          padding-bottom: 0;
+          opacity: 0;
+        }
+      }
+      
+      &.expanded {
+        .accordion-content {
+          max-height: 1000px; // 충분히 큰 값
+          opacity: 1;
+        }
+      }
+    }
+    
+    // 데스크톱에서는 항상 펼쳐진 상태
+    @media (min-width: 1024px) {
+      .accordion-content {
+        max-height: none !important;
+        opacity: 1 !important;
+        padding-top: 24px !important;
+      }
+    }
+
+    .title-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      
+      &--blue { background: $gradient-primary; }
+      &--purple { background: $gradient-secondary; }
+      &--red { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); }
+      &--green { background: $gradient-success; }
+    }
+
+    .description-text {
+      font-size: 1.125rem;
+      line-height: 1.8;
+      color: $light-text-color;
+    }
+
+    // Crowding Card Styles
+    .crowding-loading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 24px;
+      text-align: center;
+      
+      .loading-spinner {
+        width: 24px;
+        height: 24px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #ff6b6b;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+    }
+
+    .crowding-error {
+      padding: 24px;
+      text-align: center;
+      color: #e74c3c;
+      background: rgba(231, 76, 60, 0.1);
+      border-radius: 12px;
+    }
+
+    .crowding-content {
+      .crowding-level {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(238, 90, 82, 0.1));
+        border-radius: 12px;
+        margin-bottom: 16px;
+
+        .level-label {
+          font-weight: 600;
+          color: $text-color;
+        }
+
+        .level-value {
+          font-weight: 700;
+          font-size: 1.2rem;
+          
+          &.level-very-crowded { color: #dc2626; } // 매우 혼잡 - 진한 빨강
+          &.level-crowded { color: #f59e0b; }      // 혼잡 - 주황
+          &.level-normal { color: #10b981; }       // 보통 - 초록
+          &.level-comfortable { color: #3b82f6; }  // 여유 - 파랑
+          &.level-empty { color: #6366f1; }        // 한산 - 보라
+          &.level-no-info { color: #6b7280; }      // 정보 없음 - 회색
+        }
+      }
+
+      .crowding-description {
+        color: $light-text-color;
+        line-height: 1.6;
+        
+        .api-message {
+          margin-top: 12px;
+          padding: 12px;
+          background: rgba(59, 130, 246, 0.1);
+          border-radius: 8px;
+          font-size: 0.9rem;
+          color: #3b82f6;
+        }
+      }
+    }
+
+    .crowding-placeholder {
+      padding: 24px;
+      text-align: center;
+      color: $light-text-color;
+      background: rgba(107, 114, 128, 0.1);
+      border-radius: 12px;
+    }
+  }
+
+  .sticky-card {
+    // 모바일에서는 일반적인 패딩
+    @media (max-width: 1023px) {
+      padding-bottom: 24px;
+    }
+    
+    // 데스크톱에서는 특별 혜택 카드 공간 확보
+    @include breakpoint-lg {
+      padding-bottom: 380px; // 특별 혜택 카드가 겹칠 공간 확보
+      position: sticky;
+      top: 120px;
+      align-self: flex-start;
+    }
+  }
+}
+
+// Enhanced Features Grid
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+
+  .feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.6));
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    @include smooth-transition;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      
+      &--wifi { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+      &--parking { background: linear-gradient(135deg, #10b981, #059669); }
+      &--cafe { background: linear-gradient(135deg, #f59e0b, #d97706); }
+      &--family { background: linear-gradient(135deg, #ec4899, #be185d); }
+    }
+    
+    span {
+      font-weight: 600;
+      color: $text-color;
+    }
+  }
+}
+
+// Enhanced Info List
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 32px;
+
+  .info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.8), rgba(241, 245, 249, 0.6));
+    border-radius: 16px;
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    @include smooth-transition;
+    
+    &:hover {
+      transform: translateX(4px);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.8));
+    }
+
+    .info-icon {
+      color: $primary-color;
+      flex-shrink: 0;
+      margin-top: 2px;
+      padding: 8px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+      border-radius: 8px;
+    }
+
+    .info-content {
+      flex-grow: 1;
+    }
+
+    .info-label {
+      font-size: 0.875rem;
+      color: $light-text-color;
+      margin-bottom: 4px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+
+    .info-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: $text-color;
+
+      a {
+        color: $primary-color;
+        text-decoration: none;
+        @include smooth-transition;
+        
+        &:hover {
+          color: darken($primary-color, 10%);
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+}
+
+// Enhanced Map Button
+.map-button {
+  width: 100%;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  color: $text-color;
+  border-radius: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  @include smooth-transition;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+
+  &:hover {
+    background: linear-gradient(135deg, #ffffff, #f1f5f9);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// Reviews Card
+.reviews-card {
+  .reviews-summary {
+    text-align: center;
+    
+    .rating-display {
+      .rating-number {
+        font-size: 4rem;
+        font-weight: 800;
+        color: $text-color;
+        margin-bottom: 8px;
+        background: $gradient-primary;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      
+      .rating-stars {
+        display: flex;
+        justify-content: center;
+        gap: 4px;
+        margin-bottom: 12px;
+        
+        .star-filled {
+          color: #fbbf24;
+          fill: #fbbf24;
+        }
+        
+        .star-empty {
+          color: #d1d5db;
+        }
+      }
+      
+      .review-count-text {
+        color: $light-text-color;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// Special Offer Container - 상세정보 위에 겹쳐서 배치
+.special-offer-container {
+  // 모바일에서는 일반적인 블록 요소로 배치
+  @media (max-width: 1023px) {
+    position: static;
+    margin-top: 24px;
+    transition: all 0.3s ease-in-out;
+    
+    &.hidden {
+      height: 0;
+      opacity: 0;
+      margin: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+  }
+  
+  // 데스크톱에서는 겹쳐서 배치
+  @include breakpoint-lg {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    transform: translateY(0);
+    z-index: 10;
+    
+    &.hidden {
+      opacity: 0;
+      transform: translateY(20px); // 아래로 살짝 이동하며 사라짐
+      pointer-events: none;
+    }
+  }
+}
+
+// Special Offer Card
+.special-offer-card {
+  background: $gradient-success !important;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  @include smooth-transition; // 부드러운 전환 효과 추가
+  
+  .close-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    backdrop-filter: blur(10px);
+    @include smooth-transition;
+    z-index: 10;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .offer-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+  }
+  
+  .offer-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: white;
+  }
+  
+  .offer-description {
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+  
+  .offer-button {
+    width: 100%;
+    background: white;
+    color: #059669;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    @include smooth-transition;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.95);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+  }
+}
+
+// Gallery Styles (Enhanced)
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+
+  .gallery-item {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    @include smooth-transition;
+    aspect-ratio: 1;
+
+    &:hover {
+      transform: scale(1.05);
+      
+      .gallery-overlay {
+        opacity: 1;
+      }
+    }
+
+    .gallery-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .gallery-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.3));
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      @include smooth-transition;
+      
+      .camera-icon {
+        color: white;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+      }
+    }
+  }
+}
+
+// Nearby Items (Enhanced)
+.nearby-grid, .list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  .nearby-item, .list-item {
+    display: flex;
+    align-items: center;
+    background: $card-background;
+    border: 1px solid $border-color;
+    border-radius: 16px;
+    overflow: hidden;
+    @include smooth-transition;
+    cursor: pointer;
+
+    &:hover {
+      @include card-hover;
+      border-color: $primary-color;
+    }
+
+    .nearby-content, .item-content {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding: 20px;
+      gap: 16px;
+    }
+
+    .nearby-image, .item-image {
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .nearby-info, .item-info {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nearby-title, .item-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: $text-color;
+      line-height: 1.3;
+    }
+
+    .nearby-subtitle, .item-subtitle {
+      font-size: 0.875rem;
+      color: $light-text-color;
+      font-weight: 500;
+    }
+
+    .chevron-icon {
+      color: $secondary-color;
+      margin-left: auto;
+      flex-shrink: 0;
+      @include smooth-transition;
+    }
+    
+    &:hover .chevron-icon {
+      transform: translateX(4px);
+      color: $primary-color;
+    }
+  }
+}
+
+// Enhanced Animations
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  opacity: 0;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  opacity: 0;
+}
+
+// Enhanced Pulse Animation
+@keyframes pulse {
+  0% { 
+    transform: scale(1);
+  }
+  50% { 
+    transform: scale(1.2);
+    filter: brightness(1.2);
+  }
+  100% { 
+    transform: scale(1);
+  }
+}
+
+// Loading Shimmer Effect
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 2s infinite;
+}
+
+// Not Found Styles
+.not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+  
+  .not-found-content {
+    max-width: 500px;
+    padding: 40px;
+    
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: $text-color;
+      margin-bottom: 24px;
+    }
+    
+    .cta-button {
+      background: $gradient-primary;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-weight: 600;
+      cursor: pointer;
+      @include smooth-transition;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+      }
+    }
+  }
+}
+
+// Responsive Adjustments
+@include breakpoint-sm {
+  .tourist-detail-page {
+    .hero-section {
+      .hero-content {
+        padding: 32px;
+        
+        .hero-title {
+          font-size: clamp(3rem, 10vw, 5rem);
+        }
+      }
+    }
+    
+    .main-content {
+      padding: 32px;
+      margin-top: 24px; // 간격 더 축소
+      
+      .content-card {
+        padding: 40px;
+      }
+    }
+  }
+}
+
+@include breakpoint-md {
+  .floating-header {
+    padding: 20px 32px;
+  }
+  
+  .hero-section {
+    height: 80vh;
+    
+    .weather-widget {
+      left: 32px;
+    }
+    
+    .floating-actions {
+      right: 32px;
+    }
+  }
+}
+
+@include breakpoint-lg {
+  .main-content {
+    .content-grid {
+      gap: 40px;
+    }
+  }
+}
+
+// Dark mode support (optional)
+@media (prefers-color-scheme: dark) {
+  .tourist-detail-page {
+    background-color: #0f172a;
+    color: #f1f5f9;
+    
+    .content-card {
+      background: #1e293b;
+      border-color: #334155;
+    }
+    
+    .floating-header--scrolled {
+      background: rgba(30, 41, 59, 0.95);
+    }
+  }
+}
+
+// Print styles
+@media print {
+  .floating-header,
+  .floating-actions,
+  .weather-widget,
+  .special-offer-card {
+    display: none !important;
+  }
+  
+  .hero-section {
+    height: auto;
+    min-height: 300px;
+  }
+  
+  .main-content {
+    margin-top: 0;
+  }
+}
+
+// Loading States
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 2rem;
+  
+  h2 {
+    margin-top: 1rem;
+    color: $secondary-color;
+    font-weight: 500;
+  }
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid $border-color;
+  border-top: 4px solid $primary-color;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.error-message {
+  color: #dc3545;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
