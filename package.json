@@ -27,6 +27,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:obfuscated": "npm run build && npm run obfuscate",
+    "obfuscate": "node scripts/obfuscate.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -47,6 +49,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "glob": "^8.1.0",
+    "javascript-obfuscator": "^4.1.0"
   },
   "proxy": "http://127.0.0.1:8000"
 }
