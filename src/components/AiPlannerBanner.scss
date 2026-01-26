@@ -1,100 +1,278 @@
+/* AiPlannerBanner.scss */
 .ai-banner {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 80px 100px;
-  background: url('../assets/banner.jpg') center center / cover no-repeat; // 기존 배경 유지
+  width: 100%;
+  max-width: 100%; /* 부모 영역을 넘지 않도록 */
+  --banner-min-h: clamp(420px, 58vh, 700px);
+  min-height: var(--banner-min-h);
+  overflow: hidden;
+  border-radius: 24px !important; /* 모든 모서리 둥글게 - 강제 적용 */
+  box-shadow: 0 12px 40px rgba(0,0,0,0.16);
+  isolation: isolate;
+  box-sizing: border-box; /* 여백 포함 계산 */
 
-  // 반응형: 960px 이하에서 세로 배치
-  @media (max-width: 960px) {
-    flex-direction: column;
-    text-align: center;
-    padding: 40px 20px;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(255, 255, 255, 0.5); // 배경 위에 약간의 반투명 오버레이 추가 (선택 사항)
+  /* 배경 */
+  &__bg {
+    position: absolute; 
+    inset: 0; 
     z-index: 0;
+    border-radius: 24px !important; /* 배경도 모든 모서리 둥글게 */
+    overflow: hidden; /* 이미지가 모서리 밖으로 나가지 않게 */
+
+    .ai-banner__bg-img {
+      position: absolute; 
+      inset: 0; 
+      width: 100%; 
+      height: 100%; 
+      object-fit: cover;
+      opacity: 0; 
+      transform: scale(1.04);
+      transition: opacity 800ms ease, transform 1600ms ease;
+      filter: saturate(1.05) contrast(1.02) brightness(0.9);
+      &.is-active { opacity: 1; transform: scale(1); }
+    }
+
+    .ai-banner__bg-gradient {
+      position: absolute; 
+      inset: 0;
+      background: linear-gradient(120deg,
+        rgba(8,16,26,0.72) 0%,
+        rgba(8,16,26,0.55) 40%,
+        rgba(8,16,26,0.10) 70%,
+        rgba(8,16,26,0) 100%);
+      mix-blend-mode: multiply; 
+      pointer-events: none;
+      border-radius: 24px !important; /* 그라디언트도 모든 모서리 둥글게 */
+    }
+
+    .ai-banner__shape-1, .ai-banner__shape-2 {
+      position: absolute; width: 360px; height: 360px; border-radius: 50%;
+      filter: blur(64px); opacity: 0.35; pointer-events: none; mix-blend-mode: screen;
+    }
+    .ai-banner__shape-1 { background: radial-gradient(closest-side, #61dafb, transparent 70%); bottom: -80px; left: -60px; }
+    .ai-banner__shape-2 { background: radial-gradient(closest-side, #90caf9, transparent 70%); top: -100px; right: -80px; }
   }
 
-  & > * {
-    position: relative;
+  /* 컨텐츠 */
+  &__content {
+    position: relative; 
     z-index: 1;
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center;
+    height: 100%;
+    min-height: var(--banner-min-h);
+    padding: clamp(16px, 3vw, 40px) clamp(12px, 3.5vw, 60px);
+    border-radius: 24px !important; /* 컨텐츠도 모든 모서리 둥글게 */
   }
 
   &__left {
-    max-width: 50%;
-    @media (max-width: 960px) {
-      max-width: 100%;
-      margin-bottom: 40px;
-    }
+    color: #fff;
+    max-width: min(820px, 78vw);
+    display: flex; flex-direction: column; gap: clamp(10px, 1.2vw, 16px);
   }
 
+  /* 타이틀: 2줄까지 자연스럽게 */
   &__title {
-    font-weight: 700;
-    margin-bottom: 45px; /* 제목과 부제목 사이 간격 유지 */
-    line-height: 1.3;
-    font-size: 2.8rem;
-    color: #2c3e50;
+    margin: 0;
+    font-weight: 800 !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.3px;
+    font-size: clamp(22px, 4vw, 48px) !important;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.35);
+
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: clip;
+    word-break: keep-all;
+    hyphens: none;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* 최대 2줄 */
+    -webkit-box-orient: vertical;
+
+    text-wrap: balance; /* 지원 브라우저에서 균형 줄바꿈 */
   }
 
   &__subtitle {
-    margin-bottom:  30px !important; 
-    color: #555;
-    font-size: 1.1rem;
-    line-height: 1.7;
+    margin: 0;
+    opacity: 0.95;
+    font-size: clamp(12px, 1.5vw, 18px) !important;
+    word-break: keep-all;
+    line-height: 1.5 !important;
   }
 
   &__hashtags {
-    margin-bottom: 40px; /* 해시태그와 버튼 사이 간격 감소 */
-    display: flex;
-    gap: 25px; /* 해시태그 내부 간격 유지 */
+    margin-top: 4px;
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  &__chip {
+    white-space: nowrap;
+    background: rgba(255,255,255,0.14) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.22) !important;
+    backdrop-filter: blur(6px);
+    font-weight: 600 !important;
+    font-size: clamp(11px, 1.2vw, 14px) !important;
+    height: auto !important;
+    padding: 4px 10px !important;
   }
 
-  &__hashtags > span.hashtag {
-    display: inline-block;
-    background-color: #e6f7ff;
-    color: #1890ff;
-    padding: 8px 16px;
-    border-radius: 25px;
-    font-size: 0.95rem;
-  }
-
-  &__btn {
-    margin-top: 0; /* 버튼 위쪽 margin 초기화 */
-    text-transform: none;
-    font-weight: 600;
-    border-radius: 25px;
-    padding: 14px 30px;
-    font-size: 1.1rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease;
-
-    &:hover {
-      background-color: #1d39c4;
+  &__cta {
+    margin-top: 12px;
+    display: flex; gap: 10px; flex-wrap: wrap; row-gap: 8px;
+    .ai-banner__btn, .ai-banner__btn-secondary {
+      white-space: nowrap; 
+      line-height: 1.3; 
+      min-height: clamp(40px, 5.5vw, 48px);
+      padding: clamp(10px, 1.5vw, 14px) clamp(14px, 2.5vw, 20px) !important; 
+      border-radius: 12px !important; 
+      font-weight: 700 !important;
+      font-size: clamp(13px, 1.4vw, 16px) !important;
+      transition: all 0.2s ease;
+    }
+    .ai-banner__btn {
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+      }
+    }
+    .ai-banner__btn-secondary {
+      border-color: rgba(255,255,255,0.6) !important;
+      color: #fff !important; 
+      background: rgba(255,255,255,0.08) !important; 
+      backdrop-filter: blur(6px);
+      &:hover {
+        background: rgba(255,255,255,0.15) !important;
+        border-color: rgba(255,255,255,0.8) !important;
+      }
     }
   }
 
-  &__right {
-    max-width: 45%;
-    display: flex;
-    justify-content: flex-end;
-    @media (max-width: 960px) {
-      max-width: 80%;
-      justify-content: center;
-      margin-top: 40px;
-    }
+  &__caption { margin-top: 6px; color:#fff; opacity: 0.85; }
+
+  /* 하단 컨트롤 바(<> + dots) */
+  &__controls {
+    position: absolute; right: clamp(16px, 3vw, 28px); bottom: clamp(12px, 2.2vw, 20px);
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.25);
+    padding: 8px 10px; border-radius: 999px; backdrop-filter: blur(6px);
+  }
+  .ctrl-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 50%; border: 0; cursor: pointer;
+    background: rgba(0,0,0,0.35); color: #fff;
+    transition: background .2s ease;
+    &:hover { background: rgba(0,0,0,0.55); }
   }
 
-  &__image {
-    width: 80%;
-    max-width: 450px;
+  &__dots { display: flex; gap: 8px; }
+  &__dot {
+    width: 8px; height: 8px; border-radius: 50%; border: none; cursor: pointer;
+    background: rgba(255,255,255,0.5); transition: transform .2s ease, background .2s ease;
+    &.is-active { background: #fff; transform: scale(1.2); }
+  }
+
+  /* 반응형 */
+  @media (max-width: 900px) {
+    --banner-min-h: clamp(350px, 52vh, 580px);
+    &__left { max-width: 94vw; }
+    &__controls { right: 12px; bottom: 10px; padding: 6px 8px; }
+    &__content { padding: clamp(14px, 2.5vw, 32px) clamp(10px, 2.8vw, 48px); }
+  }
+
+  @media (max-width: 640px) {
+    --banner-min-h: clamp(320px, 48vh, 520px);
+    border-radius: 16px !important; /* 모바일에서도 둥근 모서리 유지 */
+    
+    &__content { 
+      padding: 16px 12px 20px 12px; 
+      justify-content: flex-end; /* 하단 정렬 */
+      padding-bottom: 24px;
+    }
+    
+    &__left { 
+      max-width: 100%; 
+      gap: 8px;
+    }
+    
+    &__title {
+      font-size: clamp(20px, 5.5vw, 28px) !important;
+      line-height: 1.25 !important;
+    }
+    
+    &__subtitle {
+      font-size: clamp(11px, 3.2vw, 14px) !important;
+      opacity: 0.92;
+      br { display: none; } /* 모바일에서 줄바꿈 제거 */
+    }
+    
+    &__hashtags { 
+      gap: 5px; 
+      margin-top: 6px;
+    }
+    
+    &__chip {
+      font-size: 10px !important;
+      padding: 3px 8px !important;
+      height: 22px !important;
+    }
+    
+    &__cta { 
+      margin-top: 10px;
+      gap: 8px;
+      .ai-banner__btn, .ai-banner__btn-secondary { 
+        flex: 1;
+        min-width: 0;
+        padding: 11px 16px !important;
+        font-size: 13px !important;
+        min-height: 42px;
+      }
+    }
+    
+    &__controls { 
+      right: 10px; 
+      bottom: 8px; 
+      padding: 5px 7px;
+      gap: 6px;
+    }
+    
+    .ctrl-btn { 
+      width: 28px; 
+      height: 28px; 
+      svg { font-size: 14px; }
+    }
+    
+    &__dot { 
+      width: 6px; 
+      height: 6px; 
+    }
+  }
+  
+  /* 아주 작은 화면 (360px 이하) */
+  @media (max-width: 380px) {
+    --banner-min-h: clamp(280px, 45vh, 480px);
+    
+    &__content { padding: 14px 10px 18px 10px; }
+    
+    &__title {
+      font-size: 18px !important;
+    }
+    
+    &__subtitle {
+      font-size: 11px !important;
+    }
+    
+    &__cta {
+      flex-direction: column;
+      gap: 6px;
+      .ai-banner__btn, .ai-banner__btn-secondary {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 14px !important;
+        font-size: 12px !important;
+        min-height: 38px;
+      }
+    }
   }
 }

@@ -9,16 +9,17 @@ const TouristList = ({ items }) => {
   const navigate = useNavigate();
   const { isWishlisted, addToWishlist, removeFromWishlist } = useWishlist();
 
-  const handleItemClick = (_id) => {
-    navigate(`/tourist/${_id}`);
+  const handleItemClick = (id) => {
+    navigate(`/tourist/${id}`);
   };
 
   const handleWishlistToggle = (event, item) => {
     event.stopPropagation();
-    if (isWishlisted(item._id)) {
-      removeFromWishlist(item._id);
+    const itemId = item.id || item._id;
+    if (isWishlisted(itemId)) {
+      removeFromWishlist(itemId);
     } else {
-      addToWishlist(item._id);
+      addToWishlist(itemId);
     }
   };
 
@@ -31,7 +32,7 @@ const TouristList = ({ items }) => {
       ) : (
         items.map((item, idx) => (
           <Card
-            key={item._id}
+            key={item.id || item._id}
             sx={{
               display: 'flex',
               flexDirection: 'column',
@@ -42,12 +43,12 @@ const TouristList = ({ items }) => {
                 boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
               },
             }}
-            onClick={() => handleItemClick(item._id)}
+            onClick={() => handleItemClick(item.id || item._id)}
           >
             <CardMedia
               component="img"
               height="180"
-              image={`/images/${item._id}.jpg`}
+              image={`/images/${item.id || item._id}.jpg`}
               alt={item.name}
               sx={{ objectFit: 'cover' }}
             />
@@ -73,8 +74,8 @@ const TouristList = ({ items }) => {
               >
                 <Heart
                   size={20}
-                  color={isWishlisted(item._id) ? '#dc3545' : '#777'}
-                  fill={isWishlisted(item._id) ? '#dc3545' : 'none'}
+                  color={isWishlisted(item.id || item._id) ? '#dc3545' : '#777'}
+                  fill={isWishlisted(item.id || item._id) ? '#dc3545' : 'none'}
                 />
               </IconButton>
             </CardContent>

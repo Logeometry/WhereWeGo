@@ -47,6 +47,12 @@ $gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
+// Loading Spinner Animation
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 @mixin card-hover {
   transform: translateY(-4px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
@@ -262,22 +268,30 @@ $gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 .hero-section {
   position: relative;
   width: 100%;
-  height: 100vh;
-  overflow: hidden;
+  height: 80vh; // 데스크톱 높이
+  min-height: 600px; // 최소 높이 보장
+  overflow: visible; // hidden에서 visible로 변경 (sticky 작동을 위해)
   display: flex;
   align-items: flex-end;
   z-index: 1;
+  
+  // 모바일에서는 줄여서 콘텐츠 공간 확보
+  @media (max-width: 1023px) {
+    height: 60vh; // 모바일에서는 화면의 60%만 차지
+    min-height: 400px;
+  }
 
   .hero-background {
     position: absolute;
     top: 0;
     left: 0;
-    width: 110%;
-    height: 110%;
+    width: 100%; // 110%에서 100%로 변경
+    height: 100%; // 110%에서 100%로 변경
     background-size: cover;
     background-position: center;
     @include smooth-transition;
     transform: scale(1.1);
+    clip-path: inset(0); // scale 효과가 밖으로 나가지 않도록
     
     &.loaded {
       animation: fadeIn 1s ease-out;
@@ -367,11 +381,10 @@ $gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   .hero-content {
     position: relative;
     z-index: 10;
-    padding: 24px;
+    padding: 80px 24px 20px 24px; // 하단 패딩 더 줄임
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding-bottom: 60px;
 
     .content-wrapper {
       display: flex;
@@ -383,26 +396,38 @@ $gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 16px;
+      margin-top: 24px; // CTA 버튼이 있던 위치로 이동
 
       .category-tag {
         background: $gradient-primary;
         color: white;
-        padding: 8px 16px;
+        padding: 10px 18px; // 패딩 증가
         border-radius: 50px;
-        font-size: 0.875rem;
+        font-size: 0.9rem; // 폰트 크기 증가
         font-weight: 600;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        @include smooth-transition;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.6);
+        }
       }
 
       .tag {
         @include glass-effect;
         color: white;
-        padding: 6px 12px;
+        padding: 8px 14px; // 패딩 증가
         border-radius: 50px;
         font-size: 0.875rem;
         font-weight: 500;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+        @include smooth-transition;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+        }
       }
     }
 
@@ -455,44 +480,51 @@ $gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
       }
     }
 
-    .cta-button {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: $gradient-primary;
-      color: white;
-      padding: 16px 32px;
-      border-radius: 50px;
-      font-size: 1.125rem;
-      font-weight: 700;
-      cursor: pointer;
-      @include smooth-transition;
-      width: fit-content;
-      box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4);
-
-      &:hover {
-        transform: translateY(-4px) scale(1.05);
-        box-shadow: 0 12px 40px rgba(59, 130, 246, 0.6);
-      }
-    }
   }
 }
 
 // Enhanced Main Content Layout
 .main-content {
   max-width: 1200px;
-  margin: -80px auto 0 auto;
+  margin: 24px auto 0 auto; // 데스크톱 간격
   padding: 24px;
   position: relative;
   z-index: 20;
+  
+  // 모바일에서는 더 큰 간격
+  @media (max-width: 1023px) {
+    margin: 60px auto 0 auto; // 모바일에서 더 큰 간격으로 한 화면에 적게 보이게
+    padding: 32px; // 모바일 좌우 여백 증가: 20px → 32px
+  }
 
   .content-grid {
     display: grid;
-    gap: 32px;
+    gap: 32px; // 데스크톱 간격
     grid-template-columns: 1fr;
+    
+    // 모바일에서는 더 큰 간격
+    @media (max-width: 1023px) {
+      gap: 48px; // 모바일에서 카드 간 간격 증가
+    }
 
     @include breakpoint-lg {
       grid-template-columns: 2fr 1fr;
+      align-items: start;
+    }
+  }
+  
+  // 사이드바 스타일
+  .sidebar {
+    position: relative; // 특별 혜택 카드의 absolute 포지셔닝을 위한 기준점
+    
+    // 모바일에서는 자연스러운 높이
+    @media (max-width: 1023px) {
+      height: auto;
+      min-height: auto;
+    }
+    
+    @include breakpoint-lg {
+      position: relative;
     }
   }
 
@@ -504,6 +536,14 @@ $gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     margin-bottom: 24px;
     border: 1px solid rgba(255, 255, 255, 0.8);
     @include smooth-transition;
+    
+    // 모바일에서 카드 크기와 폰트 증가
+    @media (max-width: 1023px) {
+      padding: 48px 32px; // 상하 패딩 증가
+      margin-bottom: 32px;
+      font-size: 1.1rem; // 기본 폰트 크기 증가
+      line-height: 1.7; // 줄 간격 증가
+    }
     
     &:hover {
       @include card-hover;
@@ -517,20 +557,103 @@ $gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
       font-weight: 700;
       margin-bottom: 24px;
       color: $text-color;
-
-      .title-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 16px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: white;
-        
-        &--blue { background: $gradient-primary; }
-        &--purple { background: $gradient-secondary; }
-        &--green { background: $gradient-success; }
+      
+      // 모바일에서 제목 폰트 크기 증가
+      @media (max-width: 1023px) {
+        font-size: 1.8rem; // 제목 크기 증가
+        margin-bottom: 32px; // 하단 여백 증가
       }
+      
+      // 아코디언 헤더 스타일 (모바일에서만)
+      &.accordion-header {
+        .title-content {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+        
+        @media (max-width: 1023px) {
+          cursor: pointer;
+          justify-content: space-between;
+          margin-bottom: 0;
+          padding-bottom: 16px;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+          
+          .accordion-icon {
+            transition: transform 0.3s ease;
+            color: $secondary-color;
+            
+            &.rotated {
+              transform: rotate(180deg);
+            }
+          }
+          
+          &:hover {
+            .accordion-icon {
+              color: $primary-color;
+            }
+          }
+        }
+        
+        @media (min-width: 1024px) {
+          cursor: default;
+          border-bottom: none;
+          
+          .accordion-icon {
+            display: none; // 데스크톱에서는 아이콘 숨김
+          }
+        }
+      }
+    }
+    
+    // 아코디언 콘텐츠 스타일
+    .accordion-content {
+      overflow: hidden;
+      transition: all 0.3s ease;
+      padding-top: 24px;
+    }
+    
+    // 모바일에서만 아코디언 동작
+    @media (max-width: 1023px) {
+      &.collapsed {
+        .accordion-content {
+          max-height: 0;
+          padding-top: 0;
+          padding-bottom: 0;
+          opacity: 0;
+        }
+      }
+      
+      &.expanded {
+        .accordion-content {
+          max-height: 1000px; // 충분히 큰 값
+          opacity: 1;
+        }
+      }
+    }
+    
+    // 데스크톱에서는 항상 펼쳐진 상태
+    @media (min-width: 1024px) {
+      .accordion-content {
+        max-height: none !important;
+        opacity: 1 !important;
+        padding-top: 24px !important;
+      }
+    }
+
+    .title-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      
+      &--blue { background: $gradient-primary; }
+      &--purple { background: $gradient-secondary; }
+      &--red { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); }
+      &--green { background: $gradient-success; }
     }
 
     .description-text {
@@ -538,10 +661,94 @@ $gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
       line-height: 1.8;
       color: $light-text-color;
     }
+
+    // Crowding Card Styles
+    .crowding-loading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 24px;
+      text-align: center;
+      
+      .loading-spinner {
+        width: 24px;
+        height: 24px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #ff6b6b;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+    }
+
+    .crowding-error {
+      padding: 24px;
+      text-align: center;
+      color: #e74c3c;
+      background: rgba(231, 76, 60, 0.1);
+      border-radius: 12px;
+    }
+
+    .crowding-content {
+      .crowding-level {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(238, 90, 82, 0.1));
+        border-radius: 12px;
+        margin-bottom: 16px;
+
+        .level-label {
+          font-weight: 600;
+          color: $text-color;
+        }
+
+        .level-value {
+          font-weight: 700;
+          font-size: 1.2rem;
+          
+          &.level-very-crowded { color: #dc2626; } // 매우 혼잡 - 진한 빨강
+          &.level-crowded { color: #f59e0b; }      // 혼잡 - 주황
+          &.level-normal { color: #10b981; }       // 보통 - 초록
+          &.level-comfortable { color: #3b82f6; }  // 여유 - 파랑
+          &.level-empty { color: #6366f1; }        // 한산 - 보라
+          &.level-no-info { color: #6b7280; }      // 정보 없음 - 회색
+        }
+      }
+
+      .crowding-description {
+        color: $light-text-color;
+        line-height: 1.6;
+        
+        .api-message {
+          margin-top: 12px;
+          padding: 12px;
+          background: rgba(59, 130, 246, 0.1);
+          border-radius: 8px;
+          font-size: 0.9rem;
+          color: #3b82f6;
+        }
+      }
+    }
+
+    .crowding-placeholder {
+      padding: 24px;
+      text-align: center;
+      color: $light-text-color;
+      background: rgba(107, 114, 128, 0.1);
+      border-radius: 12px;
+    }
   }
 
   .sticky-card {
+    // 모바일에서는 일반적인 패딩
+    @media (max-width: 1023px) {
+      padding-bottom: 24px;
+    }
+    
+    // 데스크톱에서는 특별 혜택 카드 공간 확보
     @include breakpoint-lg {
+      padding-bottom: 380px; // 특별 혜택 카드가 겹칠 공간 확보
       position: sticky;
       top: 120px;
       align-self: flex-start;
@@ -720,12 +927,72 @@ $gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   }
 }
 
+// Special Offer Container - 상세정보 위에 겹쳐서 배치
+.special-offer-container {
+  // 모바일에서는 일반적인 블록 요소로 배치
+  @media (max-width: 1023px) {
+    position: static;
+    margin-top: 24px;
+    transition: all 0.3s ease-in-out;
+    
+    &.hidden {
+      height: 0;
+      opacity: 0;
+      margin: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+  }
+  
+  // 데스크톱에서는 겹쳐서 배치
+  @include breakpoint-lg {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    transform: translateY(0);
+    z-index: 10;
+    
+    &.hidden {
+      opacity: 0;
+      transform: translateY(20px); // 아래로 살짝 이동하며 사라짐
+      pointer-events: none;
+    }
+  }
+}
+
 // Special Offer Card
 .special-offer-card {
   background: $gradient-success !important;
   color: white;
   position: relative;
   overflow: hidden;
+  @include smooth-transition; // 부드러운 전환 효과 추가
+  
+  .close-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    backdrop-filter: blur(10px);
+    @include smooth-transition;
+    z-index: 10;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+  }
   
   &::before {
     content: '';
@@ -985,7 +1252,7 @@ $gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     
     .main-content {
       padding: 32px;
-      margin-top: -100px;
+      margin-top: 24px; // 간격 더 축소
       
       .content-card {
         padding: 40px;
@@ -1054,4 +1321,35 @@ $gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   .main-content {
     margin-top: 0;
   }
+}
+
+// Loading States
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 2rem;
+  
+  h2 {
+    margin-top: 1rem;
+    color: $secondary-color;
+    font-weight: 500;
+  }
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid $border-color;
+  border-top: 4px solid $primary-color;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.error-message {
+  color: #dc3545;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
 }

@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useContext } from 'react';
+// src/components/Header.jsx
+import React, { useState, useEffect } from 'react';
 import {
-  AppBar, Toolbar, Typography, IconButton, Box, Drawer, List, ListItem,
-  ListItemIcon, ListItemText, Divider, Avatar, TextField, InputAdornment, Button
+  AppBar, Toolbar, Typography, IconButton, Box, Drawer, List, Divider, Avatar,
+  Button, ListItemButton, ListItemIcon, ListItemText
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import SearchIcon from '@mui/icons-material/Search';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import PublicIcon from '@mui/icons-material/Public';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import AddLocationIcon from '@mui/icons-material/AddLocation';
 
 // 카테고리 아이콘
 import PaletteIcon from '@mui/icons-material/Palette';
@@ -17,64 +18,43 @@ import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';
 import WavesIcon from '@mui/icons-material/Waves';
 import AttractionsIcon from '@mui/icons-material/Attractions';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import PetsIcon from '@mui/icons-material/Pets';
-import AcUnitIcon from '@mui/icons-material/AcUnit';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
-import CloseIcon from '@mui/icons-material/Close';
 
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './Header.scss';
-import { SearchContext } from '../SearchContext';
 import axios from 'axios';
+import AddTouristSpotForm from './AddTouristSpotForm';
 
-const API_BASE = process.env.REACT_APP_API_PREFIX || 'http://localhost:8000';
+const API_BASE = process.env.REACT_APP_API_PREFIX;
 
 const Header = ({ onSelectCategory = () => {} }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [addTouristFormOpen, setAddTouristFormOpen] = useState(false);
   const [user, setUser] = useState(null);
 
   const navigate = useNavigate();
-  const location = useLocation();
 
-  const { recentSearches, updateSearches, removeSearch, clearAllSearches } = useContext(SearchContext);
+  const categoryList = [
+    { label: '공연관람',   icon: <PaletteIcon /> },
+    { label: '예술 감상', icon: <PaletteIcon /> },
+    { label: '관람및체험', icon: <MovieIcon /> },
+    { label: '자연산림',   icon: <NatureIcon /> },
+    { label: '자연풍경',   icon: <WavesIcon /> },
+    { label: '테마거리',   icon: <ShoppingBagIcon /> },
+    { label: '트레킹',     icon: <DirectionsWalkIcon /> },
+    { label: '휴양',       icon: <AttractionsIcon /> },
+  ];
 
-  const handleRemoveSearch = (index) => removeSearch(index);
+  // “관광지 추가”만 유지
+  const serviceList = [
+    { label: '관광지 추가', icon: <AddLocationIcon />, action: 'add-tourist' },
+  ];
 
-  const handleSpotSelect = (spot) => {
-    updateSearches(spot);
-    navigate(`/search?query=${encodeURIComponent(spot)}`);
-    setIsDropdownOpen(false);
-  };
-
-  const handleSearchChange = (e) => setSearchTerm(e.target.value);
-
-  const performSearch = () => {
-    if (!searchTerm.trim()) return;
-    const q = searchTerm.trim();
-    updateSearches(q);
-    navigate(`/search?query=${encodeURIComponent(q)}`);
-    setSearchTerm('');
-    setIsDropdownOpen(false);
-  };
-
-  const handleClearAll = () => clearAllSearches();
-
-  const toggleDrawer = (open) => (event) => {
-    if (event && event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) return;
-    setDrawerOpen(open);
-  };
-
-  useEffect(() => setIsDropdownOpen(false), [location.pathname]);
-
-  // 사용자 정보 가져오기
+  // 사용자 정보
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // CHANGED: 공통 인증 라우터의 /api/v1/me 사용
         const { data } = await axios.get(`${API_BASE}/api/v1/me`, { withCredentials: true });
-        setUser(data);
+        setUser(data || null);
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 401) {
           setUser(null);
@@ -87,18 +67,11 @@ const Header = ({ onSelectCategory = () => {} }) => {
     fetchUser();
   }, []);
 
-  // 로그인 (Provider별 라우터 유지)
-  const handleGoogleLogin = () => {
-    window.location.href = `${API_BASE}/api/v1/auth/google/login`;
-  };
-  const handleKakaoLogin = () => {
-    window.location.href = `${API_BASE}/api/v1/auth/kakao/login`;
-  };
+  const handleGoogleLogin = () => { window.location.href = `${API_BASE}/api/v1/auth/google/login`; };
+  const handleKakaoLogin  = () => { window.location.href = `${API_BASE}/api/v1/auth/kakao/login`;  };
 
-  // 로그아웃 (공통 인증 라우터)
   const handleLogout = async () => {
     try {
-      // CHANGED: 공통 /api/v1/logout 사용
       await axios.post(`${API_BASE}/api/v1/logout`, {}, { withCredentials: true });
       setUser(null);
       alert('로그아웃되었습니다.');
@@ -109,7 +82,6 @@ const Header = ({ onSelectCategory = () => {} }) => {
     }
   };
 
-  // (선택) 강제 로그아웃: 서버에서 세션/리프레시토큰 강제 무효화
   const handleForceLogout = async () => {
     try {
       await axios.post(`${API_BASE}/api/v1/force-logout`, {}, { withCredentials: true });
@@ -122,176 +94,98 @@ const Header = ({ onSelectCategory = () => {} }) => {
     }
   };
 
-  const categoryList = [
-    { label: '문화·예술', icon: <PaletteIcon /> },
-    { label: '영화·체험', icon: <MovieIcon /> },
-    { label: '자연·생태', icon: <NatureIcon /> },
-    { label: '트레킹·산책', icon: <DirectionsWalkIcon /> },
-    { label: '해양·수상', icon: <WavesIcon /> },
-    { label: '테마·관광시설', icon: <AttractionsIcon /> },
-    { label: '상업·소비', icon: <ShoppingBagIcon /> },
-    { label: '동물 관련', icon: <PetsIcon /> },
-    { label: '계절형 체험', icon: <AcUnitIcon /> },
-  ];
-
-  const serviceList = [
-    { label: '추천 코스', icon: <StarBorderIcon /> },
-    { label: '인기 맛집', icon: <StarBorderIcon /> },
-    { label: '숙박 예약', icon: <StarBorderIcon /> },
-    { label: '할인 티켓', icon: <StarBorderIcon /> },
-  ];
-
-  const liveKeywords = [
-    '해운대', '광안리', '감천문화마을', '태종대', '자갈치시장',
-    '부산타워', '부산시민공원', '이기대공원', '송정해수욕장', '영도다리'
-  ];
-
-  const renderSearchDropdown = () => {
-    if (!isDropdownOpen) return null;
-
-    return (
-      <Box sx={{
-        position: 'absolute',
-        top: '40px',
-        width: '600px',
-        backgroundColor: '#fff',
-        border: '1px solid #ccc',
-        borderRadius: 1,
-        boxShadow: 2,
-        zIndex: 1000,
-        color: '#000',
-        maxHeight: '400px',
-        overflowY: 'auto',
-      }}>
-        {recentSearches.length > 0 && (
-          <Box sx={{ p: 1, borderBottom: '1px solid #eee' }}>
-            <Typography fontWeight="bold" fontSize={14} mb={1}>최근 검색어</Typography>
-            {recentSearches.map((spot, i) => (
-              <Box
-                key={`recent-${i}-${spot}`}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => handleSpotSelect(spot)}
-                sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', cursor: 'pointer', '&:hover': { backgroundColor: '#f0f0f0' } }}
-              >
-                <SearchIcon fontSize="small" sx={{ mr: 1 }} />
-                <Typography variant="body2" sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{spot}</Typography>
-                <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleRemoveSearch(i); }} sx={{ ml: 1 }}>
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </Box>
-            ))}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-              <Button onClick={handleClearAll} size="small">전체삭제</Button>
-            </Box>
-          </Box>
-        )}
-
-        {liveKeywords.length > 0 && (
-          <Box sx={{ p: 1 }}>
-            <Typography fontWeight="bold" fontSize={14} mb={1}>실시간 인기 검색어</Typography>
-            {liveKeywords.map((keyword, index) => (
-              <Box
-                key={`live-${index}-${keyword}`}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => handleSpotSelect(keyword)}
-                sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', cursor: 'pointer', '&:hover': { backgroundColor: '#f0f0f0' } }}
-              >
-                <Typography variant="body2" sx={{ width: 20 }}>{index + 1}</Typography>
-                <Typography variant="body2" sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ml: 1 }}>{keyword}</Typography>
-                <Typography variant="body2" sx={{ color: index % 2 === 0 ? 'red' : 'blue', ml: 1 }}>
-                  {index % 2 === 0 ? '▲' : '▼'}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-        )}
-
-        {recentSearches.length === 0 && liveKeywords.length === 0 && (
-          <Box sx={{ p: 2, color: '#777', textAlign: 'center' }}>
-            검색 기록 또는 실시간 인기 검색어가 없습니다.
-          </Box>
-        )}
-      </Box>
-    );
+  const toggleDrawer = (open) => (event) => {
+    if (event && event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) return;
+    setDrawerOpen(open);
   };
 
   return (
     <>
-      <AppBar position="fixed" className="header" sx={{ backgroundColor: '#fff', color: '#000' }}>
-        <Toolbar className="header__toolbar" sx={{ height: '100px' }}>
-          <Box className="header__left" sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-            <IconButton edge="start" className="header__icon-button" onClick={toggleDrawer(true)} sx={{ color: '#000' }}>
-              <MenuIcon />
+      <AppBar
+        position="fixed"
+        className="header"
+        sx={{
+          backgroundColor: '#fff',
+          color: '#000',
+          width: '100%',
+          left: 0,
+          right: 0,
+          maxWidth: '100vw',
+          boxSizing: 'border-box',
+          borderBottom: '1px solid #eee'
+        }}
+      >
+        <Toolbar
+          className="header__toolbar"
+          sx={{
+            height: { xs: '70px', sm: '74px', md: '80px', lg: '100px' },
+            minHeight: { xs: '70px', sm: '74px', md: '80px', lg: '100px' },
+            px: { xs: 1.5, sm: 2, md: 3 },
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box'
+          }}
+        >
+          {/* 왼쪽: 메뉴 + 로고 */}
+          <Box
+            className="header__left"
+            sx={{
+              display: 'flex', alignItems: 'center', height: '100%',
+              gap: { xs: 0.5, sm: 1 }, flexShrink: 0, zIndex: 2
+            }}
+          >
+            <IconButton edge="start" className="header__icon-button" onClick={toggleDrawer(true)} sx={{ color: '#000', p: { xs: 0.5, sm: 0.75, md: 1 } }}>
+              <MenuIcon sx={{ fontSize: { xs: '1.4rem', sm: '1.5rem', md: '1.6rem' } }} />
             </IconButton>
 
-            <Box onClick={() => navigate('/')} sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', ml: 1, height: '100%' }}>
-              <img src="/WhereWeGo.PNG" alt="Where We Go 로고" style={{ height: '80px', width: '120px', objectFit: 'contain' }} />
+            <Box onClick={() => navigate('/')} sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', height: '100%', width: { xs: '70px', sm: '90px', md: '110px', lg: '130px' }, flexShrink: 0 }}>
+              <Box
+                component="img"
+                src="/WhereWeGo.PNG"
+                alt="Where We Go 로고"
+                sx={{ height: { xs: '38px', sm: '48px', md: '65px', lg: '80px' }, width: '100%', maxHeight: '100%', objectFit: 'contain' }}
+              />
             </Box>
           </Box>
 
-          <Box className="header__center" sx={{ flex: 1, display: 'flex', justifyContent: 'center', position: 'relative' }}>
-            <TextField
-              placeholder="관광지를 검색해보세요"
-              variant="outlined"
-              size="small"
-              className="header__search"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              onFocus={() => setIsDropdownOpen(true)}
-              onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-              onKeyDown={(e) => e.key === 'Enter' && performSearch()}
-              autoComplete="off"
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={performSearch} sx={{ color: '#000' }}>
-                      <SearchIcon />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                width: '300px',
-                backgroundColor: '#fff',
-                borderRadius: 1,
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': { borderColor: '#ccc' },
-                  '&:hover fieldset': { borderColor: '#aaa' },
-                  '&.Mui-focused fieldset': { borderColor: (theme) => theme.palette.primary.main },
-                },
-                '& .MuiInputBase-input': { color: '#000' }
-              }}
-            />
-            {isDropdownOpen && renderSearchDropdown()}
-          </Box>
+          {/* 중앙: (검색 제거로 비워둠) */}
+          <Box sx={{ flex: 1 }} />
 
-          <Box className="header__right">
-            <IconButton className="header__icon-button" sx={{ color: '#000' }}><PublicIcon /></IconButton>
-            <IconButton className="header__icon-button" onClick={() => navigate('/wishlist')} sx={{ color: '#000' }}><FavoriteBorderIcon /></IconButton>
+          {/* 오른쪽: 위시리스트 + 로그인/프로필 */}
+          <Box
+            className="header__right"
+            sx={{
+              display: 'flex', alignItems: 'center',
+              gap: { xs: 0.3, sm: 0.5, md: 1 }, flexShrink: 0, ml: 'auto', zIndex: 2
+            }}
+          >
+            <IconButton className="header__icon-button" onClick={() => navigate('/wishlist')} sx={{ color: '#000', p: { xs: 0.3, sm: 0.4, md: 0.6 } }}>
+              <FavoriteBorderIcon sx={{ fontSize: { xs: '1.2rem', sm: '1.3rem', md: '1.4rem', lg: '1.5rem' } }} />
+            </IconButton>
+
             {user ? (
-              <IconButton className="header__icon-button" sx={{ color: '#000' }} onClick={toggleDrawer(true)}>
-                <Avatar src={user.picture} alt={user.name} />
+              <IconButton className="header__icon-button" sx={{ color: '#000', p: { xs: 0.2, sm: 0.3, md: 0.4 } }} onClick={toggleDrawer(true)}>
+                <Avatar src={user.picture} alt={user.name} sx={{ width: { xs: 24, sm: 28, md: 32, lg: 36 }, height: { xs: 24, sm: 28, md: 32, lg: 36 } }} />
               </IconButton>
             ) : (
-              // 로그인 아이콘 클릭 시 사이드바 열어 로그인 선택
-              <IconButton className="header__icon-button" sx={{ color: '#000' }} onClick={toggleDrawer(true)}>
-                <PersonOutlineIcon />
+              <IconButton className="header__icon-button" sx={{ color: '#000', p: { xs: 0.3, sm: 0.4, md: 0.6 } }} onClick={toggleDrawer(true)}>
+                <PersonOutlineIcon sx={{ fontSize: { xs: '1.2rem', sm: '1.3rem', md: '1.4rem', lg: '1.5rem' } }} />
               </IconButton>
             )}
           </Box>
         </Toolbar>
       </AppBar>
 
+      {/* 좌측 드로어 */}
       <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)}>
         <Box sx={{ width: 280, color: '#000' }} role="presentation" onKeyDown={toggleDrawer(false)}>
-          <Box sx={{ display: 'flex', alignItems: 'center', padding: '16px', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', p: 2, gap: 1 }}>
             {user ? (
               <>
                 <Avatar src={user.picture} alt={user.name} />
                 <Typography variant="body1" noWrap>{user.name}</Typography>
                 <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
                   <Button onClick={handleLogout} size="small" variant="outlined">로그아웃</Button>
-                  {/* 선택: 운영/디버그용 강제 로그아웃 */}
                   <Button onClick={handleForceLogout} size="small" variant="text">강제</Button>
                 </Box>
               </>
@@ -306,47 +200,55 @@ const Header = ({ onSelectCategory = () => {} }) => {
               </>
             )}
           </Box>
+
           <Divider />
+
+          {/* 카테고리 */}
           <Typography variant="subtitle1" sx={{ p: 2 }}>카테고리</Typography>
-          <List>
+          <List sx={{ pt: 0 }}>
             {categoryList.map((item) => (
-              <ListItem
-                button
+              <ListItemButton
                 key={item.label}
                 onClick={() => {
                   setDrawerOpen(false);
                   onSelectCategory(item.label);
                   navigate(`/category/${encodeURIComponent(item.label)}`);
                 }}
-                sx={{ px: 2, py: 1, cursor: 'pointer', '&:hover': { backgroundColor: '#f0f0f0' } }}
+                sx={{ px: 2, py: 1, '&:hover': { backgroundColor: '#f5f5f5' } }}
               >
-                <ListItemIcon sx={{ color: '#000' }}>{item.icon}</ListItemIcon>
+                <ListItemIcon sx={{ color: '#000', minWidth: 36 }}>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.label} />
-              </ListItem>
+              </ListItemButton>
             ))}
           </List>
+
           <Divider />
+
+          {/* 주요 서비스 (관광지 추가만 표시) */}
           <Typography variant="subtitle1" sx={{ p: 2 }}>주요 서비스</Typography>
-          <List>
-            {[
-              { label: '추천 코스', icon: <StarBorderIcon /> },
-              { label: '인기 맛집', icon: <StarBorderIcon /> },
-              { label: '숙박 예약', icon: <StarBorderIcon /> },
-              { label: '할인 티켓', icon: <StarBorderIcon /> },
-            ].map((item) => (
-              <ListItem
-                button
+          <List sx={{ pt: 0 }}>
+            {serviceList.map((item) => (
+              <ListItemButton
                 key={item.label}
-                onClick={toggleDrawer(false)}
-                sx={{ px: 2, py: 1, cursor: 'pointer', '&:hover': { backgroundColor: '#f0f0f0' } }}
+                onClick={() => {
+                  setDrawerOpen(false);
+                  if (item.action === 'add-tourist') setAddTouristFormOpen(true);
+                }}
+                sx={{ px: 2, py: 1, '&:hover': { backgroundColor: '#f5f5f5' } }}
               >
-                <ListItemIcon sx={{ color: '#000' }}>{item.icon}</ListItemIcon>
+                <ListItemIcon sx={{ color: '#000', minWidth: 36 }}>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.label} />
-              </ListItem>
+              </ListItemButton>
             ))}
           </List>
         </Box>
       </Drawer>
+
+      {/* 관광지 추가 폼 */}
+      <AddTouristSpotForm
+        open={addTouristFormOpen}
+        onClose={() => setAddTouristFormOpen(false)}
+      />
     </>
   );
 };

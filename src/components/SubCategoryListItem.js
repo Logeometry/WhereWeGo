@@ -27,10 +27,9 @@ const SubCategoryListItem = ({ subCategory, onSelect }) => {
   // 🔼🔼🔼 수정 끝 🔼🔼🔼
 
 
-  console.log('--- SubCategoryListItem Debug ---');
+  console.log('SubCategoryListItem Debug');
   console.log('subCategory.label:', subCategory.label);
   console.log('placesInSubCategory:', placesInSubCategory);
-  console.log('------------------------------');
 
   return (
     <>
@@ -74,7 +73,7 @@ const SubCategoryListItem = ({ subCategory, onSelect }) => {
                 }
               }}
             >
-              <Link to={`/tourist/${place._id}`} style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1 }}>
+              <Link to={`/tourist/${place.id || place._id}`} style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1 }}>
                 <Typography variant="body1" sx={{ '&:hover': { textDecoration: 'underline', color: 'primary.main' } }}>
                   {place.name}
                 </Typography>
